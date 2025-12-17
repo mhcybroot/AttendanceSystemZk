@@ -144,6 +144,8 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div th:replace="fragments/pagination :: pagination(page=${page}, baseUrl='/reports/weekly')">
+                        </div>
                     </div>
                 </div>
             </div>

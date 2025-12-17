@@ -1,6 +1,9 @@
 package root.cyb.mh.attendancesystem.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import root.cyb.mh.attendancesystem.dto.DailyAttendanceDto;
 import root.cyb.mh.attendancesystem.model.AttendanceLog;
@@ -35,20 +38,28 @@ public class ReportService {
     @Autowired
     private root.cyb.mh.attendancesystem.repository.LeaveRequestRepository leaveRequestRepository;
 
-    public List<DailyAttendanceDto> getDailyReport(LocalDate date, Long departmentId) {
+    public Page<DailyAttendanceDto> getDailyReport(LocalDate date, Long departmentId, Pageable pageable) {
         List<DailyAttendanceDto> report = new ArrayList<>();
 
         // Get Work Schedule
         WorkSchedule schedule = workScheduleRepository.findAll().stream().findFirst().orElse(new WorkSchedule());
 
         // Get Employees (Filter by Dept if provided)
-        List<Employee> employees;
+        List<Employee> allFilteredEmployees;
         if (departmentId != null) {
-            employees = employeeRepository.findAll().stream()
+            allFilteredEmployees = employeeRepository.findAll().stream()
                     .filter(e -> e.getDepartment() != null && e.getDepartment().getId().equals(departmentId))
                     .collect(Collectors.toList());
         } else {
-            employees = employeeRepository.findAll();
+            allFilteredEmployees = employeeRepository.findAll();
+        }
+
+        // Manual Pagination of the list
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), allFilteredEmployees.size());
+        List<Employee> employees = new ArrayList<>();
+        if (start <= allFilteredEmployees.size()) {
+            employees = allFilteredEmployees.subList(start, end);
         }
 
         // Get All Logs for the Date
@@ -137,11 +148,11 @@ public class ReportService {
             report.add(dto);
         }
 
-        return report;
+        return new PageImpl<>(report, pageable, allFilteredEmployees.size());
     }
 
-    public List<root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto> getWeeklyReport(LocalDate startOfWeek,
-            Long departmentId) {
+    public Page<root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto> getWeeklyReport(LocalDate startOfWeek,
+            Long departmentId, Pageable pageable) {
         List<root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto> report = new ArrayList<>();
 
         // Ensure start date works
@@ -156,13 +167,20 @@ public class ReportService {
         WorkSchedule schedule = workScheduleRepository.findAll().stream().findFirst().orElse(new WorkSchedule());
         List<root.cyb.mh.attendancesystem.model.PublicHoliday> holidays = publicHolidayRepository.findAll();
 
-        List<Employee> employees;
+        List<Employee> allFilteredEmployees;
         if (departmentId != null) {
-            employees = employeeRepository.findAll().stream()
+            allFilteredEmployees = employeeRepository.findAll().stream()
                     .filter(e -> e.getDepartment() != null && e.getDepartment().getId().equals(departmentId))
                     .collect(Collectors.toList());
         } else {
-            employees = employeeRepository.findAll();
+            allFilteredEmployees = employeeRepository.findAll();
+        }
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), allFilteredEmployees.size());
+        List<Employee> employees = new ArrayList<>();
+        if (start <= allFilteredEmployees.size()) {
+            employees = allFilteredEmployees.subList(start, end);
         }
 
         List<AttendanceLog> allLogs = attendanceLogRepository.findByTimestampBetween(
@@ -268,7 +286,7 @@ public class ReportService {
             dto.setLeaveCount(leave);
             report.add(dto);
         }
-        return report;
+        return new PageImpl<>(report, pageable, allFilteredEmployees.size());
     }
 
     public root.cyb.mh.attendancesystem.dto.EmployeeWeeklyDetailDto getEmployeeWeeklyReport(String employeeId,
@@ -423,8 +441,8 @@ public class ReportService {
         }
     }
 
-    public List<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> getMonthlyReport(int year, int month,
-            Long departmentId) {
+    public Page<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> getMonthlyReport(int year, int month,
+            Long departmentId, Pageable pageable) {
         List<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> report = new ArrayList<>();
 
         LocalDate startOfMonth = LocalDate.of(year, month, 1);
@@ -437,13 +455,20 @@ public class ReportService {
         List<root.cyb.mh.attendancesystem.model.PublicHoliday> holidays = publicHolidayRepository.findAll();
 
         // Filter Employees
-        List<Employee> employees;
+        List<Employee> allFilteredEmployees;
         if (departmentId != null) {
-            employees = employeeRepository.findAll().stream()
+            allFilteredEmployees = employeeRepository.findAll().stream()
                     .filter(e -> e.getDepartment() != null && e.getDepartment().getId().equals(departmentId))
                     .collect(Collectors.toList());
         } else {
-            employees = employeeRepository.findAll();
+            allFilteredEmployees = employeeRepository.findAll();
+        }
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), allFilteredEmployees.size());
+        List<Employee> employees = new ArrayList<>();
+        if (start <= allFilteredEmployees.size()) {
+            employees = allFilteredEmployees.subList(start, end);
         }
 
         // Fetch Logs
@@ -511,7 +536,7 @@ public class ReportService {
             report.add(dto);
         }
 
-        return report;
+        return new PageImpl<>(report, pageable, allFilteredEmployees.size());
     }
 
     public root.cyb.mh.attendancesystem.dto.EmployeeMonthlyDetailDto getEmployeeMonthlyReport(String employeeId,

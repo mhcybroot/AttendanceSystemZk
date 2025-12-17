@@ -13,4 +13,9 @@ public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Lo
     java.util.List<AttendanceLog> findByTimestampBetween(LocalDateTime start, LocalDateTime end);
 
     java.util.List<AttendanceLog> findByEmployeeId(String employeeId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT log FROM AttendanceLog log, Employee emp WHERE log.employeeId = emp.id AND emp.department.id = :departmentId")
+    org.springframework.data.domain.Page<AttendanceLog> findByEmployeeDepartmentId(
+            @org.springframework.data.repository.query.Param("departmentId") Long departmentId,
+            org.springframework.data.domain.Pageable pageable);
 }

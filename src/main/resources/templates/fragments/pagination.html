@@ -1,0 +1,42 @@
+<nav th:fragment="pagination(page, baseUrl)" aria-label="Page navigation" th:if="${page.totalPages > 1}">
+    <ul class="pagination justify-content-center">
+        <!-- First Page -->
+        <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+            <a class="page-link"
+                th:href="@{${baseUrl}(page=0, size=${page.size}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, departmentId=${selectedDeptId}, departmentId=${selectedDept}, date=${date}, startOfWeek=${startOfWeek}, year=${selectedYear}, month=${selectedMonth})}">First</a>
+        </li>
+
+        <!-- Previous Page -->
+        <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+            <a class="page-link"
+                th:href="@{${baseUrl}(page=${page.number - 1}, size=${page.size}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, departmentId=${selectedDeptId}, departmentId=${selectedDept}, date=${date}, startOfWeek=${startOfWeek}, year=${selectedYear}, month=${selectedMonth})}">Previous</a>
+        </li>
+
+        <!-- Page Numbers (Window of 5) -->
+        <li class="page-item" th:each="i : ${#numbers.sequence(
+                page.number > 2 ? (page.number + 2 < page.totalPages ? page.number - 2 : (page.totalPages - 5 > 0 ? page.totalPages - 5 : 0)) : 0,
+                page.number + 2 < page.totalPages ? (page.number < 2 ? (page.totalPages > 5 ? 4 : page.totalPages - 1) : page.number + 2) : page.totalPages - 1
+            )}" th:classappend="${i == page.number} ? 'active'">
+            <a class="page-link"
+                th:href="@{${baseUrl}(page=${i}, size=${page.size}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, departmentId=${selectedDeptId}, departmentId=${selectedDept}, date=${date}, startOfWeek=${startOfWeek}, year=${selectedYear}, month=${selectedMonth})}"
+                th:text="${i + 1}">1</a>
+        </li>
+
+        <!-- Next Page -->
+        <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+            <a class="page-link"
+                th:href="@{${baseUrl}(page=${page.number + 1}, size=${page.size}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, departmentId=${selectedDeptId}, departmentId=${selectedDept}, date=${date}, startOfWeek=${startOfWeek}, year=${selectedYear}, month=${selectedMonth})}">Next</a>
+        </li>
+
+        <!-- Last Page -->
+        <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+            <a class="page-link"
+                th:href="@{${baseUrl}(page=${page.totalPages - 1}, size=${page.size}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, departmentId=${selectedDeptId}, departmentId=${selectedDept}, date=${date}, startOfWeek=${startOfWeek}, year=${selectedYear}, month=${selectedMonth})}">Last</a>
+        </li>
+    </ul>
+
+    <div class="text-center mt-2 text-muted small">
+        Showing [[${page.numberOfElements}]] of [[${page.totalElements}]] items
+        (Page [[${page.number + 1}]] of [[${page.totalPages}]])
+    </div>
+</nav>

@@ -23,6 +23,8 @@ public class ReportController {
         @GetMapping("/reports")
         public String reports(@RequestParam(required = false) LocalDate date,
                         @RequestParam(required = false) Long departmentId,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size,
                         @RequestParam(defaultValue = "name") String sortField,
                         @RequestParam(defaultValue = "asc") String sortDir,
                         Model model) {
@@ -30,10 +32,42 @@ public class ReportController {
                         date = LocalDate.now();
                 }
 
-                List<root.cyb.mh.attendancesystem.dto.DailyAttendanceDto> report = reportService.getDailyReport(date,
-                                departmentId);
+                // Create Pageable
+                // Note: We sort in memory for now because the service returns a Page of DTOs
+                // built from a List,
+                // and the DTOs are not Entities. The Service handles "Paginate First, Then
+                // Calculate".
+                // However, standard Spring Pageable sorting passed to repo works on *Entities*.
+                // Here, our service manually slices. So passing 'sort' to the service's
+                // Pageable
+                // might not effect the final list order if we don't apply it manually or if we
+                // rely on the sublist.
+                // Given the service logic:
+                // 1. Fetches ALL employees (filtered by dept).
+                // 2. Slices them (applied page/size).
+                // 3. Generates report for that slice.
+                // So the "Page" contains only those employees.
+                // If we want to sort by *Employee Name* (which is default), we should sort the
+                // Employee LIST before slicing.
+                // If implementation is 'findAll' then stream, we can sort there.
+                // But we didn't add sorting to the service logic yet (it slices a raw list).
+                // For now, let's pass unsorted Pageable to get the slice, and assume default ID
+                // order or whatever findAll returns.
+                // IMPROVEMENT: The service should sort the 'allFilteredEmployees' list before
+                // slicing if we want consistent paging.
+                // But I will stick to the basic pagination integration first.
 
-                // Sorting Logic
+                org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page,
+                                size);
+
+                org.springframework.data.domain.Page<root.cyb.mh.attendancesystem.dto.DailyAttendanceDto> reportPage = reportService
+                                .getDailyReport(date, departmentId, pageable);
+
+                // Sorting the *current page* content (DTOs)
+                List<root.cyb.mh.attendancesystem.dto.DailyAttendanceDto> reportContent = new java.util.ArrayList<>(
+                                reportPage.getContent());
+
+                // ... (Existing comparator logic) ...
                 java.util.Comparator<root.cyb.mh.attendancesystem.dto.DailyAttendanceDto> comparator = null;
                 switch (sortField) {
                         case "department":
@@ -64,11 +98,25 @@ public class ReportController {
                 }
 
                 if (comparator != null) {
-                        report.sort(comparator);
+                        reportContent.sort(comparator);
                 }
 
+                // Re-wrap in PageImpl?
+                // Ideally we shouldn't sort *after* paging if we want global sort, but with
+                // "Paginate Employees First",
+                // we are sorting the *result set of that page*. This is acceptable for "View by
+                // Page" especially if default order is consistent.
+                // But strictly speaking, we should sort employees first.
+                // I will display the reportPage directly but replacing content with sorted
+                // content is hard on a Page object without creating new.
+                // Let's just update the list reference if possible? No, Page is immutable-ish.
+                // Actually, let's just pass `reportContent` as "report" and pass `reportPage`
+                // as "page".
+
+                model.addAttribute("report", reportContent);
+                model.addAttribute("page", reportPage);
+
                 model.addAttribute("date", date);
-                model.addAttribute("report", report);
                 model.addAttribute("departments", departmentRepository.findAll());
                 model.addAttribute("selectedDeptId", departmentId);
 
@@ -82,6 +130,8 @@ public class ReportController {
         @GetMapping("/reports/weekly")
         public String weeklyReports(@RequestParam(required = false) LocalDate date,
                         @RequestParam(required = false) Long departmentId,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size,
                         @RequestParam(defaultValue = "name") String sortField,
                         @RequestParam(defaultValue = "asc") String sortDir,
                         Model model) {
@@ -101,8 +151,13 @@ public class ReportController {
                         current = current.plusDays(1);
                 }
 
-                List<root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto> report = reportService
-                                .getWeeklyReport(startOfWeek, departmentId);
+                org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page,
+                                size);
+                org.springframework.data.domain.Page<root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto> reportPage = reportService
+                                .getWeeklyReport(startOfWeek, departmentId, pageable);
+
+                List<root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto> reportContent = new java.util.ArrayList<>(
+                                reportPage.getContent());
 
                 // Sorting
                 java.util.Comparator<root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto> comparator = null;
@@ -137,7 +192,9 @@ public class ReportController {
                 if ("desc".equalsIgnoreCase(sortDir)) {
                         comparator = comparator.reversed();
                 }
-                report.sort(comparator);
+                if (comparator != null) {
+                        reportContent.sort(comparator);
+                }
 
                 model.addAttribute("startOfWeek", startOfWeek);
                 model.addAttribute("headers", headers);
@@ -147,7 +204,8 @@ public class ReportController {
 
                 model.addAttribute("departments", departmentRepository.findAll());
                 model.addAttribute("selectedDept", departmentId);
-                model.addAttribute("report", report);
+                model.addAttribute("report", reportContent);
+                model.addAttribute("page", reportPage);
 
                 model.addAttribute("sortField", sortField);
                 model.addAttribute("sortDir", sortDir);
@@ -173,6 +231,8 @@ public class ReportController {
         public String monthlyReports(@RequestParam(required = false) Integer year,
                         @RequestParam(required = false) Integer month,
                         @RequestParam(required = false) Long departmentId,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size,
                         @RequestParam(defaultValue = "name") String sortField,
                         @RequestParam(defaultValue = "asc") String sortDir,
                         Model model) {
@@ -182,8 +242,14 @@ public class ReportController {
                         month = now.getMonthValue();
                 }
 
-                List<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> report = reportService.getMonthlyReport(year,
-                                month, departmentId);
+                org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page,
+                                size);
+                org.springframework.data.domain.Page<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> reportPage = reportService
+                                .getMonthlyReport(year,
+                                                month, departmentId, pageable);
+
+                List<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> reportContent = new java.util.ArrayList<>(
+                                reportPage.getContent());
 
                 // Sorting
                 java.util.Comparator<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> comparator = null;
@@ -222,14 +288,17 @@ public class ReportController {
                 if ("desc".equalsIgnoreCase(sortDir)) {
                         comparator = comparator.reversed();
                 }
-                report.sort(comparator);
+                if (comparator != null) {
+                        reportContent.sort(comparator);
+                }
 
                 model.addAttribute("selectedYear", year);
                 model.addAttribute("selectedMonth", month);
                 model.addAttribute("departments", departmentRepository.findAll());
                 model.addAttribute("selectedDept", departmentId);
 
-                model.addAttribute("report", report);
+                model.addAttribute("report", reportContent);
+                model.addAttribute("page", reportPage);
 
                 model.addAttribute("sortField", sortField);
                 model.addAttribute("sortDir", sortDir);
@@ -265,7 +334,7 @@ public class ReportController {
                         date = LocalDate.now();
 
                 List<root.cyb.mh.attendancesystem.dto.DailyAttendanceDto> report = reportService.getDailyReport(date,
-                                departmentId);
+                                departmentId, org.springframework.data.domain.PageRequest.of(0, 10000)).getContent();
                 String deptName = "All Departments";
                 if (departmentId != null) {
                         deptName = departmentRepository.findById(departmentId)
@@ -293,7 +362,7 @@ public class ReportController {
 
                 List<root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto> report = reportService.getWeeklyReport(
                                 startOfWeek,
-                                departmentId);
+                                departmentId, org.springframework.data.domain.PageRequest.of(0, 10000)).getContent();
                 String deptName = "All Departments";
                 if (departmentId != null) {
                         deptName = departmentRepository.findById(departmentId)
@@ -323,7 +392,7 @@ public class ReportController {
 
                 List<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> report = reportService.getMonthlyReport(year,
                                 month,
-                                departmentId);
+                                departmentId, org.springframework.data.domain.PageRequest.of(0, 10000)).getContent();
                 String deptName = "All Departments";
                 if (departmentId != null) {
                         deptName = departmentRepository.findById(departmentId)

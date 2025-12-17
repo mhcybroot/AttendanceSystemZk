@@ -7,6 +7,10 @@ import org.springframework.web.bind.annotation.*;
 import root.cyb.mh.attendancesystem.model.Employee;
 import root.cyb.mh.attendancesystem.repository.EmployeeRepository;
 import root.cyb.mh.attendancesystem.repository.DepartmentRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Controller
@@ -24,14 +28,19 @@ public class EmployeeController {
 
     @GetMapping
     public String listEmployees(Model model,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortField,
             @RequestParam(defaultValue = "asc") String sortDir) {
 
-        org.springframework.data.domain.Sort sort = sortDir.equalsIgnoreCase("asc")
-                ? org.springframework.data.domain.Sort.by(sortField).ascending()
-                : org.springframework.data.domain.Sort.by(sortField).descending();
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortField).ascending()
+                : Sort.by(sortField).descending();
 
-        model.addAttribute("employees", employeeRepository.findAll(sort));
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Employee> employeePage = employeeRepository.findAll(pageable);
+
+        model.addAttribute("employees", employeePage.getContent());
+        model.addAttribute("page", employeePage);
         model.addAttribute("newEmployee", new Employee());
         model.addAttribute("departments", departmentRepository.findAll());
 

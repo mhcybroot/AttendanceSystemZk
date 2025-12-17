@@ -118,6 +118,9 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Pagination -->
+                    <div th:replace="fragments/pagination :: pagination(page=${page}, baseUrl='/employees')"></div>
                 </div>
 
                 <!-- Add/Edit Employee Modal -->

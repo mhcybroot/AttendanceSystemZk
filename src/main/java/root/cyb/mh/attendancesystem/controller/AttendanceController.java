@@ -1,6 +1,10 @@
 package root.cyb.mh.attendancesystem.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -71,6 +75,8 @@ public class AttendanceController {
 
     @GetMapping("/attendance")
     public String attendance(@RequestParam(required = false) Long departmentId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortField,
             @RequestParam(defaultValue = "desc") String sortDir,
             Model model) {
@@ -81,54 +87,26 @@ public class AttendanceController {
             employeeMap.put(emp.getId(), emp.getName());
         }
 
-        java.util.List<root.cyb.mh.attendancesystem.model.AttendanceLog> logs;
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortField).ascending() : Sort.by(sortField).descending();
+        // Handle custom sort field "employeeName" which is not in DB
+        if ("employeeName".equals(sortField)) {
+            // Fallback: sort by ID if name is selected, as we can't easily DB-sort by
+            // transient name map
+            sort = Sort.by("id").descending();
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<root.cyb.mh.attendancesystem.model.AttendanceLog> logsPage;
 
         if (departmentId != null) {
-            // Filter logic: Find employees in dept, then find logs for those employees
-            java.util.List<String> employeeIds = employeeRepository.findAll().stream()
-                    .filter(e -> e.getDepartment() != null && e.getDepartment().getId().equals(departmentId))
-                    .map(root.cyb.mh.attendancesystem.model.Employee::getId)
-                    .collect(java.util.stream.Collectors.toList());
-
-            logs = attendanceLogRepository.findAll().stream()
-                    .filter(log -> employeeIds.contains(log.getEmployeeId()))
-                    .collect(java.util.stream.Collectors.toList());
+            logsPage = attendanceLogRepository.findByEmployeeDepartmentId(departmentId, pageable);
             model.addAttribute("selectedDeptId", departmentId);
         } else {
-            logs = attendanceLogRepository.findAll();
+            logsPage = attendanceLogRepository.findAll(pageable);
         }
 
-        // 2. Apply Sorting
-        java.util.Comparator<root.cyb.mh.attendancesystem.model.AttendanceLog> comparator = null;
-        switch (sortField) {
-            case "employeeName":
-                comparator = java.util.Comparator.comparing(log -> employeeMap.getOrDefault(log.getEmployeeId(), ""));
-                break;
-            case "employeeId":
-                comparator = java.util.Comparator
-                        .comparing(root.cyb.mh.attendancesystem.model.AttendanceLog::getEmployeeId);
-                break;
-            case "deviceId":
-                comparator = java.util.Comparator
-                        .comparing(root.cyb.mh.attendancesystem.model.AttendanceLog::getDeviceId);
-                break;
-            case "timestamp":
-                comparator = java.util.Comparator
-                        .comparing(root.cyb.mh.attendancesystem.model.AttendanceLog::getTimestamp);
-                break;
-            case "id":
-            default:
-                comparator = java.util.Comparator.comparing(root.cyb.mh.attendancesystem.model.AttendanceLog::getId);
-                break;
-        }
-
-        if ("desc".equalsIgnoreCase(sortDir)) {
-            comparator = comparator.reversed();
-        }
-
-        logs.sort(comparator);
-
-        model.addAttribute("logs", logs);
+        model.addAttribute("logs", logsPage.getContent());
+        model.addAttribute("page", logsPage);
         model.addAttribute("departments", departmentRepository.findAll());
         model.addAttribute("employeeMap", employeeMap);
 

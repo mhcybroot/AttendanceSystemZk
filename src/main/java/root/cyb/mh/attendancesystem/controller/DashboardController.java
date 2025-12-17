@@ -41,7 +41,9 @@ public class DashboardController {
                 long totalDepartments = departmentRepository.count();
 
                 // Today's Attendance Stats
-                List<DailyAttendanceDto> dailyReport = reportService.getDailyReport(today, null);
+                List<DailyAttendanceDto> dailyReport = reportService
+                                .getDailyReport(today, null, org.springframework.data.domain.PageRequest.of(0, 5000))
+                                .getContent();
                 long presentCount = dailyReport.stream()
                                 .filter(d -> d.getStatus().contains("PRESENT") || d.getStatus().contains("LATE")
                                                 || d.getStatus().contains("EARLY"))
