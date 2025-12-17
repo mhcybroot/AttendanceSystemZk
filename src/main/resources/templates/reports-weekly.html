@@ -3,133 +3,122 @@
 
 <head>
     <title>Weekly Reports - Attendance System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .status-cell {
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        .bg-WEEKEND {
-            background-color: #e9ecef;
-            color: #6c757d;
-        }
-
-        .bg-ABSENT {
-            background-color: #f8d7da;
-            color: #842029;
-        }
-
-        .bg-LATE {
-            background-color: #fff3cd;
-            color: #664d03;
-        }
-
-        .bg-EARLY {
-            background-color: #cff4fc;
-            color: #055160;
-        }
-
-        .bg-LATE_EARLY {
-            background-color: #ffc107;
-            color: #000;
-        }
-
-        .bg-PRESENT {
-            background-color: #d1e7dd;
-            color: #0f5132;
-        }
-    </style>
 </head>
 
-<body class="bg-light">
+<body>
+    <div th:replace="~{layout :: layout(~{::section}, ~{}, 'reports-weekly')}">
+        <section>
+            <style>
+                .status-cell {
+                    text-align: center;
+                    vertical-align: middle;
+                }
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="#">AttSys</a>
-            <div class="navbar-nav">
-                <a class="nav-link" href="/devices">Devices</a>
-                <a class="nav-link" href="/attendance">Attendance Logs</a>
-                <a class="nav-link" href="/employees">Employees</a>
-                <a class="nav-link" href="/departments">Departments</a>
-                <a class="nav-link active" href="/reports">Reports</a>
-                <a class="nav-link" href="/settings">Settings</a>
-            </div>
-        </div>
-    </nav>
+                .bg-WEEKEND {
+                    background-color: #e9ecef;
+                    color: #6c757d;
+                }
 
-    <div class="container-fluid px-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Weekly Attendance Report</h2>
-            <div>
-                <a href="/reports" class="btn btn-outline-secondary me-2">Daily View</a>
-                <a href="/reports/monthly" class="btn btn-outline-secondary me-2">Monthly View</a>
-                <form action="/reports/weekly" method="get" class="d-inline-flex">
-                    <select name="departmentId" class="form-select me-2" style="width: auto;">
-                        <option value="">All Departments</option>
-                        <option th:each="dept : ${departments}" th:value="${dept.id}" th:text="${dept.name}"
-                            th:selected="${dept.id == selectedDept}"></option>
-                    </select>
-                    <input type="date" name="date" class="form-control me-2" th:value="${startOfWeek}">
-                    <button type="submit" class="btn btn-primary">View Week</button>
-                </form>
-            </div>
-        </div>
+                .bg-ABSENT {
+                    background-color: #f8d7da;
+                    color: #842029;
+                }
 
-        <div class="card">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-sm">
-                        <thead class="table-dark text-center">
-                            <tr>
-                                <th style="min-width: 150px;">Employee</th>
-                                <th th:each="header : ${headers}" th:text="${header}">Mon 01</th>
-                                <th>Summary</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="row : ${report}">
-                                <td>
-                                    <a th:href="@{/reports/weekly/{id}(id=${row.employeeId}, date=${startOfWeek})}"
-                                        class="text-decoration-none text-dark">
-                                        <strong th:text="${row.employeeName}">John Doe</strong>
-                                    </a>
-                                    <div class="small text-muted" th:text="${row.employeeId}">ID:1</div>
-                                </td>
+                .bg-LATE {
+                    background-color: #fff3cd;
+                    color: #664d03;
+                }
 
-                                <td th:each="date : ${weekDates}" class="status-cell"
-                                    th:classappend="'bg-' + ${row.dailyStatus.get(date)}">
+                .bg-EARLY {
+                    background-color: #cff4fc;
+                    color: #055160;
+                }
 
-                                    <span th:if="${row.dailyStatus.get(date) == 'PRESENT'}">✅</span>
-                                    <span th:if="${row.dailyStatus.get(date) == 'ABSENT'}">❌</span>
-                                    <span th:if="${row.dailyStatus.get(date) == 'LATE'}">⚠️</span>
-                                    <span th:if="${row.dailyStatus.get(date) == 'EARLY'}">🏃</span>
-                                    <span th:if="${row.dailyStatus.get(date) == 'LATE_EARLY'}">⚠️🏃</span>
-                                    <span th:if="${row.dailyStatus.get(date) == 'WEEKEND'}">🏖️</span>
-                                </td>
+                .bg-LATE_EARLY {
+                    background-color: #ffc107;
+                    color: #000;
+                }
 
-                                <td class="small">
-                                    <div th:if="${row.presentCount > 0}" class="text-success">P: <span
-                                            th:text="${row.presentCount}">5</span></div>
-                                    <div th:if="${row.absentCount > 0}" class="text-danger">A: <span
-                                            th:text="${row.absentCount}">0</span></div>
-                                    <div th:if="${row.lateCount > 0}" class="text-warning">L: <span
-                                            th:text="${row.lateCount}">1</span></div>
-                                    <div th:if="${row.earlyLeaveCount > 0}" class="text-info">E: <span
-                                            th:text="${row.earlyLeaveCount}">1</span></div>
-                                </td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(report)}">
-                                <td colspan="9" class="text-center p-4">No data found.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                .bg-PRESENT {
+                    background-color: #d1e7dd;
+                    color: #0f5132;
+                }
+            </style>
+
+            <div class="container-fluid px-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Weekly Attendance Report</h2>
+                    <div>
+                        <a href="/reports" class="btn btn-outline-secondary me-2">Daily View</a>
+                        <a href="/reports/monthly" class="btn btn-outline-secondary me-2">Monthly View</a>
+                        <form action="/reports/weekly" method="get" class="d-inline-flex">
+                            <select name="departmentId" class="form-select me-2" style="width: auto;">
+                                <option value="">All Departments</option>
+                                <option th:each="dept : ${departments}" th:value="${dept.id}" th:text="${dept.name}"
+                                    th:selected="${dept.id == selectedDept}"></option>
+                            </select>
+                            <input type="date" name="date" class="form-control me-2" th:value="${startOfWeek}">
+                            <button type="submit" class="btn btn-primary">View Week</button>
+                            <a th:href="@{/reports/weekly/pdf(date=${startOfWeek}, departmentId=${selectedDept})}"
+                                class="btn btn-dark ms-2">Download PDF</a>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-dark text-center">
+                                    <tr>
+                                        <th style="min-width: 150px;">Employee</th>
+                                        <th th:each="header : ${headers}" th:text="${header}">Mon 01</th>
+                                        <th>Summary</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="row : ${report}">
+                                        <td>
+                                            <a th:href="@{/reports/weekly/{id}(id=${row.employeeId}, date=${startOfWeek})}"
+                                                class="text-decoration-none text-dark">
+                                                <strong th:text="${row.employeeName}">John Doe</strong>
+                                            </a>
+                                            <div class="small text-muted" th:text="${row.employeeId}">ID:1</div>
+                                        </td>
+
+                                        <td th:each="date : ${weekDates}" class="status-cell"
+                                            th:classappend="'bg-' + ${row.dailyStatus.get(date)}">
+
+                                            <span th:if="${row.dailyStatus.get(date) == 'PRESENT'}">✅</span>
+                                            <span th:if="${row.dailyStatus.get(date) == 'ABSENT'}">❌</span>
+                                            <span th:if="${row.dailyStatus.get(date) == 'LATE'}">⚠️</span>
+                                            <span th:if="${row.dailyStatus.get(date) == 'EARLY'}">🏃</span>
+                                            <span th:if="${row.dailyStatus.get(date) == 'LATE_EARLY'}">⚠️🏃</span>
+                                            <span th:if="${row.dailyStatus.get(date) == 'WEEKEND'}">🏖️</span>
+                                        </td>
+
+                                        <td class="small">
+                                            <div th:if="${row.presentCount > 0}" class="text-success">P: <span
+                                                    th:text="${row.presentCount}">5</span></div>
+                                            <div th:if="${row.absentCount > 0}" class="text-danger">A: <span
+                                                    th:text="${row.absentCount}">0</span></div>
+                                            <div th:if="${row.lateCount > 0}" class="text-warning">L: <span
+                                                    th:text="${row.lateCount}">1</span></div>
+                                            <div th:if="${row.earlyLeaveCount > 0}" class="text-info">E: <span
+                                                    th:text="${row.earlyLeaveCount}">1</span></div>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(report)}">
+                                        <td colspan="9" class="text-center p-4">No data found.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

@@ -26,11 +26,6 @@ public class AttendanceController {
     // @Autowired
     // private SyncService syncService;
 
-    @GetMapping
-    public String index() {
-        return "redirect:/attendance";
-    }
-
     @GetMapping("/devices")
     public String devices(Model model) {
         model.addAttribute("devices", deviceRepository.findAll());

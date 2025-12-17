@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body th:fragment="sidebar(activeLink)">
+    <div class="border-end" id="sidebar-wrapper">
+        <div class="sidebar-heading border-bottom bg-dark text-white">NEXUS Netro</div>
+        <div class="list-group list-group-flush">
+            <a href="/dashboard" class="list-group-item list-group-item-action"
+                th:classappend="${activeLink == 'dashboard'} ? 'active'">
+                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+            </a>
+            <a href="/attendance" class="list-group-item list-group-item-action"
+                th:classappend="${activeLink == 'attendance'} ? 'active'">
+                <i class="fas fa-clipboard-list me-2"></i> Attendance Logs
+            </a>
+            <a href="/employees" class="list-group-item list-group-item-action"
+                th:classappend="${activeLink == 'employees'} ? 'active'">
+                <i class="fas fa-users me-2"></i> Employees
+            </a>
+            <a href="/departments" class="list-group-item list-group-item-action"
+                th:classappend="${activeLink == 'departments'} ? 'active'">
+                <i class="fas fa-building me-2"></i> Departments
+            </a>
+
+            <div class="sidebar-heading border-bottom bg-dark text-muted small py-2">REPORTS</div>
+            <a href="/reports" class="list-group-item list-group-item-action"
+                th:classappend="${activeLink == 'reports'} ? 'active'">
+                <i class="fas fa-calendar-day me-2"></i> Daily Report
+            </a>
+            <a href="/reports/weekly" class="list-group-item list-group-item-action"
+                th:classappend="${activeLink == 'reports-weekly'} ? 'active'">
+                <i class="fas fa-calendar-week me-2"></i> Weekly Report
+            </a>
+            <a href="/reports/monthly" class="list-group-item list-group-item-action"
+                th:classappend="${activeLink == 'reports-monthly'} ? 'active'">
+                <i class="fas fa-calendar-alt me-2"></i> Monthly Report
+            </a>
+
+            <div class="sidebar-heading border-bottom bg-dark text-muted small py-2">SYSTEM</div>
+            <a href="/devices" class="list-group-item list-group-item-action"
+                th:classappend="${activeLink == 'devices'} ? 'active'">
+                <i class="fas fa-server me-2"></i> Devices
+            </a>
+            <a href="/settings" class="list-group-item list-group-item-action"
+                th:classappend="${activeLink == 'settings'} ? 'active'">
+                <i class="fas fa-cogs me-2"></i> Settings
+            </a>
+        </div>
+    </div>
+</body>
+
+</html>

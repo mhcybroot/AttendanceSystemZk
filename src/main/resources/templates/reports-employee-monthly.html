@@ -3,111 +3,101 @@
 
 <head>
     <title>Employee Monthly Detail - Attendance System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
-<body class="bg-light">
+<body>
+    <div th:replace="~{layout :: layout(~{::section}, ~{}, 'reports-monthly')}">
+        <section>
+            <div class="container-fluid px-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2>Monthly Detail Report</h2>
+                        <h4 class="text-muted" th:if="${report != null}">
+                            <span th:text="${report.employeeName}">John Doe</span>
+                            <small>(ID: <span th:text="${report.employeeId}">1</span>)</small>
+                        </h4>
+                        <div class="text-secondary" th:if="${report != null}">
+                            Department: <span th:text="${report.departmentName}">IT</span> |
+                            Period: <span th:text="${report.month + '/' + report.year}">12/2025</span>
+                        </div>
+                    </div>
+                    <div>
+                        <a th:href="@{/reports/monthly(year=${report.year}, month=${report.month})}"
+                            class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Monthly Summary
+                        </a>
+                        <a th:href="@{'/reports/monthly/' + ${report.employeeId} + '/pdf?year=' + ${report.year} + '&month=' + ${report.month}}"
+                            class="btn btn-dark ms-2">Download PDF</a>
+                        <button onclick="window.print()" class="btn btn-primary ms-2">Print</button>
+                    </div>
+                </div>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="#">AttSys</a>
-            <div class="navbar-nav">
-                <a class="nav-link" href="/devices">Devices</a>
-                <a class="nav-link" href="/attendance">Attendance Logs</a>
-                <a class="nav-link" href="/employees">Employees</a>
-                <a class="nav-link" href="/departments">Departments</a>
-                <a class="nav-link active" href="/reports">Reports</a>
-                <a class="nav-link" href="/settings">Settings</a>
-            </div>
-        </div>
-    </nav>
+                <div class="card shadow-sm" th:if="${report != null}">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Day</th>
+                                        <th>In Time</th>
+                                        <th>Out Time</th>
+                                        <th>Late By</th>
+                                        <th>Early By</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="day : ${report.dailyDetails}">
+                                        <td th:text="${day.date}">2025-12-01</td>
+                                        <td th:text="${day.dayOfWeek}">MONDAY</td>
+                                        <td th:text="${day.inTime}">09:00</td>
+                                        <td th:text="${day.outTime}">18:00</td>
+                                        <td>
+                                            <span th:if="${day.lateDurationMinutes > 0}"
+                                                th:text="${day.lateDurationMinutes + ' min'}"
+                                                class="text-danger fw-bold"></span>
+                                            <span th:if="${day.lateDurationMinutes == 0}">-</span>
+                                        </td>
+                                        <td>
+                                            <span th:if="${day.earlyLeaveDurationMinutes > 0}"
+                                                th:text="${day.earlyLeaveDurationMinutes + ' min'}"
+                                                class="text-info fw-bold"></span>
+                                            <span th:if="${day.earlyLeaveDurationMinutes == 0}">-</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge" th:classappend="${'bg-' + day.statusColor}"
+                                                th:text="${day.status}">PRESENT</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot class="table-group-divider">
+                                    <tr>
+                                        <td colspan="7">
+                                            <div class="d-flex justify-content-around fw-bold">
+                                                <span class="text-success">Total Present: <span
+                                                        th:text="${report.totalPresent}">20</span></span>
+                                                <span class="text-danger">Total Absent: <span
+                                                        th:text="${report.totalAbsent}">2</span></span>
+                                                <span class="text-warning">Total Lates: <span
+                                                        th:text="${report.totalLates}">3</span></span>
+                                                <span class="text-info">Total Early Leaves: <span
+                                                        th:text="${report.totalEarlyLeaves}">1</span></span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
-    <div class="container px-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h2>Monthly Detail Report</h2>
-                <h4 class="text-muted" th:if="${report != null}">
-                    <span th:text="${report.employeeName}">John Doe</span>
-                    <small>(ID: <span th:text="${report.employeeId}">1</span>)</small>
-                </h4>
-                <div class="text-secondary" th:if="${report != null}">
-                    Department: <span th:text="${report.departmentName}">IT</span> |
-                    Period: <span th:text="${report.month + '/' + report.year}">12/2025</span>
+                <div class="alert alert-warning" th:if="${report == null}">
+                    Employee not found.
                 </div>
             </div>
-            <div>
-                <a th:href="@{/reports/monthly(year=${report.year}, month=${report.month})}"
-                    class="btn btn-outline-secondary">Back to Monthly Summary</a>
-                <button onclick="window.print()" class="btn btn-primary ms-2">Print</button>
-            </div>
-        </div>
-
-        <div class="card shadow-sm" th:if="${report != null}">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Date</th>
-                                <th>Day</th>
-                                <th>In Time</th>
-                                <th>Out Time</th>
-                                <th>Late By</th>
-                                <th>Early By</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="day : ${report.dailyDetails}">
-                                <td th:text="${day.date}">2025-12-01</td>
-                                <td th:text="${day.dayOfWeek}">MONDAY</td>
-                                <td th:text="${day.inTime}">09:00</td>
-                                <td th:text="${day.outTime}">18:00</td>
-                                <td>
-                                    <span th:if="${day.lateDurationMinutes > 0}"
-                                        th:text="${day.lateDurationMinutes + ' min'}"
-                                        class="text-danger fw-bold"></span>
-                                    <span th:if="${day.lateDurationMinutes == 0}">-</span>
-                                </td>
-                                <td>
-                                    <span th:if="${day.earlyLeaveDurationMinutes > 0}"
-                                        th:text="${day.earlyLeaveDurationMinutes + ' min'}"
-                                        class="text-info fw-bold"></span>
-                                    <span th:if="${day.earlyLeaveDurationMinutes == 0}">-</span>
-                                </td>
-                                <td>
-                                    <span class="badge" th:classappend="${'bg-' + day.statusColor}"
-                                        th:text="${day.status}">PRESENT</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot class="table-group-divider">
-                            <tr>
-                                <td colspan="7">
-                                    <div class="d-flex justify-content-around fw-bold">
-                                        <span class="text-success">Total Present: <span
-                                                th:text="${report.totalPresent}">20</span></span>
-                                        <span class="text-danger">Total Absent: <span
-                                                th:text="${report.totalAbsent}">2</span></span>
-                                        <span class="text-warning">Total Lates: <span
-                                                th:text="${report.totalLates}">3</span></span>
-                                        <span class="text-info">Total Early Leaves: <span
-                                                th:text="${report.totalEarlyLeaves}">1</span></span>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="alert alert-warning" th:if="${report == null}">
-            Employee not found.
-        </div>
+        </section>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

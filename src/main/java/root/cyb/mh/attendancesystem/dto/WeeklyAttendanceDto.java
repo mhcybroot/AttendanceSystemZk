@@ -8,6 +8,7 @@ import java.util.Map;
 public class WeeklyAttendanceDto {
     private String employeeName;
     private String employeeId;
+    private String departmentName;
 
     // Map of Date -> Status (e.g., "PRESENT", "ABSENT", "WEEKEND")
     private Map<LocalDate, String> dailyStatus;

@@ -152,6 +152,7 @@ public class ReportService {
             root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto dto = new root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto();
             dto.setEmployeeId(emp.getId());
             dto.setEmployeeName(emp.getName());
+            dto.setDepartmentName(emp.getDepartment() != null ? emp.getDepartment().getName() : "Unassigned");
             dto.setDailyStatus(new java.util.LinkedHashMap<>());
 
             int present = 0, absent = 0, late = 0, early = 0;

@@ -15,7 +15,9 @@ public class WorkSchedule {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @org.springframework.format.annotation.DateTimeFormat(pattern = "HH:mm")
     private LocalTime startTime;
+    @org.springframework.format.annotation.DateTimeFormat(pattern = "HH:mm")
     private LocalTime endTime;
     private int lateToleranceMinutes;
     private int earlyLeaveToleranceMinutes;

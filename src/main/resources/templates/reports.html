@@ -3,94 +3,85 @@
 
 <head>
     <title>Daily Reports - Attendance System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .badge-ABSENT {
-            background-color: #dc3545;
-        }
-
-        /* Danger */
-        .badge-LATE {
-            background-color: #ffc107;
-            color: black;
-        }
-
-        /* Warning */
-        .badge-EARLY {
-            background-color: #0dcaf0;
-            color: black;
-        }
-
-        /* Info */
-        .badge-PRESENT {
-            background-color: #198754;
-        }
-
-        /* Success */
-    </style>
 </head>
 
-<body class="bg-light">
+<body>
+    <div th:replace="~{layout :: layout(~{::section}, ~{}, 'reports')}">
+        <section>
+            <style>
+                .badge-ABSENT {
+                    background-color: #dc3545;
+                }
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="#">AttSys</a>
-            <div class="navbar-nav">
-                <a class="nav-link" href="/devices">Devices</a>
-                <a class="nav-link" href="/attendance">Attendance Logs</a>
-                <a class="nav-link" href="/employees">Employees</a>
-                <a class="nav-link" href="/departments">Departments</a>
-                <a class="nav-link active" href="/reports">Reports</a>
-                <a class="nav-link" href="/settings">Settings</a>
+                .badge-LATE {
+                    background-color: #ffc107;
+                    color: black;
+                }
+
+                .badge-EARLY {
+                    background-color: #0dcaf0;
+                    color: black;
+                }
+
+                .badge-PRESENT {
+                    background-color: #198754;
+                }
+            </style>
+
+            <div class="container-fluid px-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Daily Attendance Report</h2>
+                    <form action="/reports" method="get" class="d-flex align-items-center">
+                        <select name="departmentId" class="form-select me-2" style="width: auto;">
+                            <option value="">All Departments</option>
+                            <option th:each="dept : ${departments}" th:value="${dept.id}" th:text="${dept.name}"
+                                th:selected="${dept.id == selectedDeptId}"></option>
+                        </select>
+                        <input type="date" name="date" class="form-control me-2" style="width: auto;"
+                            th:value="${date}">
+                        <button type="submit" class="btn btn-primary">View Report</button>
+                        <a th:href="@{/reports/daily/pdf(date=${date}, departmentId=${selectedDeptId})}"
+                            class="btn btn-dark ms-2">Download PDF</a>
+                    </form>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Department</th>
+                                    <th>In Time</th>
+                                    <th>Out Time</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="row : ${report}">
+                                    <td>
+                                        <span th:text="${row.employeeName}" class="fw-bold">John Doe</span>
+                                        <small class="text-muted d-block" th:text="'ID: ' + ${row.employeeId}">ID:
+                                            1</small>
+                                    </td>
+                                    <td th:text="${row.departmentName}">IT</td>
+                                    <td th:text="${row.inTime != null ? row.inTime : '-'}">09:00</td>
+                                    <td th:text="${row.outTime != null ? row.outTime : '-'}">18:00</td>
+                                    <td>
+                                        <span class="badge" th:classappend="'bg-' + ${row.statusColor}"
+                                            th:text="${row.status}">PRESENT</span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(report)}">
+                                    <td colspan="5" class="text-center">No data found for this date.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </div>
-    </nav>
-
-    <div class="container-fluid px-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Daily Attendance Report</h2>
-            <button type="submit" class="btn btn-outline-primary me-2">View</button>
-            <a href="/reports/weekly" class="btn btn-primary">Weekly View</a>
-            </form>
-        </div>
-
-        <div class="card">
-            <div class="card-body">
-                <table class="table table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Name</th>
-                            <th>Department</th>
-                            <th>In Time</th>
-                            <th>Out Time</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="row : ${report}">
-                            <td>
-                                <span th:text="${row.employeeName}" class="fw-bold">John Doe</span>
-                                <small class="text-muted d-block" th:text="'ID: ' + ${row.employeeId}">ID: 1</small>
-                            </td>
-                            <td th:text="${row.departmentName}">IT</td>
-                            <td th:text="${row.inTime != null ? row.inTime : '-'}">09:00</td>
-                            <td th:text="${row.outTime != null ? row.outTime : '-'}">18:00</td>
-                            <td>
-                                <span class="badge" th:classappend="'bg-' + ${row.statusColor}"
-                                    th:text="${row.status}">PRESENT</span>
-                            </td>
-                        </tr>
-                        <tr th:if="${#lists.isEmpty(report)}">
-                            <td colspan="5" class="text-center">No data found for this date.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        </section>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

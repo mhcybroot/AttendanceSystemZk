@@ -3,99 +3,94 @@
 
 <head>
     <title>Employee Weekly Detail - Attendance System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
-<body class="bg-light">
+<body>
+    <div th:replace="~{layout :: layout(~{::section}, ~{}, 'reports-weekly')}">
+        <section>
+            <div class="container-fluid mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2>Employee Weekly Detail</h2>
+                    <a href="/reports/weekly" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Weekly Report
+                    </a>
+                </div>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="#">AttSys</a>
-            <div class="navbar-nav">
-                <a class="nav-link" href="/reports/weekly">Back to Weekly Report</a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container mt-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h4 class="mb-0" th:text="${report.employeeName}">Employee Name</h4>
-                        <div class="text-muted small">
-                            ID: <span th:text="${report.employeeId}">123</span> |
-                            Dept: <span th:text="${report.departmentName}">Engineering</span>
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="mb-0" th:text="${report.employeeName}">Employee Name</h4>
+                                <div class="text-muted small">
+                                    ID: <span th:text="${report.employeeId}">123</span> |
+                                    Dept: <span th:text="${report.departmentName}">Engineering</span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="text-muted small">Week of</div>
+                                <strong th:text="${report.startOfWeek}">2024-01-01</strong>
+                            </div>
                         </div>
                     </div>
-                    <div class="text-end">
-                        <div class="text-muted small">Week of</div>
-                        <strong th:text="${report.startOfWeek}">2024-01-01</strong>
+                    <div class="card-body p-0">
+                        <table class="table table-striped mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Day</th>
+                                    <th>In Time</th>
+                                    <th>Out Time</th>
+                                    <th>Late By</th>
+                                    <th>Early By</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="day : ${report.dailyDetails}">
+                                    <td th:text="${day.date}">2024-01-01</td>
+                                    <td th:text="${day.dayOfWeek}">MONDAY</td>
+
+                                    <td th:text="${day.inTime != null ? day.inTime : '-'}">09:00</td>
+                                    <td th:text="${day.outTime != null ? day.outTime : '-'}">18:00</td>
+
+                                    <td>
+                                        <span th:if="${day.lateDurationMinutes > 0}" class="text-danger"
+                                            th:text="${day.lateDurationMinutes} + ' min'">15 min</span>
+                                        <span th:if="${day.lateDurationMinutes == 0}">-</span>
+                                    </td>
+                                    <td>
+                                        <span th:if="${day.earlyLeaveDurationMinutes > 0}" class="text-info"
+                                            th:text="${day.earlyLeaveDurationMinutes} + ' min'">10 min</span>
+                                        <span th:if="${day.earlyLeaveDurationMinutes == 0}">-</span>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge" th:classappend="'bg-' + ${day.statusColor}"
+                                            th:text="${day.status}">PRESENT</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="6" class="text-end"><strong>Summary:</strong></td>
+                                    <td>
+                                        <div>Present: <span th:text="${report.totalPresent}">5</span></div>
+                                        <div>Absent: <span th:text="${report.totalAbsent}">0</span></div>
+                                        <div class="text-warning" th:if="${report.totalLates > 0}">
+                                            Lates: <span th:text="${report.totalLates}">1</span>
+                                        </div>
+                                        <div class="text-info" th:if="${report.totalEarlyLeaves > 0}">
+                                            Early: <span th:text="${report.totalEarlyLeaves}">1</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
             </div>
-            <div class="card-body p-0">
-                <table class="table table-striped mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Date</th>
-                            <th>Day</th>
-                            <th>In Time</th>
-                            <th>Out Time</th>
-                            <th>Late By</th>
-                            <th>Early By</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="day : ${report.dailyDetails}">
-                            <td th:text="${day.date}">2024-01-01</td>
-                            <td th:text="${day.dayOfWeek}">MONDAY</td>
-
-                            <td th:text="${day.inTime != null ? day.inTime : '-'}">09:00</td>
-                            <td th:text="${day.outTime != null ? day.outTime : '-'}">18:00</td>
-
-                            <td>
-                                <span th:if="${day.lateDurationMinutes > 0}" class="text-danger"
-                                    th:text="${day.lateDurationMinutes} + ' min'">15 min</span>
-                                <span th:if="${day.lateDurationMinutes == 0}">-</span>
-                            </td>
-                            <td>
-                                <span th:if="${day.earlyLeaveDurationMinutes > 0}" class="text-info"
-                                    th:text="${day.earlyLeaveDurationMinutes} + ' min'">10 min</span>
-                                <span th:if="${day.earlyLeaveDurationMinutes == 0}">-</span>
-                            </td>
-
-                            <td>
-                                <span class="badge" th:classappend="'bg-' + ${day.statusColor}"
-                                    th:text="${day.status}">PRESENT</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                    <tfoot class="table-light">
-                        <tr>
-                            <td colspan="6" class="text-end"><strong>Summary:</strong></td>
-                            <td>
-                                <div>Present: <span th:text="${report.totalPresent}">5</span></div>
-                                <div>Absent: <span th:text="${report.totalAbsent}">0</span></div>
-                                <div class="text-warning" th:if="${report.totalLates > 0}">
-                                    Lates: <span th:text="${report.totalLates}">1</span>
-                                </div>
-                                <div class="text-info" th:if="${report.totalEarlyLeaves > 0}">
-                                    Early: <span th:text="${report.totalEarlyLeaves}">1</span>
-                                </div>
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-            <div class="card-footer text-end">
-                <a href="/reports/weekly" class="btn btn-secondary btn-sm">Close</a>
-            </div>
-        </div>
+        </section>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

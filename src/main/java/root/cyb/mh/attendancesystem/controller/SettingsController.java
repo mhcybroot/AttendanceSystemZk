@@ -37,8 +37,10 @@ public class SettingsController {
     public String saveSettings(@ModelAttribute WorkSchedule schedule,
             @RequestParam(required = false) List<Integer> weekendDaysList) {
         WorkSchedule existing = workScheduleRepository.findAll().stream().findFirst().orElse(new WorkSchedule());
-        existing.setStartTime(schedule.getStartTime());
-        existing.setEndTime(schedule.getEndTime());
+        if (schedule.getStartTime() != null)
+            existing.setStartTime(schedule.getStartTime());
+        if (schedule.getEndTime() != null)
+            existing.setEndTime(schedule.getEndTime());
         existing.setLateToleranceMinutes(schedule.getLateToleranceMinutes());
         existing.setEarlyLeaveToleranceMinutes(schedule.getEarlyLeaveToleranceMinutes());
 

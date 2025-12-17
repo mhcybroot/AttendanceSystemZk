@@ -112,4 +112,112 @@ public class ReportController {
         model.addAttribute("report", reportService.getEmployeeMonthlyReport(employeeId, year, month));
         return "reports-employee-monthly";
     }
+
+    @Autowired
+    private root.cyb.mh.attendancesystem.service.PdfExportService pdfExportService;
+
+    @GetMapping("/reports/daily/pdf")
+    public org.springframework.http.ResponseEntity<byte[]> downloadDailyReportPdf(
+            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) Long departmentId)
+            throws java.io.IOException, com.lowagie.text.DocumentException {
+        if (date == null)
+            date = LocalDate.now();
+
+        List<root.cyb.mh.attendancesystem.dto.DailyAttendanceDto> report = reportService.getDailyReport(date,
+                departmentId);
+        String deptName = "All Departments";
+        if (departmentId != null) {
+            deptName = departmentRepository.findById(departmentId)
+                    .map(root.cyb.mh.attendancesystem.model.Department::getName).orElse("Unknown");
+        }
+
+        byte[] pdfBytes = pdfExportService.exportDailyReport(report, date, deptName);
+
+        return org.springframework.http.ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=daily_report_" + date + ".pdf")
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
+    }
+
+    @GetMapping("/reports/weekly/pdf")
+    public org.springframework.http.ResponseEntity<byte[]> downloadWeeklyReportPdf(
+            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) Long departmentId)
+            throws java.io.IOException, com.lowagie.text.DocumentException {
+        if (date == null)
+            date = LocalDate.now();
+        LocalDate startOfWeek = date
+                .with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+
+        List<root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto> report = reportService.getWeeklyReport(startOfWeek,
+                departmentId);
+        String deptName = "All Departments";
+        if (departmentId != null) {
+            deptName = departmentRepository.findById(departmentId)
+                    .map(root.cyb.mh.attendancesystem.model.Department::getName).orElse("Unknown");
+        }
+
+        byte[] pdfBytes = pdfExportService.exportWeeklyReport(report, startOfWeek, deptName);
+
+        return org.springframework.http.ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=weekly_report_" + startOfWeek + ".pdf")
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
+    }
+
+    @GetMapping("/reports/monthly/pdf")
+    public org.springframework.http.ResponseEntity<byte[]> downloadMonthlyReportPdf(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Long departmentId)
+            throws java.io.IOException, com.lowagie.text.DocumentException {
+        if (year == null || month == null) {
+            LocalDate now = LocalDate.now();
+            year = now.getYear();
+            month = now.getMonthValue();
+        }
+
+        List<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> report = reportService.getMonthlyReport(year, month,
+                departmentId);
+        String deptName = "All Departments";
+        if (departmentId != null) {
+            deptName = departmentRepository.findById(departmentId)
+                    .map(root.cyb.mh.attendancesystem.model.Department::getName).orElse("Unknown");
+        }
+
+        byte[] pdfBytes = pdfExportService.exportMonthlyReport(report, year, month, deptName);
+
+        return org.springframework.http.ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=monthly_report_" + month + "_" + year + ".pdf")
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
+    }
+
+    @GetMapping("/reports/monthly/{employeeId}/pdf")
+    public org.springframework.http.ResponseEntity<byte[]> downloadEmployeeMonthlyReportPdf(
+            @org.springframework.web.bind.annotation.PathVariable String employeeId,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month)
+            throws java.io.IOException, com.lowagie.text.DocumentException {
+        if (year == null || month == null) {
+            LocalDate now = LocalDate.now();
+            year = now.getYear();
+            month = now.getMonthValue();
+        }
+
+        root.cyb.mh.attendancesystem.dto.EmployeeMonthlyDetailDto report = reportService
+                .getEmployeeMonthlyReport(employeeId, year, month);
+
+        byte[] pdfBytes = pdfExportService.exportEmployeeMonthlyReport(report);
+
+        return org.springframework.http.ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=employee_report_" + employeeId + "_" + month + "_" + year + ".pdf")
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
+    }
 }
