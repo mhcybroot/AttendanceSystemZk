@@ -24,7 +24,10 @@ public class WorkSchedule {
 
     // Store as comma-separated integers (1=Mon, 7=Sun)
     // Default: 6,7 (Saturday, Sunday)
+    // Default: 6,7 (Saturday, Sunday)
     private String weekendDays = "6,7";
+
+    private Integer defaultAnnualLeaveQuota = 12; // Days per year
 
     // Default constructor with standard values if needed
     public WorkSchedule() {

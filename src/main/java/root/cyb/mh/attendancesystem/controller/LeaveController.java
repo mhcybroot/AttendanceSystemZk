@@ -93,9 +93,8 @@ public class LeaveController {
 
     @PostMapping("/manage/delete")
     public String deleteRequest(@RequestParam Long id) {
-        if (isTestingMode) {
-            leaveService.deleteRequest(id);
-        }
+        // Allow admins to always delete requests (for correction/testing)
+        leaveService.deleteRequest(id);
         return "redirect:/leave/manage";
     }
 }

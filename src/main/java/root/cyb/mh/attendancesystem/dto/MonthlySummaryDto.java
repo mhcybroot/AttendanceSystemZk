@@ -10,6 +10,8 @@ public class MonthlySummaryDto {
     private int lateCount;
     private int earlyLeaveCount;
     private int leaveCount;
+    private int paidLeaveCount;
+    private int unpaidLeaveCount;
 
     public String getEmployeeId() {
         return employeeId;
@@ -73,5 +75,21 @@ public class MonthlySummaryDto {
 
     public void setLeaveCount(int leaveCount) {
         this.leaveCount = leaveCount;
+    }
+
+    public int getPaidLeaveCount() {
+        return paidLeaveCount;
+    }
+
+    public void setPaidLeaveCount(int paidLeaveCount) {
+        this.paidLeaveCount = paidLeaveCount;
+    }
+
+    public int getUnpaidLeaveCount() {
+        return unpaidLeaveCount;
+    }
+
+    public void setUnpaidLeaveCount(int unpaidLeaveCount) {
+        this.unpaidLeaveCount = unpaidLeaveCount;
     }
 }

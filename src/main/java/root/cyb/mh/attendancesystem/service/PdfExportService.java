@@ -149,7 +149,7 @@ public class PdfExportService {
     public byte[] exportMonthlyReport(List<MonthlySummaryDto> report, int year, int month, String departmentName)
             throws DocumentException, IOException {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Document document = new Document(PageSize.A4);
+            Document document = new Document(PageSize.A4.rotate()); // Landscape for more columns
             PdfWriter.getInstance(document, out);
             document.open();
 
@@ -157,11 +157,12 @@ public class PdfExportService {
                     "Period: " + month + "/" + year,
                     departmentName);
 
-            PdfPTable table = new PdfPTable(8); // ID, Name, Dept, Present, Absent, Late, Early, Leave
+            PdfPTable table = new PdfPTable(10); // ID, Name, Dept, P, A, L, E, Total Leave, Paid, Unpaid
             table.setWidthPercentage(100);
-            table.setWidths(new float[] { 2, 4, 3, 2, 2, 2, 2, 2 });
+            table.setWidths(new float[] { 1.5f, 3f, 2f, 1f, 1f, 1f, 1f, 1f, 1f, 1f });
 
-            addTableHeader(table, "ID", "Name", "Department", "Present", "Absent", "Late", "Early", "Leave");
+            addTableHeader(table, "ID", "Name", "Dept", "Pres", "Abs", "Late", "Early", "Total LV", "Paid LV",
+                    "Unpaid LV");
 
             for (MonthlySummaryDto dto : report) {
                 addCell(table, dto.getEmployeeId());
@@ -172,6 +173,8 @@ public class PdfExportService {
                 addCell(table, String.valueOf(dto.getLateCount()));
                 addCell(table, String.valueOf(dto.getEarlyLeaveCount()));
                 addCell(table, String.valueOf(dto.getLeaveCount()));
+                addCell(table, String.valueOf(dto.getPaidLeaveCount()));
+                addCell(table, String.valueOf(dto.getUnpaidLeaveCount()));
             }
 
             document.add(table);
@@ -187,42 +190,101 @@ public class PdfExportService {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            addHeader(document, "Individual Monthly Attendance Report",
-                    "Employee: " + report.getEmployeeName() + " (" + report.getEmployeeId() + ")",
-                    "Department: " + report.getDepartmentName() + " | Period: " + report.getMonth() + "/"
-                            + report.getYear());
-
-            PdfPTable table = new PdfPTable(7); // Date, Day, In, Out, Late, Early, Status
-            table.setWidthPercentage(100);
-            table.setWidths(new float[] { 2, 2, 2, 2, 2, 2, 3 });
-
-            addTableHeader(table, "Date", "Day", "In Time", "Out Time", "Late", "Early", "Status");
-
-            for (EmployeeWeeklyDetailDto.DailyDetail day : report.getDailyDetails()) {
-                addCell(table, day.getDate().toString());
-                addCell(table, day.getDayOfWeek());
-                addCell(table, day.getInTime() != null ? day.getInTime().toString() : "-");
-                addCell(table, day.getOutTime() != null ? day.getOutTime().toString() : "-");
-                addCell(table, day.getLateDurationMinutes() > 0 ? day.getLateDurationMinutes() + " min" : "-");
-                addCell(table,
-                        day.getEarlyLeaveDurationMinutes() > 0 ? day.getEarlyLeaveDurationMinutes() + " min" : "-");
-                addCell(table, day.getStatus());
-            }
-
-            document.add(table);
-
-            // Summary
-            Paragraph summary = new Paragraph("\nSummary: Present: " + report.getTotalPresent() +
-                    " | Absent: " + report.getTotalAbsent() +
-                    " | Late: " + report.getTotalLates() +
-                    " | Early: " + report.getTotalEarlyLeaves() +
-                    " | Leave: " + report.getTotalLeaves(), HEADER_FONT);
-            document.add(summary);
+            addMonthlyReportContent(document, report);
 
             addFooter(document);
             document.close();
             return out.toByteArray();
         }
+    }
+
+    public byte[] exportEmployeeRangeReport(root.cyb.mh.attendancesystem.dto.EmployeeRangeReportDto rangeReport)
+            throws DocumentException, IOException {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Document document = new Document(PageSize.A4);
+            PdfWriter.getInstance(document, out);
+            document.open();
+
+            // Main Header
+            addHeader(document, "Attendance History Report",
+                    "Employee: " + rangeReport.getEmployeeName() + " (" + rangeReport.getEmployeeId() + ")",
+                    "Period: " + rangeReport.getStartDate() + " to " + rangeReport.getEndDate());
+
+            // Overall Summary
+            Paragraph summary = new Paragraph("Period Summary: Present: " + rangeReport.getTotalPresent() +
+                    " | Absent: " + rangeReport.getTotalAbsent() +
+                    " | Late: " + rangeReport.getTotalLates() +
+                    "\nTotal Leaves: " + rangeReport.getTotalLeaves() +
+                    " (Paid: " + rangeReport.getTotalPaidLeaves() + ", Unpaid: " + rangeReport.getTotalUnpaidLeaves()
+                    + ")\n\n",
+                    HEADER_FONT);
+            document.add(summary);
+
+            // Loop through months
+            for (EmployeeMonthlyDetailDto monthArg : rangeReport.getMonthlyReports()) {
+                document.add(new Paragraph("\n"));
+                // Sub-section Header
+                Paragraph monthTitle = new Paragraph(java.time.Month.of(monthArg.getMonth()) + " " + monthArg.getYear(),
+                        HEADER_FONT);
+                monthTitle.setAlignment(Element.ALIGN_LEFT);
+                document.add(monthTitle);
+                document.add(new Paragraph("\n"));
+
+                // Add table
+                addMonthlyTable(document, monthArg);
+
+                // Monthly Summary line
+                Paragraph mSummary = new Paragraph("Month Summary: P: " + monthArg.getTotalPresent() +
+                        " | A: " + monthArg.getTotalAbsent() +
+                        " | Paid Lv: " + monthArg.getPaidLeavesCount() +
+                        " | Unpaid Lv: " + monthArg.getUnpaidLeavesCount(), SMALL_FONT);
+                document.add(mSummary);
+                document.add(new Paragraph("----------------------------------------------------------------"));
+            }
+
+            addFooter(document);
+            document.close();
+            return out.toByteArray();
+        }
+    }
+
+    private void addMonthlyReportContent(Document document, EmployeeMonthlyDetailDto report) throws DocumentException {
+        addHeader(document, "Individual Monthly Attendance Report",
+                "Employee: " + report.getEmployeeName() + " (" + report.getEmployeeId() + ")",
+                "Department: " + report.getDepartmentName() + " | Period: " + report.getMonth() + "/"
+                        + report.getYear());
+
+        addMonthlyTable(document, report);
+
+        // Summary
+        Paragraph summary = new Paragraph("\nSummary: Present: " + report.getTotalPresent() +
+                " | Absent: " + report.getTotalAbsent() +
+                " | Late: " + report.getTotalLates() +
+                " | Early: " + report.getTotalEarlyLeaves() +
+                "\nTotal Leaves: " + report.getTotalLeaves() +
+                " (Paid: " + report.getPaidLeavesCount() + ", Unpaid: " + report.getUnpaidLeavesCount() + ")",
+                HEADER_FONT);
+        document.add(summary);
+    }
+
+    private void addMonthlyTable(Document document, EmployeeMonthlyDetailDto report) throws DocumentException {
+        PdfPTable table = new PdfPTable(7); // Date, Day, In, Out, Late, Early, Status
+        table.setWidthPercentage(100);
+        table.setWidths(new float[] { 2, 2, 2, 2, 2, 2, 3 });
+
+        addTableHeader(table, "Date", "Day", "In Time", "Out Time", "Late", "Early", "Status");
+
+        for (EmployeeWeeklyDetailDto.DailyDetail day : report.getDailyDetails()) {
+            addCell(table, day.getDate().toString());
+            addCell(table, day.getDayOfWeek());
+            addCell(table, day.getInTime() != null ? day.getInTime().toString() : "-");
+            addCell(table, day.getOutTime() != null ? day.getOutTime().toString() : "-");
+            addCell(table, day.getLateDurationMinutes() > 0 ? day.getLateDurationMinutes() + " min" : "-");
+            addCell(table, day.getEarlyLeaveDurationMinutes() > 0 ? day.getEarlyLeaveDurationMinutes() + " min" : "-");
+            addCell(table, day.getStatus());
+        }
+
+        document.add(table);
     }
 
     // --- Helper Methods ---

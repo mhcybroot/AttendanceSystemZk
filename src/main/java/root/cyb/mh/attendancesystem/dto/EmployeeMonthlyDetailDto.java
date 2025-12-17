@@ -18,6 +18,9 @@ public class EmployeeMonthlyDetailDto {
     private int totalLates;
     private int totalEarlyLeaves;
     private int totalLeaves;
+    private int paidLeavesCount; // Renamed to slightly distinct from monthly summary if needed, but consistent
+                                 // is better. Let's use same name style.
+    private int unpaidLeavesCount;
 
     // Getters and Setters
     public String getEmployeeName() {
@@ -107,5 +110,21 @@ public class EmployeeMonthlyDetailDto {
 
     public void setTotalLeaves(int totalLeaves) {
         this.totalLeaves = totalLeaves;
+    }
+
+    public int getPaidLeavesCount() {
+        return paidLeavesCount;
+    }
+
+    public void setPaidLeavesCount(int paidLeavesCount) {
+        this.paidLeavesCount = paidLeavesCount;
+    }
+
+    public int getUnpaidLeavesCount() {
+        return unpaidLeavesCount;
+    }
+
+    public void setUnpaidLeavesCount(int unpaidLeavesCount) {
+        this.unpaidLeavesCount = unpaidLeavesCount;
     }
 }

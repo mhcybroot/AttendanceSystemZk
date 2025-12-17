@@ -455,6 +455,7 @@ public class ReportService {
         // Configs
         WorkSchedule schedule = workScheduleRepository.findAll().stream().findFirst().orElse(new WorkSchedule());
         List<root.cyb.mh.attendancesystem.model.PublicHoliday> holidays = publicHolidayRepository.findAll();
+        int defaultQuota = schedule.getDefaultAnnualLeaveQuota() != null ? schedule.getDefaultAnnualLeaveQuota() : 12;
 
         // Filter Employees
         List<Employee> allFilteredEmployees;
@@ -487,8 +488,27 @@ public class ReportService {
             dto.setDepartmentName(emp.getDepartment() != null ? emp.getDepartment().getName() : "Unassigned");
 
             int present = 0, absent = 0, late = 0, early = 0, leave = 0;
+            int paidLeave = 0, unpaidLeave = 0;
+
+            // Calculate Remaining Quota at Start of Month
+            int effectiveQuota = emp.getEffectiveQuota(defaultQuota);
+            int leavesTakenBefore = countYearlyLeavesBeforeMonth(emp.getId(), year, month, allLeaves);
+            int remainingQuota = Math.max(0, effectiveQuota - leavesTakenBefore);
 
             for (LocalDate date : monthDates) {
+                // Priority 1: Check Leave FIRST overrides everything (Logs, Weekend, etc.)
+                boolean onLeave = isEmployeeOnLeave(emp.getId(), date, allLeaves);
+                if (onLeave) {
+                    leave++;
+                    if (remainingQuota > 0) {
+                        paidLeave++;
+                        remainingQuota--;
+                    } else {
+                        unpaidLeave++;
+                    }
+                    continue; // Skip further processing for this day
+                }
+
                 // Check keys
                 boolean isWeekend = schedule.getWeekendDays() != null
                         && schedule.getWeekendDays().contains(String.valueOf(date.getDayOfWeek().getValue()));
@@ -501,31 +521,35 @@ public class ReportService {
                         .sorted(Comparator.comparing(AttendanceLog::getTimestamp))
                         .collect(Collectors.toList());
 
-                if (isWeekend || isPublicHoliday) {
-                    if (!dailyLogs.isEmpty()) {
-                        present++;
-                    }
-                } else if (dailyLogs.isEmpty()) {
-                    if (isEmployeeOnLeave(emp.getId(), date, allLeaves)) {
-                        leave++;
-                    } else {
-                        absent++;
-                    }
-                } else {
+                if (!dailyLogs.isEmpty()) {
+                    // Priority 2: PRESENT (Logs exist and NOT on Leave)
                     present++;
 
-                    LocalTime inTime = dailyLogs.get(0).getTimestamp().toLocalTime();
-                    LocalTime outTime = dailyLogs.get(dailyLogs.size() - 1).getTimestamp().toLocalTime();
+                    // Only count Late/Early if it is NOT a weekend/holiday (Working Day)
+                    if (!isWeekend && !isPublicHoliday) {
+                        LocalTime inTime = dailyLogs.get(0).getTimestamp().toLocalTime();
+                        LocalTime outTime = dailyLogs.get(dailyLogs.size() - 1).getTimestamp().toLocalTime();
 
-                    LocalTime lateThreshold = schedule.getStartTime().plusMinutes(schedule.getLateToleranceMinutes());
-                    LocalTime earlyThreshold = schedule.getEndTime()
-                            .minusMinutes(schedule.getEarlyLeaveToleranceMinutes());
+                        LocalTime lateThreshold = schedule.getStartTime()
+                                .plusMinutes(schedule.getLateToleranceMinutes());
+                        LocalTime earlyThreshold = schedule.getEndTime()
+                                .minusMinutes(schedule.getEarlyLeaveToleranceMinutes());
 
-                    if (inTime.isAfter(lateThreshold)) {
-                        late++;
+                        if (inTime.isAfter(lateThreshold)) {
+                            late++;
+                        }
+                        if (outTime.isBefore(earlyThreshold)) {
+                            early++;
+                        }
                     }
-                    if (outTime.isBefore(earlyThreshold)) {
-                        early++;
+                } else {
+                    // Priority 3: NO LOGS
+                    if (isWeekend || isPublicHoliday) {
+                        // WEEKEND/HOLIDAY
+                        // Do nothing, just off
+                    } else {
+                        // ABSENT
+                        absent++;
                     }
                 }
             }
@@ -535,6 +559,8 @@ public class ReportService {
             dto.setLateCount(late);
             dto.setEarlyLeaveCount(early);
             dto.setLeaveCount(leave);
+            dto.setPaidLeaveCount(paidLeave);
+            dto.setUnpaidLeaveCount(unpaidLeave);
             report.add(dto);
         }
 
@@ -564,6 +590,8 @@ public class ReportService {
         // Configs
         WorkSchedule schedule = workScheduleRepository.findAll().stream().findFirst().orElse(new WorkSchedule());
         List<root.cyb.mh.attendancesystem.model.PublicHoliday> holidays = publicHolidayRepository.findAll();
+        int defaultQuota = schedule.getDefaultAnnualLeaveQuota() != null ? schedule.getDefaultAnnualLeaveQuota() : 12;
+
         List<AttendanceLog> allLogs = attendanceLogRepository.findByTimestampBetween(
                 startOfMonth.atStartOfDay(), endOfMonth.atTime(LocalTime.MAX));
 
@@ -572,11 +600,35 @@ public class ReportService {
 
         List<root.cyb.mh.attendancesystem.dto.EmployeeWeeklyDetailDto.DailyDetail> details = new ArrayList<>();
         int present = 0, absent = 0, late = 0, early = 0, leaves = 0;
+        int paidLeaves = 0, unpaidLeaves = 0;
+
+        // Calculate Remaining Quota
+        int effectiveQuota = emp.getEffectiveQuota(defaultQuota);
+        int leavesTakenBefore = countYearlyLeavesBeforeMonth(emp.getId(), year, month, allLeaves);
+        int remainingQuota = Math.max(0, effectiveQuota - leavesTakenBefore);
 
         for (LocalDate date : monthDates) {
             root.cyb.mh.attendancesystem.dto.EmployeeWeeklyDetailDto.DailyDetail daily = new root.cyb.mh.attendancesystem.dto.EmployeeWeeklyDetailDto.DailyDetail();
             daily.setDate(date);
             daily.setDayOfWeek(date.getDayOfWeek().name());
+
+            // Priority 1: Check Leave FIRST overrides everything
+            boolean onLeave = isEmployeeOnLeave(emp.getId(), date, allLeaves);
+            if (onLeave) {
+                leaves++;
+                String leaveType = remainingQuota > 0 ? "PAID LEAVE" : "UNPAID LEAVE";
+                if (remainingQuota > 0) {
+                    paidLeaves++;
+                    remainingQuota--;
+                } else {
+                    unpaidLeaves++;
+                }
+
+                daily.setStatus(leaveType);
+                daily.setStatusColor("info");
+                details.add(daily);
+                continue; // Skip further processing for this day
+            }
 
             // Check keys
             boolean isWeekend = schedule.getWeekendDays() != null
@@ -593,55 +645,50 @@ public class ReportService {
             String status = "";
             String color = "";
 
-            if (isWeekend || isPublicHoliday) {
-                status = "WEEKEND";
-                color = "secondary";
-                if (isPublicHoliday)
-                    status = "HOLIDAY";
+            if (!dailyLogs.isEmpty()) {
+                // Priority 2: PRESENT
+                present++;
+                status = "PRESENT";
+                color = "success";
 
-                if (!dailyLogs.isEmpty()) {
-                    status = "PRESENT (" + status + ")";
-                    color = "success";
-                    present++;
-                    processTimings(daily, dailyLogs, schedule);
-                }
-            } else if (dailyLogs.isEmpty()) {
-                if (isEmployeeOnLeave(emp.getId(), date, allLeaves)) {
-                    status = "LEAVE";
-                    color = "info";
-                    leaves++;
+                processTimings(daily, dailyLogs, schedule); // calculates late/early minutes
+
+                if (isWeekend || isPublicHoliday) {
+                    status = "PRESENT (" + (isPublicHoliday ? "HOLIDAY" : "WEEKEND") + ")";
                 } else {
+                    // Working Day: Update Counters and Status Label for deviations
+                    if (daily.getLateDurationMinutes() > 0) {
+                        late++;
+                        status = "LATE";
+                    }
+                    if (daily.getEarlyLeaveDurationMinutes() > 0) {
+                        early++;
+                        if (status.equals("PRESENT"))
+                            status = "EARLY";
+                        else if (status.equals("LATE"))
+                            status = "LATE & EARLY";
+                    }
+
+                    if (status.contains("LATE") || status.contains("EARLY")) {
+                        if (status.contains("&"))
+                            color = "warning";
+                        else if (status.contains("LATE"))
+                            color = "warning";
+                        else
+                            color = "info";
+                    }
+                }
+            } else {
+                // Priority 3: NO LOGS
+                if (isWeekend || isPublicHoliday) {
+                    // WEEKEND/HOLIDAY
+                    status = isPublicHoliday ? "HOLIDAY" : "WEEKEND";
+                    color = "secondary";
+                } else {
+                    // Priority 4: ABSENT
                     status = "ABSENT";
                     color = "danger";
                     absent++;
-                }
-            } else {
-                status = "PRESENT";
-                color = "success";
-                present++;
-
-                processTimings(daily, dailyLogs, schedule);
-
-                if (daily.getLateDurationMinutes() > 0) {
-                    late++;
-                    if (status.equals("PRESENT"))
-                        status = "LATE";
-                }
-                if (daily.getEarlyLeaveDurationMinutes() > 0) {
-                    early++;
-                    if (status.equals("PRESENT"))
-                        status = "EARLY";
-                    else if (status.equals("LATE"))
-                        status = "LATE & EARLY";
-                }
-
-                if (status.contains("LATE") || status.contains("EARLY")) {
-                    if (status.contains("&"))
-                        color = "warning";
-                    else if (status.contains("LATE"))
-                        color = "warning";
-                    else
-                        color = "info";
                 }
             }
 
@@ -655,8 +702,34 @@ public class ReportService {
         dto.setTotalAbsent(absent);
         dto.setTotalLates(late);
         dto.setTotalEarlyLeaves(early);
+        dto.setTotalLeaves(leaves);
+        dto.setPaidLeavesCount(paidLeaves);
+        dto.setUnpaidLeavesCount(unpaidLeaves);
 
         return dto;
+    }
+
+    private int countYearlyLeavesBeforeMonth(String employeeId, int year, int month,
+            List<root.cyb.mh.attendancesystem.model.LeaveRequest> allLeaves) {
+        LocalDate startOfYear = LocalDate.of(year, 1, 1);
+        LocalDate startOfMonth = LocalDate.of(year, month, 1);
+
+        return (int) allLeaves.stream()
+                .filter(l -> l.getEmployee().getId().equals(employeeId))
+                // Filter leaves that end after start of year and start before start of month
+                .filter(l -> !l.getEndDate().isBefore(startOfYear) && l.getStartDate().isBefore(startOfMonth))
+                .mapToLong(l -> {
+                    // Calculate intersection with [StartOfYear, StartOfMonth)
+                    LocalDate s = l.getStartDate().isBefore(startOfYear) ? startOfYear : l.getStartDate();
+                    LocalDate e = l.getEndDate().isAfter(startOfMonth.minusDays(1)) ? startOfMonth.minusDays(1)
+                            : l.getEndDate();
+
+                    if (s.isAfter(e))
+                        return 0;
+
+                    return java.time.temporal.ChronoUnit.DAYS.between(s, e) + 1;
+                })
+                .sum();
     }
 
     private boolean isEmployeeOnLeave(String employeeId, LocalDate date,
@@ -665,5 +738,51 @@ public class ReportService {
                 .anyMatch(l -> l.getEmployee().getId().equals(employeeId)
                         && !date.isBefore(l.getStartDate())
                         && !date.isAfter(l.getEndDate()));
+    }
+
+    public root.cyb.mh.attendancesystem.dto.EmployeeRangeReportDto getEmployeeRangeReport(
+            String employeeId, LocalDate startDate, LocalDate endDate) {
+
+        root.cyb.mh.attendancesystem.dto.EmployeeRangeReportDto rangeDto = new root.cyb.mh.attendancesystem.dto.EmployeeRangeReportDto();
+        rangeDto.setEmployeeId(employeeId);
+        rangeDto.setStartDate(startDate);
+        rangeDto.setEndDate(endDate);
+
+        // Find Employee for basic info
+        Employee emp = employeeRepository.findById(employeeId).orElse(null);
+        if (emp != null) {
+            rangeDto.setEmployeeName(emp.getName());
+            rangeDto.setDepartmentName(emp.getDepartment() != null ? emp.getDepartment().getName() : "Unassigned");
+        }
+
+        List<root.cyb.mh.attendancesystem.dto.EmployeeMonthlyDetailDto> monthlyReports = new ArrayList<>();
+
+        LocalDate current = startDate.withDayOfMonth(1);
+        LocalDate endLoop = endDate.withDayOfMonth(1); // Compare months
+
+        while (!current.isAfter(endLoop)) {
+            int y = current.getYear();
+            int m = current.getMonthValue();
+
+            root.cyb.mh.attendancesystem.dto.EmployeeMonthlyDetailDto monthDto = getEmployeeMonthlyReport(employeeId, y,
+                    m);
+            if (monthDto != null) {
+                monthlyReports.add(monthDto);
+
+                // Aggregate Stats
+                rangeDto.setTotalPresent(rangeDto.getTotalPresent() + monthDto.getTotalPresent());
+                rangeDto.setTotalAbsent(rangeDto.getTotalAbsent() + monthDto.getTotalAbsent());
+                rangeDto.setTotalLates(rangeDto.getTotalLates() + monthDto.getTotalLates());
+                rangeDto.setTotalEarlyLeaves(rangeDto.getTotalEarlyLeaves() + monthDto.getTotalEarlyLeaves());
+                rangeDto.setTotalLeaves(rangeDto.getTotalLeaves() + monthDto.getTotalLeaves());
+                rangeDto.setTotalPaidLeaves(rangeDto.getTotalPaidLeaves() + monthDto.getPaidLeavesCount());
+                rangeDto.setTotalUnpaidLeaves(rangeDto.getTotalUnpaidLeaves() + monthDto.getUnpaidLeavesCount());
+            }
+
+            current = current.plusMonths(1);
+        }
+
+        rangeDto.setMonthlyReports(monthlyReports);
+        return rangeDto;
     }
 }

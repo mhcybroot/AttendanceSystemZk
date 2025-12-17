@@ -67,7 +67,47 @@ public class EmployeeDashboardController {
         // 4. Monthly Stats Calculation
         calculateMonthlyStats(model, allLogs, schedule, employeeId);
 
+        // 5. Annual Quota Stats
+        calculateAnnualStats(model, schedule, employeeId, employee);
+
         return "employee-dashboard";
+    }
+
+    private void calculateAnnualStats(Model model, WorkSchedule schedule, String employeeId, Employee employee) {
+        int defaultQuota = schedule != null && schedule.getDefaultAnnualLeaveQuota() != null
+                ? schedule.getDefaultAnnualLeaveQuota()
+                : 12;
+        int quota = employee.getEffectiveQuota(defaultQuota);
+
+        // Calculate Total Approved Leaves for Current Year
+        int currentYear = LocalDate.now().getYear();
+        List<root.cyb.mh.attendancesystem.model.LeaveRequest> leaves = leaveRequestRepository
+                .findByStatusOrderByCreatedAtDesc(root.cyb.mh.attendancesystem.model.LeaveRequest.Status.APPROVED);
+
+        long yearlyLeavesCount = leaves.stream()
+                .filter(l -> l.getEmployee().getId().equals(employeeId))
+                .filter(l -> l.getStartDate().getYear() == currentYear || l.getEndDate().getYear() == currentYear)
+                .mapToLong(l -> {
+                    // Calculate intersection with current year
+                    LocalDate start = l.getStartDate().getYear() < currentYear ? LocalDate.of(currentYear, 1, 1)
+                            : l.getStartDate();
+                    LocalDate end = l.getEndDate().getYear() > currentYear ? LocalDate.of(currentYear, 12, 31)
+                            : l.getEndDate();
+
+                    if (start.isAfter(end))
+                        return 0;
+                    return java.time.temporal.ChronoUnit.DAYS.between(start, end) + 1;
+                })
+                .sum();
+
+        int totalTaken = (int) yearlyLeavesCount;
+        int paidTaken = Math.min(totalTaken, quota);
+        int unpaidTaken = Math.max(0, totalTaken - quota);
+
+        model.addAttribute("annualQuota", quota);
+        model.addAttribute("yearlyLeavesTaken", totalTaken);
+        model.addAttribute("paidLeavesTaken", paidTaken);
+        model.addAttribute("unpaidLeavesTaken", unpaidTaken);
     }
 
     private void calculateMonthlyStats(Model model, List<AttendanceLog> allLogs, WorkSchedule schedule,
@@ -128,12 +168,8 @@ public class EmployeeDashboardController {
         model.addAttribute("lateCount", lateCount);
         model.addAttribute("earlyCount", earlyCount);
 
-        // Leaves Calculation
+        // Leaves Calculation (Monthly)
         int leaveCount = 0;
-        // Only count approved leaves for this month
-        // We need employee ID. Let's assume allLogs belongs to one employee.
-        // Or better, pass employeeId to this method.
-        // For now, let's filter all approved leaves for this month and employee.
         if (employeeId != null) {
             final String empId = employeeId;
             List<root.cyb.mh.attendancesystem.model.LeaveRequest> leaves = leaveRequestRepository
@@ -151,12 +187,9 @@ public class EmployeeDashboardController {
                     .mapToLong(l -> {
                         // Count days in this month
                         LocalDate s = l.getStartDate().isBefore(currentYearMonth.atDay(1)) ? currentYearMonth.atDay(1)
+                                .plusDays(0) // hack to copy
                                 : l.getStartDate();
-                        LocalDate e = l.getEndDate().isAfter(now) ? now : l.getEndDate(); // Count up to 'now' or end of
-                                                                                          // month? Stats usually
-                                                                                          // implies so far or total
-                                                                                          // scheduled?
-                        // Let's count total days of leave falling in this month
+                        // Count up to 'now' or end of month? Let's say end of month logic for stats
                         LocalDate monthEnd = currentYearMonth.atEndOfMonth();
                         LocalDate realEnd = l.getEndDate().isAfter(monthEnd) ? monthEnd : l.getEndDate();
 
@@ -173,23 +206,44 @@ public class EmployeeDashboardController {
 
     @GetMapping("/employee/attendance/history")
     public String attendanceHistory(
+            @RequestParam(name = "period", required = false) String period,
             @RequestParam(name = "year", required = false) Integer year,
             @RequestParam(name = "month", required = false) Integer month,
             Model model, Principal principal) {
 
         String employeeId = principal.getName();
+        LocalDate now = LocalDate.now();
+        LocalDate startDate;
+        LocalDate endDate;
 
-        // Defaults
-        if (year == null)
-            year = LocalDate.now().getYear();
-        if (month == null)
-            month = LocalDate.now().getMonthValue();
+        // Determine Dates based on Period
+        if ("3M".equals(period)) {
+            endDate = now;
+            startDate = now.minusMonths(2).withDayOfMonth(1); // Current + prev 2
+        } else if ("6M".equals(period)) {
+            endDate = now;
+            startDate = now.minusMonths(5).withDayOfMonth(1);
+        } else if ("1Y".equals(period)) {
+            endDate = now;
+            startDate = now.minusMonths(11).withDayOfMonth(1);
+        } else {
+            // Specific Month (Default)
+            if (year == null)
+                year = now.getYear();
+            if (month == null)
+                month = now.getMonthValue();
 
-        // Fetch Data
-        root.cyb.mh.attendancesystem.dto.EmployeeMonthlyDetailDto historyData = reportService
-                .getEmployeeMonthlyReport(employeeId, year, month);
+            startDate = LocalDate.of(year, month, 1);
+            endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+            period = "MONTH"; // Default marker
+        }
 
-        model.addAttribute("data", historyData);
+        // Fetch Range Data
+        root.cyb.mh.attendancesystem.dto.EmployeeRangeReportDto rangeData = reportService
+                .getEmployeeRangeReport(employeeId, startDate, endDate);
+
+        model.addAttribute("data", rangeData);
+        model.addAttribute("selectedPeriod", period);
         model.addAttribute("selectedYear", year);
         model.addAttribute("selectedMonth", month);
         model.addAttribute("activeLink", "history");
@@ -198,29 +252,59 @@ public class EmployeeDashboardController {
     }
 
     @GetMapping("/employee/report/monthly/download")
-    public void downloadMonthlyReport(HttpServletResponse response, Principal principal) throws Exception {
-        String employeeId = principal.getName();
-        // Generate for current month by default
-        int year = LocalDate.now().getYear();
-        int month = LocalDate.now().getMonthValue();
+    public void downloadAttendanceReport(
+            @RequestParam(name = "period", required = false) String period,
+            @RequestParam(name = "year", required = false) Integer year,
+            @RequestParam(name = "month", required = false) Integer month,
+            HttpServletResponse response, Principal principal) throws Exception {
 
-        // 1. Get Data DTO
-        root.cyb.mh.attendancesystem.dto.EmployeeMonthlyDetailDto reportData = reportService
-                .getEmployeeMonthlyReport(employeeId, year, month);
+        String employeeId = principal.getName();
+        LocalDate now = LocalDate.now();
+        LocalDate startDate;
+        LocalDate endDate;
+
+        // Determine Dates (Same logic as View)
+        if ("3M".equals(period)) {
+            endDate = now;
+            startDate = now.minusMonths(2).withDayOfMonth(1);
+        } else if ("6M".equals(period)) {
+            endDate = now;
+            startDate = now.minusMonths(5).withDayOfMonth(1);
+        } else if ("1Y".equals(period)) {
+            endDate = now;
+            startDate = now.minusMonths(11).withDayOfMonth(1);
+        } else {
+            // Specific Month (Default)
+            if (year == null)
+                year = now.getYear();
+            if (month == null)
+                month = now.getMonthValue();
+
+            startDate = LocalDate.of(year, month, 1);
+            endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+            period = "MONTH_" + month + "_" + year;
+        }
+
+        // 1. Get Range Data
+        root.cyb.mh.attendancesystem.dto.EmployeeRangeReportDto reportData = reportService
+                .getEmployeeRangeReport(employeeId, startDate, endDate);
 
         if (reportData == null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Employee data not found");
             return;
         }
 
-        // 2. Generate PDF
-        byte[] pdfBytes = pdfExportService.exportEmployeeMonthlyReport(reportData);
+        // 2. Generate PDF using Range Export
+        // Note: Even for a single month, we now use the Range logic (List of 1 report)
+        // via exportEmployeeRangeReport
+        // or we could keep the old one. But Range logic is cleaner as it handles the
+        // list loop.
+        byte[] pdfBytes = pdfExportService.exportEmployeeRangeReport(reportData);
 
         // 3. Write Response
         response.setContentType("application/pdf");
         response.setHeader("Content-Disposition",
-                "attachment; filename=My_Attendance_Report_" + month + "_" + year + "_" + System.currentTimeMillis()
-                        + ".pdf");
+                "attachment; filename=Attendance_Report_" + period + "_" + System.currentTimeMillis() + ".pdf");
         response.getOutputStream().write(pdfBytes);
     }
 }

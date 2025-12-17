@@ -31,4 +31,10 @@ public class Employee {
     private String password;
     @jakarta.persistence.Column(length = 100000) // Large text for Base64 image
     private String photoBase64;
+
+    private Integer annualLeaveQuota; // Null means use global default
+
+    public int getEffectiveQuota(int globalDefault) {
+        return annualLeaveQuota != null ? annualLeaveQuota : globalDefault;
+    }
 }

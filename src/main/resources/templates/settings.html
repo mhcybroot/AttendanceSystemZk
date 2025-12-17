@@ -46,6 +46,16 @@
                                 </div>
                             </div>
 
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Default Annual Leave Quota (Days)</label>
+                                    <input type="number" class="form-control" th:field="*{defaultAnnualLeaveQuota}"
+                                        required min="0">
+                                    <small class="text-muted">Paid leaves per year. Excess leaves will be counted as
+                                        Unpaid.</small>
+                                </div>
+                            </div>
+
                             <div class="mb-3">
                                 <label class="form-label d-block">Weekly Holidays (Weekends)</label>
                                 <div class="form-check form-check-inline">
