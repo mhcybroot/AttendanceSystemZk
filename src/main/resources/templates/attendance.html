@@ -27,11 +27,46 @@
                         <table class="table table-hover">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>Log ID</th>
-                                    <th>Employee Name</th>
-                                    <th>Employee ID</th>
-                                    <th>Device ID</th>
-                                    <th>Timestamp</th>
+                                    <th>
+                                        <a class="text-white text-decoration-none"
+                                            th:href="@{/attendance(departmentId=${selectedDeptId}, sortField='id', sortDir=${sortField == 'id' ? reverseSortDir : sortDir})}">
+                                            Log ID
+                                            <span th:if="${sortField == 'id'}"
+                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a class="text-white text-decoration-none"
+                                            th:href="@{/attendance(departmentId=${selectedDeptId}, sortField='employeeName', sortDir=${sortField == 'employeeName' ? reverseSortDir : sortDir})}">
+                                            Employee Name
+                                            <span th:if="${sortField == 'employeeName'}"
+                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a class="text-white text-decoration-none"
+                                            th:href="@{/attendance(departmentId=${selectedDeptId}, sortField='employeeId', sortDir=${sortField == 'employeeId' ? reverseSortDir : sortDir})}">
+                                            Employee ID
+                                            <span th:if="${sortField == 'employeeId'}"
+                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a class="text-white text-decoration-none"
+                                            th:href="@{/attendance(departmentId=${selectedDeptId}, sortField='deviceId', sortDir=${sortField == 'deviceId' ? reverseSortDir : sortDir})}">
+                                            Device ID
+                                            <span th:if="${sortField == 'deviceId'}"
+                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a class="text-white text-decoration-none"
+                                            th:href="@{/attendance(departmentId=${selectedDeptId}, sortField='timestamp', sortDir=${sortField == 'timestamp' ? reverseSortDir : sortDir})}">
+                                            Timestamp
+                                            <span th:if="${sortField == 'timestamp'}"
+                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                        </a>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>

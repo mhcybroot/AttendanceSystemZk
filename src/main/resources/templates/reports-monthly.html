@@ -43,13 +43,55 @@
                             <table class="table table-striped table-hover">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th>Employee</th>
-                                        <th>Department</th>
-                                        <th class="text-center">Present</th>
-                                        <th class="text-center">Absent</th>
-                                        <th class="text-center">Late</th>
-                                        <th class="text-center">Early Leave</th>
-                                        <th class="text-center">Leave</th>
+                                        <th>
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/reports/monthly(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept}, sortField='name', sortDir=${sortField == 'name' ? reverseSortDir : sortDir})}">
+                                                Employee <span th:if="${sortField == 'name'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/reports/monthly(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept}, sortField='department', sortDir=${sortField == 'department' ? reverseSortDir : sortDir})}">
+                                                Department <span th:if="${sortField == 'department'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                        <th class="text-center">
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/reports/monthly(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept}, sortField='present', sortDir=${sortField == 'present' ? reverseSortDir : sortDir})}">
+                                                Present <span th:if="${sortField == 'present'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                        <th class="text-center">
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/reports/monthly(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept}, sortField='absent', sortDir=${sortField == 'absent' ? reverseSortDir : sortDir})}">
+                                                Absent <span th:if="${sortField == 'absent'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                        <th class="text-center">
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/reports/monthly(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept}, sortField='late', sortDir=${sortField == 'late' ? reverseSortDir : sortDir})}">
+                                                Late <span th:if="${sortField == 'late'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                        <th class="text-center">
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/reports/monthly(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept}, sortField='early', sortDir=${sortField == 'early' ? reverseSortDir : sortDir})}">
+                                                Early Leave <span th:if="${sortField == 'early'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                        <th class="text-center">
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/reports/monthly(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept}, sortField='leave', sortDir=${sortField == 'leave' ? reverseSortDir : sortDir})}">
+                                                Leave <span th:if="${sortField == 'leave'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>

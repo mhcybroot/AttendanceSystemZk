@@ -70,7 +70,19 @@ public class AttendanceController {
     private root.cyb.mh.attendancesystem.repository.DepartmentRepository departmentRepository;
 
     @GetMapping("/attendance")
-    public String attendance(@RequestParam(required = false) Long departmentId, Model model) {
+    public String attendance(@RequestParam(required = false) Long departmentId,
+            @RequestParam(defaultValue = "id") String sortField,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            Model model) {
+
+        // 1. Prepare Employee Map for Name Lookup (needed for sorting by name)
+        java.util.Map<String, String> employeeMap = new java.util.HashMap<>();
+        for (root.cyb.mh.attendancesystem.model.Employee emp : employeeRepository.findAll()) {
+            employeeMap.put(emp.getId(), emp.getName());
+        }
+
+        java.util.List<root.cyb.mh.attendancesystem.model.AttendanceLog> logs;
+
         if (departmentId != null) {
             // Filter logic: Find employees in dept, then find logs for those employees
             java.util.List<String> employeeIds = employeeRepository.findAll().stream()
@@ -78,22 +90,51 @@ public class AttendanceController {
                     .map(root.cyb.mh.attendancesystem.model.Employee::getId)
                     .collect(java.util.stream.Collectors.toList());
 
-            model.addAttribute("logs", attendanceLogRepository.findAll().stream()
+            logs = attendanceLogRepository.findAll().stream()
                     .filter(log -> employeeIds.contains(log.getEmployeeId()))
-                    .collect(java.util.stream.Collectors.toList()));
+                    .collect(java.util.stream.Collectors.toList());
             model.addAttribute("selectedDeptId", departmentId);
         } else {
-            model.addAttribute("logs", attendanceLogRepository.findAll());
+            logs = attendanceLogRepository.findAll();
         }
 
+        // 2. Apply Sorting
+        java.util.Comparator<root.cyb.mh.attendancesystem.model.AttendanceLog> comparator = null;
+        switch (sortField) {
+            case "employeeName":
+                comparator = java.util.Comparator.comparing(log -> employeeMap.getOrDefault(log.getEmployeeId(), ""));
+                break;
+            case "employeeId":
+                comparator = java.util.Comparator
+                        .comparing(root.cyb.mh.attendancesystem.model.AttendanceLog::getEmployeeId);
+                break;
+            case "deviceId":
+                comparator = java.util.Comparator
+                        .comparing(root.cyb.mh.attendancesystem.model.AttendanceLog::getDeviceId);
+                break;
+            case "timestamp":
+                comparator = java.util.Comparator
+                        .comparing(root.cyb.mh.attendancesystem.model.AttendanceLog::getTimestamp);
+                break;
+            case "id":
+            default:
+                comparator = java.util.Comparator.comparing(root.cyb.mh.attendancesystem.model.AttendanceLog::getId);
+                break;
+        }
+
+        if ("desc".equalsIgnoreCase(sortDir)) {
+            comparator = comparator.reversed();
+        }
+
+        logs.sort(comparator);
+
+        model.addAttribute("logs", logs);
         model.addAttribute("departments", departmentRepository.findAll());
-
-        // Create a map of ID -> Name for easy lookup in view
-        java.util.Map<String, String> employeeMap = new java.util.HashMap<>();
-        for (root.cyb.mh.attendancesystem.model.Employee emp : employeeRepository.findAll()) {
-            employeeMap.put(emp.getId(), emp.getName());
-        }
         model.addAttribute("employeeMap", employeeMap);
+
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDir);
+        model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
 
         return "attendance";
     }
