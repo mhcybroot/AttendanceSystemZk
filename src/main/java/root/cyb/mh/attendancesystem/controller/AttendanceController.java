@@ -43,6 +43,18 @@ public class AttendanceController {
         return "redirect:/devices";
     }
 
+    @PostMapping("/devices/update")
+    public String updateDevice(@ModelAttribute Device device) {
+        deviceRepository.save(device);
+        return "redirect:/devices";
+    }
+
+    @PostMapping("/devices/delete")
+    public String deleteDevice(@RequestParam Long id) {
+        deviceRepository.deleteById(id);
+        return "redirect:/devices";
+    }
+
     @PostMapping("/sync")
     public String manualSync() {
         // syncService.syncAllDevices();

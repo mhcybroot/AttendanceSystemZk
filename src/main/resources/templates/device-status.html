@@ -42,13 +42,73 @@
                                         <span th:if="${device.id == null}" class="badge bg-secondary">Offline</span>
                                     </td>
                                     <td>
-                                        <form action="/devices/download" method="post" style="display:inline;">
-                                            <button type="submit" class="btn btn-primary btn-sm">Download Logs</button>
+                                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                            th:data-bs-target="'#editDeviceModal'+${device.id}" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+
+                                        <!-- Edit Modal -->
+                                        <div class="modal fade" th:id="'editDeviceModal'+${device.id}" tabindex="-1"
+                                            aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Edit Device</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                            aria-label="Close"></button>
+                                                    </div>
+                                                    <form th:action="@{/devices/update}" method="post">
+                                                        <div class="modal-body">
+                                                            <input type="hidden" name="id" th:value="${device.id}">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Name</label>
+                                                                <input type="text" class="form-control" name="name"
+                                                                    th:value="${device.name}" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">IP Address</label>
+                                                                <input type="text" class="form-control" name="ipAddress"
+                                                                    th:value="${device.ipAddress}" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Port</label>
+                                                                <input type="number" class="form-control" name="port"
+                                                                    th:value="${device.port}" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Serial Number</label>
+                                                                <input type="text" class="form-control"
+                                                                    name="serialNumber"
+                                                                    th:value="${device.serialNumber}">
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary"
+                                                                data-bs-dismiss="modal">Close</button>
+                                                            <button type="submit" class="btn btn-primary">Save
+                                                                Changes</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <form action="/devices/download" method="post" style="display:inline;"
+                                            title="Download Logs">
+                                            <button type="submit" class="btn btn-primary btn-sm"><i
+                                                    class="fas fa-download"></i> Logs</button>
                                         </form>
                                         <form action="/devices/download-users" method="post"
-                                            style="display:inline; margin-left:5px;">
-                                            <button type="submit" class="btn btn-info btn-sm text-white">Download
-                                                Users</button>
+                                            style="display:inline; margin-left:5px;" title="Download Users">
+                                            <button type="submit" class="btn btn-info btn-sm text-white"><i
+                                                    class="fas fa-users"></i> Users</button>
+                                        </form>
+                                        <form action="/devices/delete" method="post"
+                                            style="display:inline; margin-left:5px;"
+                                            onsubmit="return confirm('Delete this device?')">
+                                            <input type="hidden" name="id" th:value="${device.id}">
+                                            <button type="submit" class="btn btn-danger btn-sm"><i
+                                                    class="fas fa-trash"></i></button>
                                         </form>
                                     </td>
                                 </tr>
