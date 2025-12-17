@@ -73,12 +73,11 @@ public class PdfExportService {
                     "Week of: " + startOfWeek + " to " + startOfWeek.plusDays(6),
                     departmentName);
 
-            // Dynamic columns: ID, Name, Dept, Mon, Tue, Wed, Thu, Fri, Sat, Sun, Summary
-            PdfPTable table = new PdfPTable(3 + 7 + 4);
+            // Re-calc widths array size properly
+            // 3 + 7 + 5 (P, A, L, E, LV) = 15 columns
+            PdfPTable table = new PdfPTable(15);
             table.setWidthPercentage(100);
-
-            // Adjust widths crudely
-            float[] widths = new float[14];
+            float[] widths = new float[15];
             widths[0] = 1.5f; // ID
             widths[1] = 3f; // Name
             widths[2] = 2f; // Dept
@@ -88,6 +87,7 @@ public class PdfExportService {
             widths[11] = 1f; // A
             widths[12] = 1f; // L
             widths[13] = 1f; // E
+            widths[14] = 1f; // LV
 
             table.setWidths(widths);
 
@@ -98,7 +98,7 @@ public class PdfExportService {
             for (int i = 0; i < 7; i++) {
                 addTableHeader(table, current.plusDays(i).format(dayFmt));
             }
-            addTableHeader(table, "P", "A", "L", "E");
+            addTableHeader(table, "P", "A", "L", "E", "LV");
 
             for (WeeklyAttendanceDto dto : report) {
                 addCell(table, dto.getEmployeeId());
@@ -122,6 +122,10 @@ public class PdfExportService {
                         status = "L";
                     else if (status.contains("EARLY"))
                         status = "E";
+                    else if (status.contains("LEAVE"))
+                        status = "LV";
+                    else if (status.contains("LEAVE"))
+                        status = "LV";
 
                     addCell(table, status);
                     day = day.plusDays(1);
@@ -131,6 +135,7 @@ public class PdfExportService {
                 addCell(table, String.valueOf(dto.getAbsentCount()));
                 addCell(table, String.valueOf(dto.getLateCount()));
                 addCell(table, String.valueOf(dto.getEarlyLeaveCount()));
+                addCell(table, String.valueOf(dto.getLeaveCount()));
             }
 
             document.add(table);
@@ -138,6 +143,7 @@ public class PdfExportService {
             document.close();
             return out.toByteArray();
         }
+
     }
 
     public byte[] exportMonthlyReport(List<MonthlySummaryDto> report, int year, int month, String departmentName)
@@ -151,11 +157,11 @@ public class PdfExportService {
                     "Period: " + month + "/" + year,
                     departmentName);
 
-            PdfPTable table = new PdfPTable(7); // ID, Name, Dept, Present, Absent, Late, Early
+            PdfPTable table = new PdfPTable(8); // ID, Name, Dept, Present, Absent, Late, Early, Leave
             table.setWidthPercentage(100);
-            table.setWidths(new float[] { 2, 4, 3, 2, 2, 2, 2 });
+            table.setWidths(new float[] { 2, 4, 3, 2, 2, 2, 2, 2 });
 
-            addTableHeader(table, "ID", "Name", "Department", "Present", "Absent", "Late", "Early");
+            addTableHeader(table, "ID", "Name", "Department", "Present", "Absent", "Late", "Early", "Leave");
 
             for (MonthlySummaryDto dto : report) {
                 addCell(table, dto.getEmployeeId());
@@ -165,6 +171,7 @@ public class PdfExportService {
                 addCell(table, String.valueOf(dto.getAbsentCount()));
                 addCell(table, String.valueOf(dto.getLateCount()));
                 addCell(table, String.valueOf(dto.getEarlyLeaveCount()));
+                addCell(table, String.valueOf(dto.getLeaveCount()));
             }
 
             document.add(table);
@@ -208,7 +215,8 @@ public class PdfExportService {
             Paragraph summary = new Paragraph("\nSummary: Present: " + report.getTotalPresent() +
                     " | Absent: " + report.getTotalAbsent() +
                     " | Late: " + report.getTotalLates() +
-                    " | Early: " + report.getTotalEarlyLeaves(), HEADER_FONT);
+                    " | Early: " + report.getTotalEarlyLeaves() +
+                    " | Leave: " + report.getTotalLeaves(), HEADER_FONT);
             document.add(summary);
 
             addFooter(document);

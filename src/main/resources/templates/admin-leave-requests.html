@@ -70,6 +70,18 @@
                                                 <i class="fas fa-times"></i>
                                             </button>
                                         </div>
+
+                                        <!-- Testing Option: Delete -->
+                                        <div th:if="${isTestingMode}" class="d-inline-block ms-2">
+                                            <form action="/leave/manage/delete" method="post"
+                                                onsubmit="return confirm('TESTING MODE: Delete this request irreversibly?');">
+                                                <input type="hidden" name="id" th:value="${req.id}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    title="Delete (Testing)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 <tr th:if="${requests.isEmpty()}">

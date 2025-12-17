@@ -82,6 +82,9 @@
                                         <div class="text-info" th:if="${report.totalEarlyLeaves > 0}">
                                             Early: <span th:text="${report.totalEarlyLeaves}">1</span>
                                         </div>
+                                        <div class="text-primary" th:if="${report.totalLeaves > 0}">
+                                            Leaves: <span th:text="${report.totalLeaves}">1</span>
+                                        </div>
                                     </td>
                                 </tr>
                             </tfoot>

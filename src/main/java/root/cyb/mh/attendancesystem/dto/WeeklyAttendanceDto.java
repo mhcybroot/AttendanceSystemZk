@@ -18,4 +18,5 @@ public class WeeklyAttendanceDto {
     private int absentCount;
     private int lateCount;
     private int earlyLeaveCount;
+    private int leaveCount;
 }

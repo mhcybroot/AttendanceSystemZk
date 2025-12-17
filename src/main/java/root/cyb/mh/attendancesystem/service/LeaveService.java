@@ -53,4 +53,8 @@ public class LeaveService {
 
         leaveRequestRepository.save(request);
     }
+
+    public void deleteRequest(Long id) {
+        leaveRequestRepository.deleteById(id);
+    }
 }

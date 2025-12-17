@@ -49,6 +49,7 @@
                                         <th class="text-center">Absent</th>
                                         <th class="text-center">Late</th>
                                         <th class="text-center">Early Leave</th>
+                                        <th class="text-center">Leave</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -66,9 +67,10 @@
                                         <td class="text-center text-warning fw-bold" th:text="${row.lateCount}">1</td>
                                         <td class="text-center text-info fw-bold" th:text="${row.earlyLeaveCount}">0
                                         </td>
+                                        <td class="text-center text-primary fw-bold" th:text="${row.leaveCount}">0</td>
                                     </tr>
                                     <tr th:if="${#lists.isEmpty(report)}">
-                                        <td colspan="6" class="text-center p-4">No data found for this month.</td>
+                                        <td colspan="7" class="text-center p-4">No data found for this month.</td>
                                     </tr>
                                 </tbody>
                             </table>

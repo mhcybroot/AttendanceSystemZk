@@ -32,6 +32,9 @@ public class ReportService {
     @Autowired
     private root.cyb.mh.attendancesystem.repository.PublicHolidayRepository publicHolidayRepository;
 
+    @Autowired
+    private root.cyb.mh.attendancesystem.repository.LeaveRequestRepository leaveRequestRepository;
+
     public List<DailyAttendanceDto> getDailyReport(LocalDate date, Long departmentId) {
         List<DailyAttendanceDto> report = new ArrayList<>();
 
@@ -54,6 +57,13 @@ public class ReportService {
                 .collect(Collectors.toList());
 
         List<root.cyb.mh.attendancesystem.model.PublicHoliday> holidays = publicHolidayRepository.findAll();
+
+        // Get Approved Leaves for the Date
+        List<root.cyb.mh.attendancesystem.model.LeaveRequest> approvedLeaves = leaveRequestRepository
+                .findByStatusOrderByCreatedAtDesc(root.cyb.mh.attendancesystem.model.LeaveRequest.Status.APPROVED)
+                .stream()
+                .filter(l -> !date.isBefore(l.getStartDate()) && !date.isAfter(l.getEndDate()))
+                .collect(Collectors.toList());
 
         for (Employee emp : employees) {
             DailyAttendanceDto dto = new DailyAttendanceDto();
@@ -84,8 +94,18 @@ public class ReportService {
                     dto.setOutTime(outTime);
                 }
             } else if (empLogs.isEmpty()) {
-                dto.setStatus("ABSENT");
-                dto.setStatusColor("danger");
+                // Check for Leave
+                boolean onLeave = approvedLeaves.stream().anyMatch(l -> l.getEmployee().getId().equals(emp.getId()));
+                if (onLeave) {
+                    root.cyb.mh.attendancesystem.model.LeaveRequest leave = approvedLeaves.stream()
+                            .filter(l -> l.getEmployee().getId().equals(emp.getId()))
+                            .findFirst().orElse(null);
+                    dto.setStatus(leave != null ? leave.getLeaveType().toUpperCase() + " LEAVE" : "ON LEAVE");
+                    dto.setStatusColor("info"); // Blue
+                } else {
+                    dto.setStatus("ABSENT");
+                    dto.setStatusColor("danger");
+                }
             } else {
                 LocalTime inTime = empLogs.get(0).getTimestamp().toLocalTime();
                 LocalTime outTime = empLogs.get(empLogs.size() - 1).getTimestamp().toLocalTime();
@@ -148,6 +168,10 @@ public class ReportService {
         List<AttendanceLog> allLogs = attendanceLogRepository.findByTimestampBetween(
                 startOfWeek.atStartOfDay(), endOfWeek.atTime(LocalTime.MAX));
 
+        // Get Approved Leaves overlapping the week
+        List<root.cyb.mh.attendancesystem.model.LeaveRequest> allLeaves = leaveRequestRepository
+                .findByStatusOrderByCreatedAtDesc(root.cyb.mh.attendancesystem.model.LeaveRequest.Status.APPROVED);
+
         for (Employee emp : employees) {
             root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto dto = new root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto();
             dto.setEmployeeId(emp.getId());
@@ -155,7 +179,7 @@ public class ReportService {
             dto.setDepartmentName(emp.getDepartment() != null ? emp.getDepartment().getName() : "Unassigned");
             dto.setDailyStatus(new java.util.LinkedHashMap<>());
 
-            int present = 0, absent = 0, late = 0, early = 0;
+            int present = 0, absent = 0, late = 0, early = 0, leave = 0;
 
             for (LocalDate date : weekDates) {
                 // Check if Holiday/Weekend
@@ -200,8 +224,18 @@ public class ReportService {
                         }
                     }
                 } else if (dailyLogs.isEmpty()) {
-                    status = "ABSENT";
-                    absent++;
+                    // Check Leave
+                    boolean onLeave = isEmployeeOnLeave(emp.getId(), date, allLeaves);
+                    if (onLeave) {
+                        status = "LEAVE";
+                        // Don't increment absent/present count for leave? Or separate count?
+                        // But for Summary PDF we might want to know.
+                        // Let's rely on string status for now.
+                        leave++;
+                    } else {
+                        status = "ABSENT";
+                        absent++;
+                    }
                 } else {
                     status = "PRESENT";
                     present++;
@@ -231,6 +265,7 @@ public class ReportService {
             dto.setAbsentCount(absent);
             dto.setLateCount(late);
             dto.setEarlyLeaveCount(early);
+            dto.setLeaveCount(leave);
             report.add(dto);
         }
         return report;
@@ -266,8 +301,11 @@ public class ReportService {
         List<AttendanceLog> allLogs = attendanceLogRepository.findByTimestampBetween(
                 startOfWeek.atStartOfDay(), endOfWeek.atTime(LocalTime.MAX));
 
+        List<root.cyb.mh.attendancesystem.model.LeaveRequest> allLeaves = leaveRequestRepository
+                .findByStatusOrderByCreatedAtDesc(root.cyb.mh.attendancesystem.model.LeaveRequest.Status.APPROVED);
+
         List<root.cyb.mh.attendancesystem.dto.EmployeeWeeklyDetailDto.DailyDetail> details = new ArrayList<>();
-        int present = 0, absent = 0, late = 0, early = 0;
+        int present = 0, absent = 0, late = 0, early = 0, leaves = 0;
 
         for (LocalDate date : weekDates) {
             root.cyb.mh.attendancesystem.dto.EmployeeWeeklyDetailDto.DailyDetail daily = new root.cyb.mh.attendancesystem.dto.EmployeeWeeklyDetailDto.DailyDetail();
@@ -306,9 +344,16 @@ public class ReportService {
                     // unless we want to track overtime strictness. Let's just show times.
                 }
             } else if (dailyLogs.isEmpty()) {
-                status = "ABSENT";
-                color = "danger";
-                absent++;
+                boolean onLeave = isEmployeeOnLeave(emp.getId(), date, allLeaves);
+                if (onLeave) {
+                    status = "LEAVE";
+                    color = "info";
+                    leaves++;
+                } else {
+                    status = "ABSENT";
+                    color = "danger";
+                    absent++;
+                }
             } else {
                 status = "PRESENT";
                 color = "success";
@@ -405,13 +450,16 @@ public class ReportService {
         List<AttendanceLog> allLogs = attendanceLogRepository.findByTimestampBetween(
                 startOfMonth.atStartOfDay(), endOfMonth.atTime(LocalTime.MAX));
 
+        List<root.cyb.mh.attendancesystem.model.LeaveRequest> allLeaves = leaveRequestRepository
+                .findByStatusOrderByCreatedAtDesc(root.cyb.mh.attendancesystem.model.LeaveRequest.Status.APPROVED);
+
         for (Employee emp : employees) {
             root.cyb.mh.attendancesystem.dto.MonthlySummaryDto dto = new root.cyb.mh.attendancesystem.dto.MonthlySummaryDto();
             dto.setEmployeeId(emp.getId());
             dto.setEmployeeName(emp.getName());
             dto.setDepartmentName(emp.getDepartment() != null ? emp.getDepartment().getName() : "Unassigned");
 
-            int present = 0, absent = 0, late = 0, early = 0;
+            int present = 0, absent = 0, late = 0, early = 0, leave = 0;
 
             for (LocalDate date : monthDates) {
                 // Check keys
@@ -431,7 +479,11 @@ public class ReportService {
                         present++;
                     }
                 } else if (dailyLogs.isEmpty()) {
-                    absent++;
+                    if (isEmployeeOnLeave(emp.getId(), date, allLeaves)) {
+                        leave++;
+                    } else {
+                        absent++;
+                    }
                 } else {
                     present++;
 
@@ -455,6 +507,7 @@ public class ReportService {
             dto.setAbsentCount(absent);
             dto.setLateCount(late);
             dto.setEarlyLeaveCount(early);
+            dto.setLeaveCount(leave);
             report.add(dto);
         }
 
@@ -487,8 +540,11 @@ public class ReportService {
         List<AttendanceLog> allLogs = attendanceLogRepository.findByTimestampBetween(
                 startOfMonth.atStartOfDay(), endOfMonth.atTime(LocalTime.MAX));
 
+        List<root.cyb.mh.attendancesystem.model.LeaveRequest> allLeaves = leaveRequestRepository
+                .findByStatusOrderByCreatedAtDesc(root.cyb.mh.attendancesystem.model.LeaveRequest.Status.APPROVED);
+
         List<root.cyb.mh.attendancesystem.dto.EmployeeWeeklyDetailDto.DailyDetail> details = new ArrayList<>();
-        int present = 0, absent = 0, late = 0, early = 0;
+        int present = 0, absent = 0, late = 0, early = 0, leaves = 0;
 
         for (LocalDate date : monthDates) {
             root.cyb.mh.attendancesystem.dto.EmployeeWeeklyDetailDto.DailyDetail daily = new root.cyb.mh.attendancesystem.dto.EmployeeWeeklyDetailDto.DailyDetail();
@@ -523,9 +579,15 @@ public class ReportService {
                     processTimings(daily, dailyLogs, schedule);
                 }
             } else if (dailyLogs.isEmpty()) {
-                status = "ABSENT";
-                color = "danger";
-                absent++;
+                if (isEmployeeOnLeave(emp.getId(), date, allLeaves)) {
+                    status = "LEAVE";
+                    color = "info";
+                    leaves++;
+                } else {
+                    status = "ABSENT";
+                    color = "danger";
+                    absent++;
+                }
             } else {
                 status = "PRESENT";
                 color = "success";
@@ -568,5 +630,13 @@ public class ReportService {
         dto.setTotalEarlyLeaves(early);
 
         return dto;
+    }
+
+    private boolean isEmployeeOnLeave(String employeeId, LocalDate date,
+            List<root.cyb.mh.attendancesystem.model.LeaveRequest> leaves) {
+        return leaves.stream()
+                .anyMatch(l -> l.getEmployee().getId().equals(employeeId)
+                        && !date.isBefore(l.getStartDate())
+                        && !date.isAfter(l.getEndDate()));
     }
 }

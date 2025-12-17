@@ -43,6 +43,16 @@
                     background-color: #d1e7dd;
                     color: #0f5132;
                 }
+
+                .bg-PRESENT {
+                    background-color: #d1e7dd;
+                    color: #0f5132;
+                }
+
+                .bg-LEAVE {
+                    background-color: #cff4fc;
+                    color: #055160;
+                }
             </style>
 
             <div class="container-fluid px-4">
@@ -95,6 +105,7 @@
                                             <span th:if="${row.dailyStatus.get(date) == 'EARLY'}">🏃</span>
                                             <span th:if="${row.dailyStatus.get(date) == 'LATE_EARLY'}">⚠️🏃</span>
                                             <span th:if="${row.dailyStatus.get(date) == 'WEEKEND'}">🏖️</span>
+                                            <span th:if="${row.dailyStatus.get(date) == 'LEAVE'}">🏥</span>
                                         </td>
 
                                         <td class="small">
@@ -106,6 +117,8 @@
                                                     th:text="${row.lateCount}">1</span></div>
                                             <div th:if="${row.earlyLeaveCount > 0}" class="text-info">E: <span
                                                     th:text="${row.earlyLeaveCount}">1</span></div>
+                                            <div th:if="${row.leaveCount > 0}" class="text-primary">LV: <span
+                                                    th:text="${row.leaveCount}">1</span></div>
                                         </td>
                                     </tr>
                                     <tr th:if="${#lists.isEmpty(report)}">

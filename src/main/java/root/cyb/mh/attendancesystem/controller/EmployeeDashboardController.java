@@ -36,6 +36,9 @@ public class EmployeeDashboardController {
     private WorkScheduleRepository workScheduleRepository;
 
     @Autowired
+    private root.cyb.mh.attendancesystem.repository.LeaveRequestRepository leaveRequestRepository;
+
+    @Autowired
     private ReportService reportService;
 
     @Autowired
@@ -62,12 +65,13 @@ public class EmployeeDashboardController {
         model.addAttribute("recentLogs", recentLogs);
 
         // 4. Monthly Stats Calculation
-        calculateMonthlyStats(model, allLogs, schedule);
+        calculateMonthlyStats(model, allLogs, schedule, employeeId);
 
         return "employee-dashboard";
     }
 
-    private void calculateMonthlyStats(Model model, List<AttendanceLog> allLogs, WorkSchedule schedule) {
+    private void calculateMonthlyStats(Model model, List<AttendanceLog> allLogs, WorkSchedule schedule,
+            String employeeId) {
         LocalDate now = LocalDate.now();
         YearMonth currentYearMonth = YearMonth.from(now);
 
@@ -123,6 +127,48 @@ public class EmployeeDashboardController {
         }
         model.addAttribute("lateCount", lateCount);
         model.addAttribute("earlyCount", earlyCount);
+
+        // Leaves Calculation
+        int leaveCount = 0;
+        // Only count approved leaves for this month
+        // We need employee ID. Let's assume allLogs belongs to one employee.
+        // Or better, pass employeeId to this method.
+        // For now, let's filter all approved leaves for this month and employee.
+        if (employeeId != null) {
+            final String empId = employeeId;
+            List<root.cyb.mh.attendancesystem.model.LeaveRequest> leaves = leaveRequestRepository
+                    .findByStatusOrderByCreatedAtDesc(root.cyb.mh.attendancesystem.model.LeaveRequest.Status.APPROVED);
+
+            long leavesThisMonth = leaves.stream()
+                    .filter(l -> l.getEmployee().getId().equals(empId))
+                    .filter(l -> {
+                        // Check overlap with current month
+                        LocalDate start = l.getStartDate();
+                        LocalDate end = l.getEndDate();
+                        // simple check: if any day of leave is in current month
+                        return !start.isAfter(now) && !end.isBefore(currentYearMonth.atDay(1));
+                    })
+                    .mapToLong(l -> {
+                        // Count days in this month
+                        LocalDate s = l.getStartDate().isBefore(currentYearMonth.atDay(1)) ? currentYearMonth.atDay(1)
+                                : l.getStartDate();
+                        LocalDate e = l.getEndDate().isAfter(now) ? now : l.getEndDate(); // Count up to 'now' or end of
+                                                                                          // month? Stats usually
+                                                                                          // implies so far or total
+                                                                                          // scheduled?
+                        // Let's count total days of leave falling in this month
+                        LocalDate monthEnd = currentYearMonth.atEndOfMonth();
+                        LocalDate realEnd = l.getEndDate().isAfter(monthEnd) ? monthEnd : l.getEndDate();
+
+                        if (s.isAfter(realEnd))
+                            return 0;
+
+                        return java.time.temporal.ChronoUnit.DAYS.between(s, realEnd) + 1;
+                    })
+                    .sum();
+            leaveCount = (int) leavesThisMonth;
+        }
+        model.addAttribute("leaveCount", leaveCount);
     }
 
     @GetMapping("/employee/attendance/history")

@@ -16,6 +16,7 @@ public class EmployeeWeeklyDetailDto {
     private int totalAbsent;
     private int totalLates;
     private int totalEarlyLeaves;
+    private int totalLeaves;
 
     public String getEmployeeName() {
         return employeeName;
@@ -95,6 +96,14 @@ public class EmployeeWeeklyDetailDto {
 
     public void setTotalEarlyLeaves(int totalEarlyLeaves) {
         this.totalEarlyLeaves = totalEarlyLeaves;
+    }
+
+    public int getTotalLeaves() {
+        return totalLeaves;
+    }
+
+    public void setTotalLeaves(int totalLeaves) {
+        this.totalLeaves = totalLeaves;
     }
 
     public static class DailyDetail {

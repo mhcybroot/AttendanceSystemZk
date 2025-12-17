@@ -19,6 +19,9 @@ import java.util.List;
 @RequestMapping("/leave")
 public class LeaveController {
 
+    @org.springframework.beans.factory.annotation.Value("${app.testing:false}")
+    private boolean isTestingMode;
+
     @Autowired
     private LeaveService leaveService;
 
@@ -58,7 +61,9 @@ public class LeaveController {
         // Fetch all requests (could filter by pending in UI or via param)
         List<LeaveRequest> allRequests = leaveService.getAllRequests();
         model.addAttribute("requests", allRequests);
+        model.addAttribute("requests", allRequests);
         model.addAttribute("activeLink", "leave-manage");
+        model.addAttribute("isTestingMode", isTestingMode);
         return "admin-leave-requests";
     }
 
@@ -83,6 +88,14 @@ public class LeaveController {
             return "redirect:/leave/manage?error=" + e.getMessage();
         }
 
+        return "redirect:/leave/manage";
+    }
+
+    @PostMapping("/manage/delete")
+    public String deleteRequest(@RequestParam Long id) {
+        if (isTestingMode) {
+            leaveService.deleteRequest(id);
+        }
         return "redirect:/leave/manage";
     }
 }

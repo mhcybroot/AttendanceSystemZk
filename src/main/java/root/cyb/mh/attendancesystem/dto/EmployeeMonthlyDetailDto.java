@@ -17,6 +17,7 @@ public class EmployeeMonthlyDetailDto {
     private int totalAbsent;
     private int totalLates;
     private int totalEarlyLeaves;
+    private int totalLeaves;
 
     // Getters and Setters
     public String getEmployeeName() {
@@ -98,5 +99,13 @@ public class EmployeeMonthlyDetailDto {
 
     public void setTotalEarlyLeaves(int totalEarlyLeaves) {
         this.totalEarlyLeaves = totalEarlyLeaves;
+    }
+
+    public int getTotalLeaves() {
+        return totalLeaves;
+    }
+
+    public void setTotalLeaves(int totalLeaves) {
+        this.totalLeaves = totalLeaves;
     }
 }
