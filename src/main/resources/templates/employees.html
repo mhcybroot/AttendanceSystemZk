@@ -38,7 +38,7 @@
                                     <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
                                     <th>Photo</th>
                                     <th>
-                                        <a
+                                        <a class="text-white text-decoration-none"
                                             th:href="@{/employees(sortField='id', sortDir=${sortField == 'id' ? reverseSortDir : sortDir})}">
                                             ID (Device ID)
                                             <span th:if="${sortField == 'id'}"
@@ -46,7 +46,7 @@
                                         </a>
                                     </th>
                                     <th>
-                                        <a
+                                        <a class="text-white text-decoration-none"
                                             th:href="@{/employees(sortField='name', sortDir=${sortField == 'name' ? reverseSortDir : sortDir})}">
                                             Name
                                             <span th:if="${sortField == 'name'}"
@@ -54,7 +54,7 @@
                                         </a>
                                     </th>
                                     <th>
-                                        <a
+                                        <a class="text-white text-decoration-none"
                                             th:href="@{/employees(sortField='department', sortDir=${sortField == 'department' ? reverseSortDir : sortDir})}">
                                             Department
                                             <span th:if="${sortField == 'department'}"
@@ -62,7 +62,7 @@
                                         </a>
                                     </th>
                                     <th>
-                                        <a
+                                        <a class="text-white text-decoration-none"
                                             th:href="@{/employees(sortField='role', sortDir=${sortField == 'role' ? reverseSortDir : sortDir})}">
                                             Role
                                             <span th:if="${sortField == 'role'}"
@@ -70,7 +70,7 @@
                                         </a>
                                     </th>
                                     <th>
-                                        <a
+                                        <a class="text-white text-decoration-none"
                                             th:href="@{/employees(sortField='email', sortDir=${sortField == 'email' ? reverseSortDir : sortDir})}">
                                             Email
                                             <span th:if="${sortField == 'email'}"

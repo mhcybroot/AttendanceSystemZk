@@ -17,8 +17,20 @@ public class DepartmentController {
     private DepartmentRepository departmentRepository;
 
     @GetMapping("/departments")
-    public String departments(Model model) {
-        model.addAttribute("departments", departmentRepository.findAll());
+    public String departments(Model model,
+            @RequestParam(defaultValue = "id") String sortField,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+
+        org.springframework.data.domain.Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? org.springframework.data.domain.Sort.by(sortField).ascending()
+                : org.springframework.data.domain.Sort.by(sortField).descending();
+
+        model.addAttribute("departments", departmentRepository.findAll(sort));
+
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDir);
+        model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
+
         return "departments";
     }
 

@@ -21,9 +21,30 @@
                         <table class="table table-striped table-hover">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Description</th>
+                                    <th>
+                                        <a class="text-white text-decoration-none"
+                                            th:href="@{/departments(sortField='id', sortDir=${sortField == 'id' ? reverseSortDir : sortDir})}">
+                                            ID
+                                            <span th:if="${sortField == 'id'}"
+                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a class="text-white text-decoration-none"
+                                            th:href="@{/departments(sortField='name', sortDir=${sortField == 'name' ? reverseSortDir : sortDir})}">
+                                            Name
+                                            <span th:if="${sortField == 'name'}"
+                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a class="text-white text-decoration-none"
+                                            th:href="@{/departments(sortField='description', sortDir=${sortField == 'description' ? reverseSortDir : sortDir})}">
+                                            Description
+                                            <span th:if="${sortField == 'description'}"
+                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                        </a>
+                                    </th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
