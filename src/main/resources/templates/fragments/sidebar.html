@@ -3,7 +3,7 @@
 
 <body th:fragment="sidebar(activeLink)">
     <div class="border-end" id="sidebar-wrapper">
-        <div class="sidebar-heading border-bottom bg-dark text-white">NEXUS Netro</div>
+        <div class="sidebar-heading border-bottom bg-dark text-white">[[${companyName}]]</div>
         <div class="list-group list-group-flush">
             <!-- Admin / HR Navigation -->
             <div sec:authorize="hasAnyRole('ADMIN', 'HR')">

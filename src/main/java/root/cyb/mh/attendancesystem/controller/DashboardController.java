@@ -30,6 +30,9 @@ public class DashboardController {
         private AttendanceLogRepository attendanceLogRepository;
 
         @Autowired
+        private root.cyb.mh.attendancesystem.repository.LeaveRequestRepository leaveRequestRepository;
+
+        @Autowired
         private ReportService reportService;
 
         @GetMapping({ "/", "/dashboard" })
@@ -48,14 +51,6 @@ public class DashboardController {
                                 .filter(d -> d.getStatus().contains("PRESENT") || d.getStatus().contains("LATE")
                                                 || d.getStatus().contains("EARLY"))
                                 .count();
-                long latersCount = dailyReport.stream()
-                                .filter(d -> d.getStatus().contains("LATE"))
-                                .count();
-
-                long absentCount = totalEmployees - presentCount; // Rough estimate, precise absent count depends on
-                                                                  // dailyReport
-                                                                  // logic
-
                 // Recent Activity (Last 5 logs)
                 List<AttendanceLog> recentLogs = attendanceLogRepository.findByTimestampBetween(
                                 today.atStartOfDay(), today.atTime(LocalTime.MAX))
@@ -67,43 +62,37 @@ public class DashboardController {
                 // Enrich logs with names
                 recentLogs.forEach(log -> {
                         employeeRepository.findById(log.getEmployeeId()).ifPresent(emp -> {
-                                // Temporary way to carry name, better to use DTO but staying simple for now
-                                // or just look it up in template using a map if needed,
-                                // but let's assume log display uses ID or we pass a map.
+                                // This block was just checking/loading, effectively doing nothing but ensuring
+                                // lazy load if any
+                                // Since we use DTO or direct access in view, this might be redundant but safe
+                                // to keep for now
                         });
                 });
+
+                // Leaves Today
+                long leaveCount = leaveRequestRepository
+                                .countByStartDateLessThanEqualAndEndDateGreaterThanEqualAndStatus(
+                                                today, today,
+                                                root.cyb.mh.attendancesystem.model.LeaveRequest.Status.APPROVED);
+
+                // Status Breakdown
+                long absentCount = totalEmployees - presentCount - leaveCount;
+                if (absentCount < 0)
+                        absentCount = 0;
 
                 model.addAttribute("totalEmployees", totalEmployees);
                 model.addAttribute("totalDepartments", totalDepartments);
                 model.addAttribute("presentCount", presentCount);
                 model.addAttribute("absentCount", absentCount);
-                model.addAttribute("latersCount", latersCount);
+                model.addAttribute("leaveCount", leaveCount);
                 model.addAttribute("recentLogs", recentLogs);
 
-                // Chart Data (Last 7 Days)
-                java.util.List<String> chartLabels = new java.util.ArrayList<>();
-                java.util.List<Long> chartData = new java.util.ArrayList<>();
+                // Chart 1: Today's Status (Donut)
+                // Order: Present, On Leave, Absent
+                java.util.List<Long> statusChartData = java.util.Arrays.asList(presentCount, leaveCount,
+                                absentCount);
+                model.addAttribute("statusChartData", statusChartData);
 
-                LocalDate startOfChart = today.minusDays(6);
-                List<AttendanceLog> weeklyLogs = attendanceLogRepository.findByTimestampBetween(
-                                startOfChart.atStartOfDay(), today.atTime(LocalTime.MAX));
-
-                for (int i = 6; i >= 0; i--) {
-                        LocalDate date = today.minusDays(i);
-                        chartLabels.add(date.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM")));
-
-                        // Count distinct employees present on this date
-                        long presentCountForDate = weeklyLogs.stream()
-                                        .filter(l -> l.getTimestamp().toLocalDate().equals(date))
-                                        .map(AttendanceLog::getEmployeeId)
-                                        .distinct()
-                                        .count();
-
-                        chartData.add(presentCountForDate);
-                }
-
-                model.addAttribute("chartLabels", chartLabels);
-                model.addAttribute("chartData", chartData);
                 model.addAttribute("employeeMap", employeeRepository.findAll().stream()
                                 .collect(Collectors.toMap(root.cyb.mh.attendancesystem.model.Employee::getId,
                                                 root.cyb.mh.attendancesystem.model.Employee::getName)));

@@ -79,7 +79,7 @@
 
             <!-- Metrics -->
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="metric-card">
                         <div class="metric-info">
                             <h3 th:text="${totalEmployees}">0</h3>
@@ -90,7 +90,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="metric-card">
                         <div class="metric-info">
                             <h3 th:text="${totalDepartments}">0</h3>
@@ -101,7 +101,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="metric-card">
                         <div class="metric-info">
                             <h3 th:text="${presentCount}">0</h3>
@@ -112,35 +112,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="metric-card">
-                        <div class="metric-info">
-                            <h3 th:text="${latersCount}">0</h3>
-                            <p>Late Today</p>
-                        </div>
-                        <div class="metric-icon bg-icon-warning">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Main Content Row -->
             <div class="row">
-                <!-- Chart -->
+                <!-- Recent Activity (Left, Wider) -->
                 <div class="col-lg-8">
-                    <div class="card h-100">
-                        <div class="card-header-custom">
-                            Weekly Attendance Trend
-                        </div>
-                        <div class="card-body">
-                            <canvas id="attendanceChart" height="150"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Activity -->
-                <div class="col-lg-4">
                     <div class="card h-100">
                         <div class="card-header-custom">
                             Recent Activity
@@ -163,6 +140,18 @@
                                 <div class="list-group-item text-center text-muted" th:if="${recentLogs.isEmpty()}">
                                     No recent activity
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section (Right, Narrower) -->
+                <div class="col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header-custom">Today's Status</div>
+                        <div class="card-body">
+                            <div style="height: 300px; position: relative;">
+                                <canvas id="statusChart"></canvas>
                             </div>
                         </div>
                     </div>
@@ -242,39 +231,36 @@
             </div>
         </section>
 
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script th:inline="javascript">
-            // Chart.js
-            var ctx = document.getElementById('attendanceChart').getContext('2d');
-            var labels = /*[[${chartLabels}]]*/['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            var data = /*[[${chartData}]]*/[10, 15, 12, 18, 20, 10, 5];
+            // Charts
+            // 1. Status Chart (Doughnut)
+            var statusCtx = document.getElementById('statusChart').getContext('2d');
+            var statusData = /*[[${statusChartData}]]*/[10, 1, 5]; // Present, Leave, Absent
 
-            var myChart = new Chart(ctx, {
-                type: 'bar',
+            new Chart(statusCtx, {
+                type: 'doughnut',
                 data: {
-                    labels: labels,
+                    labels: ['Present', 'On Leave', 'Absent'],
                     datasets: [{
-                        label: 'Present Employees',
-                        data: data,
-                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1,
-                        borderRadius: 4
+                        data: statusData,
+                        backgroundColor: ['#198754', '#0dcaf0', '#dc3545'], // Green, Info, Red
+                        borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1 }
-                        }
-                    },
+                    maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false }
+                        legend: { position: 'bottom' }
                     }
                 }
             });
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+            var deptLabels = /*[[${deptLabels}]]*/['HR', 'IT', 'Sales'];
+
+
         </script>
     </div>
 </body>

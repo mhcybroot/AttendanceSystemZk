@@ -1,5 +1,16 @@
-<nav th:fragment="pagination(page, baseUrl)" aria-label="Page navigation" th:if="${page.totalPages > 1}">
-    <ul class="pagination justify-content-center">
+<nav th:fragment="pagination(page, baseUrl)" aria-label="Page navigation" th:if="${page.totalPages > 1}"
+    class="d-flex justify-content-between align-items-center mt-3">
+
+    <!-- Summary Text (Left) -->
+    <div class="text-muted small">
+        Showing <span class="fw-bold">[[${page.numberOfElements}]]</span> of <span
+            class="fw-bold">[[${page.totalElements}]]</span> items
+        (Page <span class="fw-bold">[[${page.number + 1}]]</span> of <span
+            class="fw-bold">[[${page.totalPages}]]</span>)
+    </div>
+
+    <!-- Pagination Controls (Right) -->
+    <ul class="pagination mb-0">
         <!-- First Page -->
         <li class="page-item" th:classappend="${page.first} ? 'disabled'">
             <a class="page-link"
@@ -34,9 +45,4 @@
                 th:href="@{${baseUrl}(page=${page.totalPages - 1}, size=${page.size}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, departmentId=${selectedDeptId}, departmentId=${selectedDept}, date=${date}, startOfWeek=${startOfWeek}, year=${selectedYear}, month=${selectedMonth})}">Last</a>
         </li>
     </ul>
-
-    <div class="text-center mt-2 text-muted small">
-        Showing [[${page.numberOfElements}]] of [[${page.totalElements}]] items
-        (Page [[${page.number + 1}]] of [[${page.totalPages}]])
-    </div>
 </nav>

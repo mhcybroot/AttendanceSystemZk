@@ -219,7 +219,8 @@ public class EmployeeDashboardController {
         // 3. Write Response
         response.setContentType("application/pdf");
         response.setHeader("Content-Disposition",
-                "attachment; filename=My_Attendance_Report_" + month + "_" + year + ".pdf");
+                "attachment; filename=My_Attendance_Report_" + month + "_" + year + "_" + System.currentTimeMillis()
+                        + ".pdf");
         response.getOutputStream().write(pdfBytes);
     }
 }

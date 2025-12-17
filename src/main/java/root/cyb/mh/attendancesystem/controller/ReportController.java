@@ -345,7 +345,8 @@ public class ReportController {
 
                 return org.springframework.http.ResponseEntity.ok()
                                 .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
-                                                "attachment; filename=daily_report_" + date + ".pdf")
+                                                "attachment; filename=daily_report_" + date + "_"
+                                                                + System.currentTimeMillis() + ".pdf")
                                 .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
                                 .body(pdfBytes);
         }
@@ -373,7 +374,8 @@ public class ReportController {
 
                 return org.springframework.http.ResponseEntity.ok()
                                 .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
-                                                "attachment; filename=weekly_report_" + startOfWeek + ".pdf")
+                                                "attachment; filename=weekly_report_" + startOfWeek + "_"
+                                                                + System.currentTimeMillis() + ".pdf")
                                 .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
                                 .body(pdfBytes);
         }
@@ -403,7 +405,8 @@ public class ReportController {
 
                 return org.springframework.http.ResponseEntity.ok()
                                 .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
-                                                "attachment; filename=monthly_report_" + month + "_" + year + ".pdf")
+                                                "attachment; filename=monthly_report_" + month + "_" + year + "_"
+                                                                + System.currentTimeMillis() + ".pdf")
                                 .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
                                 .body(pdfBytes);
         }
@@ -428,7 +431,7 @@ public class ReportController {
                 return org.springframework.http.ResponseEntity.ok()
                                 .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
                                                 "attachment; filename=employee_report_" + employeeId + "_" + month + "_"
-                                                                + year + ".pdf")
+                                                                + year + "_" + System.currentTimeMillis() + ".pdf")
                                 .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
                                 .body(pdfBytes);
         }

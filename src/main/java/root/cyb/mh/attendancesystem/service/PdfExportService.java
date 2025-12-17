@@ -23,7 +23,7 @@ import java.util.Map;
 @Service
 public class PdfExportService {
 
-    @Value("${app.company.name}")
+    @Value("${app.company.name:Skylink Innovation Limited}")
     private String companyName;
 
     private static final Font TITLE_FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);

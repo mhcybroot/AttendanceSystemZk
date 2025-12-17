@@ -17,4 +17,8 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
 
     // Find pending requests
     List<LeaveRequest> findByStatusOrderByCreatedAtDesc(LeaveRequest.Status status);
+
+    // Count approved leaves for a specific date
+    long countByStartDateLessThanEqualAndEndDateGreaterThanEqualAndStatus(java.time.LocalDate date1,
+            java.time.LocalDate date2, LeaveRequest.Status status);
 }
