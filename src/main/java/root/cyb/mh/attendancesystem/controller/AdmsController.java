@@ -22,10 +22,10 @@ public class AdmsController {
     @PostMapping("/cdata")
     public String receiveData(@RequestParam(required = false) String SN,
             @RequestParam(required = false) String table,
-            @RequestBody String body,
+            @RequestBody(required = false) String body,
             HttpServletRequest request) {
-        System.out.println("ADMS Push: SN=" + SN + ", Table=" + table);
-        return admsService.processCdata(SN, table, body);
+        // Body might be null/empty, just pass safety empty string
+        return admsService.processCdata(SN, table, body != null ? body : "");
     }
 
     // Command Request (Device asks "Any commands for me?")

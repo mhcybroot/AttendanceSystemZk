@@ -22,6 +22,8 @@ public class SecurityConfig {
                                                 .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**")
                                                 .permitAll()
                                                 .requestMatchers("/login", "/error").permitAll()
+                                                .requestMatchers("/iclock/**").permitAll() // Allow ADMS Device
+                                                                                           // Communication
                                                 // Admin Only Areas
                                                 .requestMatchers("/settings/**", "/users/**", "/devices/**")
                                                 .hasRole("ADMIN")
