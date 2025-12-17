@@ -111,7 +111,9 @@ public class ReportService {
                     root.cyb.mh.attendancesystem.model.LeaveRequest leave = approvedLeaves.stream()
                             .filter(l -> l.getEmployee().getId().equals(emp.getId()))
                             .findFirst().orElse(null);
-                    dto.setStatus(leave != null ? leave.getLeaveType().toUpperCase() + " LEAVE" : "ON LEAVE");
+                    String type = leave != null && leave.getLeaveType() != null ? leave.getLeaveType().toUpperCase()
+                            : "";
+                    dto.setStatus(!type.isEmpty() ? type + " LEAVE" : "ON LEAVE");
                     dto.setStatusColor("info"); // Blue
                 } else {
                     dto.setStatus("ABSENT");
