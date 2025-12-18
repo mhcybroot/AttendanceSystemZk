@@ -211,6 +211,10 @@ public class ReportController {
                 model.addAttribute("sortDir", sortDir);
                 model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
 
+                // Fix pagination: ensure 'date' param is preserved (using startOfWeek as the
+                // canonical date)
+                model.addAttribute("date", startOfWeek);
+
                 return "reports-weekly";
         }
 

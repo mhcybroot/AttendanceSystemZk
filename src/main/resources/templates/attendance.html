@@ -24,66 +24,70 @@
 
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <table class="table table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>
-                                        <a class="text-white text-decoration-none"
-                                            th:href="@{/attendance(departmentId=${selectedDeptId}, sortField='id', sortDir=${sortField == 'id' ? reverseSortDir : sortDir})}">
-                                            Log ID
-                                            <span th:if="${sortField == 'id'}"
-                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a class="text-white text-decoration-none"
-                                            th:href="@{/attendance(departmentId=${selectedDeptId}, sortField='employeeName', sortDir=${sortField == 'employeeName' ? reverseSortDir : sortDir})}">
-                                            Employee Name
-                                            <span th:if="${sortField == 'employeeName'}"
-                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a class="text-white text-decoration-none"
-                                            th:href="@{/attendance(departmentId=${selectedDeptId}, sortField='employeeId', sortDir=${sortField == 'employeeId' ? reverseSortDir : sortDir})}">
-                                            Employee ID
-                                            <span th:if="${sortField == 'employeeId'}"
-                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a class="text-white text-decoration-none"
-                                            th:href="@{/attendance(departmentId=${selectedDeptId}, sortField='deviceId', sortDir=${sortField == 'deviceId' ? reverseSortDir : sortDir})}">
-                                            Device ID
-                                            <span th:if="${sortField == 'deviceId'}"
-                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a class="text-white text-decoration-none"
-                                            th:href="@{/attendance(departmentId=${selectedDeptId}, sortField='timestamp', sortDir=${sortField == 'timestamp' ? reverseSortDir : sortDir})}">
-                                            Timestamp
-                                            <span th:if="${sortField == 'timestamp'}"
-                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
-                                        </a>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="log : ${logs}">
-                                    <td th:text="${log.id}">1</td>
-                                    <td th:text="${employeeMap.getOrDefault(log.employeeId, 'Unknown')}">John Doe</td>
-                                    <td th:text="${log.employeeId}">101</td>
-                                    <td th:text="${log.deviceId}">1</td>
-                                    <td th:text="${#temporals.format(log.timestamp, 'yyyy-MM-dd HH:mm:ss')}">2023-10-01
-                                        08:30:00
-                                    </td>
-                                </tr>
-                                <tr th:if="${#lists.isEmpty(logs)}">
-                                    <td colspan="5" class="text-center">No logs found.</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/attendance(departmentId=${selectedDeptId}, sortField='id', sortDir=${sortField == 'id' ? reverseSortDir : sortDir})}">
+                                                Log ID
+                                                <span th:if="${sortField == 'id'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/attendance(departmentId=${selectedDeptId}, sortField='employeeName', sortDir=${sortField == 'employeeName' ? reverseSortDir : sortDir})}">
+                                                Employee Name
+                                                <span th:if="${sortField == 'employeeName'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/attendance(departmentId=${selectedDeptId}, sortField='employeeId', sortDir=${sortField == 'employeeId' ? reverseSortDir : sortDir})}">
+                                                Employee ID
+                                                <span th:if="${sortField == 'employeeId'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/attendance(departmentId=${selectedDeptId}, sortField='deviceId', sortDir=${sortField == 'deviceId' ? reverseSortDir : sortDir})}">
+                                                Device ID
+                                                <span th:if="${sortField == 'deviceId'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/attendance(departmentId=${selectedDeptId}, sortField='timestamp', sortDir=${sortField == 'timestamp' ? reverseSortDir : sortDir})}">
+                                                Timestamp
+                                                <span th:if="${sortField == 'timestamp'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="log : ${logs}">
+                                        <td th:text="${log.id}">1</td>
+                                        <td th:text="${employeeMap.getOrDefault(log.employeeId, 'Unknown')}">John Doe
+                                        </td>
+                                        <td th:text="${log.employeeId}">101</td>
+                                        <td th:text="${log.deviceId}">1</td>
+                                        <td th:text="${#temporals.format(log.timestamp, 'yyyy-MM-dd HH:mm:ss')}">
+                                            2023-10-01
+                                            08:30:00
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(logs)}">
+                                        <td colspan="5" class="text-center">No logs found.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Pagination -->

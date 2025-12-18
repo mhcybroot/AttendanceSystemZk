@@ -5,7 +5,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestMapping;
 import jakarta.servlet.http.HttpServletResponse;
 
 import root.cyb.mh.attendancesystem.model.*;
@@ -17,9 +16,6 @@ import root.cyb.mh.attendancesystem.service.ReportService;
 
 import java.security.Principal;
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.LocalDateTime;
-import java.time.YearMonth;
 import java.util.List;
 import java.util.stream.Collectors;
 

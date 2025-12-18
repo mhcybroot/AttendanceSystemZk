@@ -32,91 +32,93 @@
 
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <table class="table table-striped table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
-                                    <th>Photo</th>
-                                    <th>
-                                        <a class="text-white text-decoration-none"
-                                            th:href="@{/employees(sortField='id', sortDir=${sortField == 'id' ? reverseSortDir : sortDir})}">
-                                            ID (Device ID)
-                                            <span th:if="${sortField == 'id'}"
-                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a class="text-white text-decoration-none"
-                                            th:href="@{/employees(sortField='name', sortDir=${sortField == 'name' ? reverseSortDir : sortDir})}">
-                                            Name
-                                            <span th:if="${sortField == 'name'}"
-                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a class="text-white text-decoration-none"
-                                            th:href="@{/employees(sortField='department', sortDir=${sortField == 'department' ? reverseSortDir : sortDir})}">
-                                            Department
-                                            <span th:if="${sortField == 'department'}"
-                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a class="text-white text-decoration-none"
-                                            th:href="@{/employees(sortField='role', sortDir=${sortField == 'role' ? reverseSortDir : sortDir})}">
-                                            Role
-                                            <span th:if="${sortField == 'role'}"
-                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a class="text-white text-decoration-none"
-                                            th:href="@{/employees(sortField='email', sortDir=${sortField == 'email' ? reverseSortDir : sortDir})}">
-                                            Email
-                                            <span th:if="${sortField == 'email'}"
-                                                th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
-                                        </a>
-                                    </th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="emp : ${employees}">
-                                    <td><input type="checkbox" class="emp-checkbox" th:value="${emp.id}"
-                                            onclick="updateBulkBtn()"></td>
-                                    <td>
-                                        <img th:if="${emp.photoBase64 != null}"
-                                            th:src="'data:image/jpeg;base64,' + ${emp.photoBase64}" width="50"
-                                            height="50" class="rounded-circle" style="object-fit:cover;">
-                                        <span th:if="${emp.photoBase64 == null}" class="text-muted">No IMG</span>
-                                    </td>
-                                    <td th:text="${emp.id}">1</td>
-                                    <td th:text="${emp.name}">John Doe</td>
-                                    <td th:text="${emp.department != null ? emp.department.name : 'Unassigned'}">
-                                        Engineering
-                                    </td>
-                                    <td th:text="${emp.role}">Developer</td>
-                                    <td th:text="${emp.email}">john@example.com</td>
-                                    <td>
-                                        <button class="btn btn-warning btn-sm me-1" type="button" th:data-id="${emp.id}"
-                                            th:data-name="${emp.name}" th:data-role="${emp.role}"
-                                            th:data-email="${emp.email}"
-                                            th:data-dept-id="${emp.department != null ? emp.department.id : ''}"
-                                            onclick="editEmployee(this)">
-                                            Edit
-                                        </button>
-                                        <a th:href="@{/employees/delete/{id}(id=${emp.id})}"
-                                            class="btn btn-danger btn-sm"
-                                            onclick="return confirm('Delete this employee?')">Delete</a>
-                                    </td>
-                                </tr>
-                                <tr th:if="${#lists.isEmpty(employees)}">
-                                    <td colspan="6" class="text-center">No employees found. Add one to link names to
-                                        attendance
-                                        logs.</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+                                        <th>Photo</th>
+                                        <th>
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/employees(sortField='id', sortDir=${sortField == 'id' ? reverseSortDir : sortDir})}">
+                                                ID (Device ID)
+                                                <span th:if="${sortField == 'id'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/employees(sortField='name', sortDir=${sortField == 'name' ? reverseSortDir : sortDir})}">
+                                                Name
+                                                <span th:if="${sortField == 'name'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/employees(sortField='department', sortDir=${sortField == 'department' ? reverseSortDir : sortDir})}">
+                                                Department
+                                                <span th:if="${sortField == 'department'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/employees(sortField='role', sortDir=${sortField == 'role' ? reverseSortDir : sortDir})}">
+                                                Role
+                                                <span th:if="${sortField == 'role'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/employees(sortField='email', sortDir=${sortField == 'email' ? reverseSortDir : sortDir})}">
+                                                Email
+                                                <span th:if="${sortField == 'email'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="emp : ${employees}">
+                                        <td><input type="checkbox" class="emp-checkbox" th:value="${emp.id}"
+                                                onclick="updateBulkBtn()"></td>
+                                        <td>
+                                            <img th:if="${emp.photoBase64 != null}"
+                                                th:src="'data:image/jpeg;base64,' + ${emp.photoBase64}" width="50"
+                                                height="50" class="rounded-circle" style="object-fit:cover;">
+                                            <span th:if="${emp.photoBase64 == null}" class="text-muted">No IMG</span>
+                                        </td>
+                                        <td th:text="${emp.id}">1</td>
+                                        <td th:text="${emp.name}">John Doe</td>
+                                        <td th:text="${emp.department != null ? emp.department.name : 'Unassigned'}">
+                                            Engineering
+                                        </td>
+                                        <td th:text="${emp.role}">Developer</td>
+                                        <td th:text="${emp.email}">john@example.com</td>
+                                        <td>
+                                            <button class="btn btn-warning btn-sm me-1" type="button"
+                                                th:data-id="${emp.id}" th:data-name="${emp.name}"
+                                                th:data-role="${emp.role}" th:data-email="${emp.email}"
+                                                th:data-dept-id="${emp.department != null ? emp.department.id : ''}"
+                                                onclick="editEmployee(this)">
+                                                Edit
+                                            </button>
+                                            <a th:href="@{/employees/delete/{id}(id=${emp.id})}"
+                                                class="btn btn-danger btn-sm"
+                                                onclick="return confirm('Delete this employee?')">Delete</a>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(employees)}">
+                                        <td colspan="6" class="text-center">No employees found. Add one to link names to
+                                            attendance
+                                            logs.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Pagination -->
