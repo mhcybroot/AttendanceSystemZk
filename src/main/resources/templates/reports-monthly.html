@@ -16,11 +16,40 @@
                         <a href="/reports/weekly" class="btn btn-outline-secondary me-2">Weekly</a>
 
                         <form action="/reports/monthly" method="get" class="d-inline-flex align-items-center">
-                            <select name="departmentId" class="form-select me-2" style="width: auto;">
-                                <option value="">All Departments</option>
-                                <option th:each="dept : ${departments}" th:value="${dept.id}" th:text="${dept.name}"
-                                    th:selected="${dept.id == selectedDept}"></option>
-                            </select>
+                            <!-- Modern Multi-Select Dropdown -->
+                            <div class="dropdown me-2" style="width: auto;">
+                                <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+                                    id="deptDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                    aria-expanded="false">
+                                    Select Departments
+                                </button>
+                                <ul class="dropdown-menu p-3 shadow" aria-labelledby="deptDropdown"
+                                    style="width: 300px; max-height: 400px; overflow-y: auto;">
+
+                                    <!-- Select All Option -->
+                                    <li class="mb-2 border-bottom pb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="selectAllDepts">
+                                            <label class="form-check-label fw-bold" for="selectAllDepts">
+                                                Select All
+                                            </label>
+                                        </div>
+                                    </li>
+
+                                    <!-- Department List -->
+                                    <li th:each="dept : ${departments}" class="mb-1">
+                                        <div class="form-check">
+                                            <input class="form-check-input dept-checkbox" type="checkbox"
+                                                name="departmentId" th:value="${dept.id}" th:id="'dept-' + ${dept.id}"
+                                                th:checked="${selectedDept != null and #lists.contains(selectedDept, dept.id)}">
+                                            <label class="form-check-label" th:for="'dept-' + ${dept.id}"
+                                                th:text="${dept.name}">
+                                                IT
+                                            </label>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
 
                             <select name="month" class="form-select me-2" style="width: auto;">
                                 <option th:each="m : ${#numbers.sequence(1, 12)}" th:value="${m}" th:text="${m}"
@@ -147,6 +176,60 @@
                     </div>
                 </div>
             </div>
+            <!-- Script for Multi-Select -->
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const selectAll = document.getElementById('selectAllDepts');
+                    const checkboxes = document.querySelectorAll('.dept-checkbox');
+                    const dropdownBtn = document.getElementById('deptDropdown');
+
+                    function updateButtonText() {
+                        const checked = Array.from(checkboxes).filter(cb => cb.checked);
+                        if (checked.length === 0) {
+                            dropdownBtn.textContent = 'Select Departments';
+                            dropdownBtn.classList.remove('btn-primary');
+                            dropdownBtn.classList.add('btn-outline-secondary');
+                        } else if (checked.length === checkboxes.length) {
+                            dropdownBtn.textContent = 'All Departments Selected';
+                            dropdownBtn.classList.add('btn-primary');
+                            dropdownBtn.classList.remove('btn-outline-secondary');
+                        } else {
+                            dropdownBtn.textContent = checked.length + ' Departments Selected';
+                            dropdownBtn.classList.add('btn-primary');
+                            dropdownBtn.classList.remove('btn-outline-secondary');
+                        }
+                    }
+
+                    // Handle Select All
+                    selectAll.addEventListener('change', function () {
+                        checkboxes.forEach(cb => cb.checked = selectAll.checked);
+                        updateButtonText();
+                    });
+
+                    // Handle Individual Checkbox
+                    checkboxes.forEach(cb => {
+                        cb.addEventListener('change', function () {
+                            // If any unchecked, uncheck "Select All"
+                            if (!this.checked) {
+                                selectAll.checked = false;
+                            }
+                            // If all checked, check "Select All"
+                            const allChecked = Array.from(checkboxes).every(c => c.checked);
+                            if (allChecked) {
+                                selectAll.checked = true;
+                            }
+                            updateButtonText();
+                        });
+                    });
+
+                    // Initial State
+                    updateButtonText();
+                    // Check "Select All" if all loaded as checked
+                    if (checkboxes.length > 0 && Array.from(checkboxes).every(c => c.checked)) {
+                        selectAll.checked = true;
+                    }
+                });
+            </script>
         </section>
     </div>
 </body>

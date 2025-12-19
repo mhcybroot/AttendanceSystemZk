@@ -202,7 +202,7 @@ public class ReportController {
         @GetMapping("/reports/monthly")
         public String monthlyReports(@RequestParam(required = false) Integer year,
                         @RequestParam(required = false) Integer month,
-                        @RequestParam(required = false) Long departmentId,
+                        @RequestParam(required = false) List<Long> departmentId,
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "10") int size,
                         @RequestParam(defaultValue = "name") String sortField,
@@ -383,7 +383,7 @@ public class ReportController {
         public org.springframework.http.ResponseEntity<byte[]> downloadMonthlyReportPdf(
                         @RequestParam(required = false) Integer year,
                         @RequestParam(required = false) Integer month,
-                        @RequestParam(required = false) Long departmentId)
+                        @RequestParam(required = false) List<Long> departmentId)
                         throws java.io.IOException, com.lowagie.text.DocumentException {
                 if (year == null || month == null) {
                         LocalDate now = LocalDate.now();
@@ -394,10 +394,14 @@ public class ReportController {
                 List<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> report = reportService.getMonthlyReport(year,
                                 month,
                                 departmentId, org.springframework.data.domain.PageRequest.of(0, 10000)).getContent();
+
                 String deptName = "All Departments";
-                if (departmentId != null) {
-                        deptName = departmentRepository.findById(departmentId)
-                                        .map(root.cyb.mh.attendancesystem.model.Department::getName).orElse("Unknown");
+                if (departmentId != null && !departmentId.isEmpty()) {
+                        deptName = departmentId.size() == 1
+                                        ? departmentRepository.findById(departmentId.get(0))
+                                                        .map(root.cyb.mh.attendancesystem.model.Department::getName)
+                                                        .orElse("Unknown")
+                                        : "Multiple Departments (" + departmentId.size() + ")";
                 }
 
                 byte[] pdfBytes = pdfExportService.exportMonthlyReport(report, year, month, deptName);
@@ -550,7 +554,7 @@ public class ReportController {
         public org.springframework.http.ResponseEntity<byte[]> downloadMonthlyReportExcel(
                         @RequestParam(required = false) Integer year,
                         @RequestParam(required = false) Integer month,
-                        @RequestParam(required = false) Long departmentId) throws java.io.IOException {
+                        @RequestParam(required = false) List<Long> departmentId) throws java.io.IOException {
                 if (year == null || month == null) {
                         LocalDate now = LocalDate.now();
                         year = now.getYear();
@@ -575,7 +579,7 @@ public class ReportController {
         public org.springframework.http.ResponseEntity<byte[]> downloadMonthlyReportCsv(
                         @RequestParam(required = false) Integer year,
                         @RequestParam(required = false) Integer month,
-                        @RequestParam(required = false) Long departmentId) throws java.io.IOException {
+                        @RequestParam(required = false) List<Long> departmentId) throws java.io.IOException {
                 if (year == null || month == null) {
                         LocalDate now = LocalDate.now();
                         year = now.getYear();

@@ -490,7 +490,7 @@ public class ReportService {
     }
 
     public Page<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> getMonthlyReport(int year, int month,
-            Long departmentId, Pageable pageable) {
+            List<Long> departmentIds, Pageable pageable) {
         List<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> report = new ArrayList<>();
 
         LocalDate startOfMonth = LocalDate.of(year, month, 1);
@@ -507,9 +507,9 @@ public class ReportService {
 
         // Filter Employees
         List<Employee> allFilteredEmployees;
-        if (departmentId != null) {
+        if (departmentIds != null && !departmentIds.isEmpty()) {
             allFilteredEmployees = employeeRepository.findAll().stream()
-                    .filter(e -> e.getDepartment() != null && e.getDepartment().getId().equals(departmentId))
+                    .filter(e -> e.getDepartment() != null && departmentIds.contains(e.getDepartment().getId()))
                     .collect(Collectors.toList());
         } else {
             allFilteredEmployees = employeeRepository.findAll();
