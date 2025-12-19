@@ -51,43 +51,77 @@
                                 </ul>
                             </div>
 
-                            <select name="month" class="form-select me-2" style="width: auto;">
-                                <option th:each="m : ${#numbers.sequence(1, 12)}" th:value="${m}" th:text="${m}"
-                                    th:selected="${m == selectedMonth}"></option>
-                            </select>
-
-                            <input type="number" name="year" class="form-control me-2" style="width: 100px;"
-                                th:value="${selectedYear}" placeholder="Year">
-
-                            <button type="submit" class="btn btn-primary">View Month</button>
-                            <!-- Multi-Format Export -->
-                            <div class="dropdown d-inline-block ms-2">
-                                <button class="btn btn-dark dropdown-toggle" type="button" id="exportDropdown"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-download me-1"></i> Export
+                            <!-- Multi-Select Month Dropdown -->
+                            <div class="dropdown me-2" style="width: auto;">
+                                <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+                                    id="monthDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                    aria-expanded="false">
+                                    Select Months
                                 </button>
-                                <ul class="dropdown-menu" aria-labelledby="exportDropdown">
-                                    <li>
-                                        <a class="dropdown-item"
-                                            th:href="@{/reports/monthly/pdf(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept})}">
-                                            <i class="fas fa-file-pdf text-danger me-2"></i> PDF
-                                        </a>
+                                <ul class="dropdown-menu p-3 shadow" aria-labelledby="monthDropdown"
+                                    style="width: 250px; max-height: 400px; overflow-y: auto;">
+
+                                    <li class="mb-2 border-bottom pb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="selectAllMonths">
+                                            <label class="form-check-label fw-bold" for="selectAllMonths">
+                                                Select All
+                                            </label>
+                                        </div>
                                     </li>
-                                    <li>
-                                        <a class="dropdown-item"
-                                            th:href="@{/reports/monthly/excel(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept})}">
-                                            <i class="fas fa-file-excel text-success me-2"></i> Excel
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item"
-                                            th:href="@{/reports/monthly/csv(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept})}">
-                                            <i class="fas fa-file-csv text-primary me-2"></i> CSV
-                                        </a>
+
+                                    <li th:each="m : ${#numbers.sequence(1, 12)}" class="mb-1">
+                                        <div class="form-check">
+                                            <input class="form-check-input month-checkbox" type="checkbox" name="month"
+                                                th:value="${m}" th:id="'month-' + ${m}"
+                                                th:checked="${selectedMonth != null and #lists.contains(selectedMonth, m)}">
+                                            <label class="form-check-label" th:for="'month-' + ${m}"
+                                                th:text="${T(java.time.Month).of(m).getDisplayName(T(java.time.format.TextStyle).FULL, T(java.util.Locale).ENGLISH)}">
+                                                January
+                                            </label>
+                                        </div>
                                     </li>
                                 </ul>
                             </div>
+
+                            <select name="year" class="form-select me-2" style="width: auto;">
+                                <option th:each="y : ${#numbers.sequence(2023, 2030)}" th:value="${y}" th:text="${y}"
+                                    th:selected="${y == selectedYear}"></option>
+                            </select>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
                         </form>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-success dropdown-toggle" type="button" id="exportDropdown"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-download"></i> Export
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                                <li>
+                                    <a class="dropdown-item"
+                                        th:href="@{/reports/monthly/pdf(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept})}">
+                                        <i class="fas fa-file-pdf me-2 text-danger"></i>Export as PDF
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item"
+                                        th:href="@{/reports/monthly/excel(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept})}">
+                                        <i class="fas fa-file-excel me-2 text-success"></i>Export as Excel
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item"
+                                        th:href="@{/reports/monthly/csv(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept})}">
+                                        <i class="fas fa-file-csv me-2 text-info"></i>Export as CSV
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
@@ -108,6 +142,13 @@
                                             <a class="text-white text-decoration-none"
                                                 th:href="@{/reports/monthly(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept}, sortField='department', sortDir=${sortField == 'department' ? reverseSortDir : sortDir})}">
                                                 Department <span th:if="${sortField == 'department'}"
+                                                    th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a class="text-white text-decoration-none"
+                                                th:href="@{/reports/monthly(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept}, sortField='month', sortDir=${sortField == 'month' ? reverseSortDir : sortDir})}">
+                                                Month <span th:if="${sortField == 'month'}"
                                                     th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
                                             </a>
                                         </th>
@@ -157,6 +198,9 @@
                                             <div class="small text-muted" th:text="${row.employeeId}">ID:1</div>
                                         </td>
                                         <td th:text="${row.departmentName}">IT</td>
+                                        <td
+                                            th:text="${T(java.time.Month).of(row.month).getDisplayName(T(java.time.format.TextStyle).SHORT, T(java.util.Locale).ENGLISH)} + ' ' + ${row.year}">
+                                            Jan 2024</td>
 
                                         <td class="text-center table-success" th:text="${row.presentCount}">25</td>
                                         <td class="text-center table-danger" th:text="${row.absentCount}">0</td>
@@ -179,55 +223,63 @@
             <!-- Script for Multi-Select -->
             <script>
                 document.addEventListener('DOMContentLoaded', function () {
-                    const selectAll = document.getElementById('selectAllDepts');
-                    const checkboxes = document.querySelectorAll('.dept-checkbox');
-                    const dropdownBtn = document.getElementById('deptDropdown');
+                    // Generic function to setup multi-select logic
+                    function setupMultiSelect(dropdownId, selectAllId, checkboxClass, defaultText, singularItem, pluralItem) {
+                        const selectAll = document.getElementById(selectAllId);
+                        const checkboxes = document.querySelectorAll('.' + checkboxClass);
+                        const dropdownBtn = document.getElementById(dropdownId);
 
-                    function updateButtonText() {
-                        const checked = Array.from(checkboxes).filter(cb => cb.checked);
-                        if (checked.length === 0) {
-                            dropdownBtn.textContent = 'Select Departments';
-                            dropdownBtn.classList.remove('btn-primary');
-                            dropdownBtn.classList.add('btn-outline-secondary');
-                        } else if (checked.length === checkboxes.length) {
-                            dropdownBtn.textContent = 'All Departments Selected';
-                            dropdownBtn.classList.add('btn-primary');
-                            dropdownBtn.classList.remove('btn-outline-secondary');
-                        } else {
-                            dropdownBtn.textContent = checked.length + ' Departments Selected';
-                            dropdownBtn.classList.add('btn-primary');
-                            dropdownBtn.classList.remove('btn-outline-secondary');
+                        if (!selectAll || !dropdownBtn) return;
+
+                        function updateButtonText() {
+                            const checked = Array.from(checkboxes).filter(cb => cb.checked);
+                            if (checked.length === 0) {
+                                dropdownBtn.textContent = defaultText;
+                                dropdownBtn.classList.remove('btn-primary');
+                                dropdownBtn.classList.add('btn-outline-secondary');
+                            } else if (checked.length === checkboxes.length) {
+                                dropdownBtn.textContent = 'All ' + pluralItem + ' Selected';
+                                dropdownBtn.classList.add('btn-primary');
+                                dropdownBtn.classList.remove('btn-outline-secondary');
+                            } else {
+                                dropdownBtn.textContent = checked.length + ' ' + (checked.length === 1 ? singularItem : pluralItem) + ' Selected';
+                                dropdownBtn.classList.add('btn-primary');
+                                dropdownBtn.classList.remove('btn-outline-secondary');
+                            }
+                        }
+
+                        // Handle Select All
+                        selectAll.addEventListener('change', function () {
+                            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+                            updateButtonText();
+                        });
+
+                        // Handle Individual Checkbox
+                        checkboxes.forEach(cb => {
+                            cb.addEventListener('change', function () {
+                                if (!this.checked) {
+                                    selectAll.checked = false;
+                                }
+                                const allChecked = Array.from(checkboxes).every(c => c.checked);
+                                if (allChecked) {
+                                    selectAll.checked = true;
+                                }
+                                updateButtonText();
+                            });
+                        });
+
+                        // Initial State
+                        updateButtonText();
+                        if (checkboxes.length > 0 && Array.from(checkboxes).every(c => c.checked)) {
+                            selectAll.checked = true;
                         }
                     }
 
-                    // Handle Select All
-                    selectAll.addEventListener('change', function () {
-                        checkboxes.forEach(cb => cb.checked = selectAll.checked);
-                        updateButtonText();
-                    });
+                    // Setup Department Dropdown
+                    setupMultiSelect('deptDropdown', 'selectAllDepts', 'dept-checkbox', 'Select Departments', 'Department', 'Departments');
 
-                    // Handle Individual Checkbox
-                    checkboxes.forEach(cb => {
-                        cb.addEventListener('change', function () {
-                            // If any unchecked, uncheck "Select All"
-                            if (!this.checked) {
-                                selectAll.checked = false;
-                            }
-                            // If all checked, check "Select All"
-                            const allChecked = Array.from(checkboxes).every(c => c.checked);
-                            if (allChecked) {
-                                selectAll.checked = true;
-                            }
-                            updateButtonText();
-                        });
-                    });
-
-                    // Initial State
-                    updateButtonText();
-                    // Check "Select All" if all loaded as checked
-                    if (checkboxes.length > 0 && Array.from(checkboxes).every(c => c.checked)) {
-                        selectAll.checked = true;
-                    }
+                    // Setup Month Dropdown
+                    setupMultiSelect('monthDropdown', 'selectAllMonths', 'month-checkbox', 'Select Months', 'Month', 'Months');
                 });
             </script>
         </section>

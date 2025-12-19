@@ -146,28 +146,47 @@ public class PdfExportService {
 
     }
 
-    public byte[] exportMonthlyReport(List<MonthlySummaryDto> report, int year, int month, String departmentName)
+    public byte[] exportMonthlyReport(List<MonthlySummaryDto> report, int year, List<Integer> months,
+            String departmentName)
             throws DocumentException, IOException {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Document document = new Document(PageSize.A4.rotate()); // Landscape for more columns
             PdfWriter.getInstance(document, out);
             document.open();
 
+            // Format months for header
+            String monthNames = months.stream()
+                    .map(m -> java.time.Month.of(m).getDisplayName(java.time.format.TextStyle.SHORT,
+                            java.util.Locale.ENGLISH))
+                    .collect(java.util.stream.Collectors.joining(", "));
+
             addHeader(document, "Monthly Attendance Summary",
-                    "Period: " + month + "/" + year,
+                    "Period: " + monthNames + " " + year,
                     departmentName);
 
-            PdfPTable table = new PdfPTable(10); // ID, Name, Dept, P, A, L, E, Total Leave, Paid, Unpaid
+            // Updated width for 11 columns (Added Period)
+            // ID, Name, Dept, Period, Pres, Abs, Late, Early, Total LV, Paid LV, Unpaid LV
+            PdfPTable table = new PdfPTable(11);
             table.setWidthPercentage(100);
-            table.setWidths(new float[] { 1.5f, 3f, 2f, 1f, 1f, 1f, 1f, 1f, 1f, 1f });
 
-            addTableHeader(table, "ID", "Name", "Dept", "Pres", "Abs", "Late", "Early", "Total LV", "Paid LV",
+            // Adjust widths:
+            // ID(1.5), Name(3), Dept(2), Period(1.5), P(1), A(1), L(1), E(1), TL(1), PL(1),
+            // UL(1) -> Sum ~15
+            table.setWidths(new float[] { 1.5f, 3f, 2f, 1.5f, 1f, 1f, 1f, 1f, 1f, 1f, 1f });
+
+            addTableHeader(table, "ID", "Name", "Dept", "Period", "Pres", "Abs", "Late", "Early", "Total LV", "Paid LV",
                     "Unpaid LV");
 
             for (MonthlySummaryDto dto : report) {
                 addCell(table, dto.getEmployeeId());
                 addCell(table, dto.getEmployeeName());
                 addCell(table, dto.getDepartmentName());
+                // Add Period Cell
+                String period = java.time.Month.of(dto.getMonth()).getDisplayName(java.time.format.TextStyle.SHORT,
+                        java.util.Locale.ENGLISH)
+                        + "-" + dto.getYear();
+                addCell(table, period);
+
                 addCell(table, String.valueOf(dto.getPresentCount()));
                 addCell(table, String.valueOf(dto.getAbsentCount()));
                 addCell(table, String.valueOf(dto.getLateCount()));

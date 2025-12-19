@@ -201,24 +201,25 @@ public class ReportController {
 
         @GetMapping("/reports/monthly")
         public String monthlyReports(@RequestParam(required = false) Integer year,
-                        @RequestParam(required = false) Integer month,
+                        @RequestParam(required = false) List<Integer> month,
                         @RequestParam(required = false) List<Long> departmentId,
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "10") int size,
                         @RequestParam(defaultValue = "name") String sortField,
                         @RequestParam(defaultValue = "asc") String sortDir,
                         Model model) {
-                if (year == null || month == null) {
-                        LocalDate now = LocalDate.now();
-                        year = now.getYear();
-                        month = now.getMonthValue();
+                if (year == null) {
+                        year = LocalDate.now().getYear();
+                }
+                if (month == null || month.isEmpty()) {
+                        month = new java.util.ArrayList<>();
+                        month.add(LocalDate.now().getMonthValue());
                 }
 
                 org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page,
                                 size);
                 org.springframework.data.domain.Page<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> reportPage = reportService
-                                .getMonthlyReport(year,
-                                                month, departmentId, pageable);
+                                .getMonthlyReport(year, month, departmentId, pageable);
 
                 List<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> reportContent = new java.util.ArrayList<>(
                                 reportPage.getContent());
@@ -226,6 +227,10 @@ public class ReportController {
                 // Sorting
                 java.util.Comparator<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> comparator = null;
                 switch (sortField) {
+                        case "month":
+                                comparator = java.util.Comparator.comparingInt(
+                                                root.cyb.mh.attendancesystem.dto.MonthlySummaryDto::getMonth);
+                                break;
                         case "department":
                                 comparator = java.util.Comparator.comparing(
                                                 dto -> dto.getDepartmentName() != null ? dto.getDepartmentName() : "");
@@ -265,7 +270,7 @@ public class ReportController {
                 }
 
                 model.addAttribute("selectedYear", year);
-                model.addAttribute("selectedMonth", month);
+                model.addAttribute("selectedMonth", month); // Now a List
                 model.addAttribute("departments", departmentRepository.findAll());
                 model.addAttribute("selectedDept", departmentId);
 
@@ -382,19 +387,19 @@ public class ReportController {
         @GetMapping("/reports/monthly/pdf")
         public org.springframework.http.ResponseEntity<byte[]> downloadMonthlyReportPdf(
                         @RequestParam(required = false) Integer year,
-                        @RequestParam(required = false) Integer month,
+                        @RequestParam(required = false) List<Integer> month,
                         @RequestParam(required = false) List<Long> departmentId)
                         throws java.io.IOException, com.lowagie.text.DocumentException {
-                if (year == null || month == null) {
-                        LocalDate now = LocalDate.now();
-                        year = now.getYear();
-                        month = now.getMonthValue();
+                if (year == null)
+                        year = LocalDate.now().getYear();
+                if (month == null || month.isEmpty()) {
+                        month = new java.util.ArrayList<>();
+                        month.add(LocalDate.now().getMonthValue());
                 }
 
                 List<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> report = reportService.getMonthlyReport(year,
-                                month,
-                                departmentId, org.springframework.data.domain.PageRequest.of(0, 10000)).getContent();
-
+                                month, departmentId, org.springframework.data.domain.PageRequest.of(0, 10000))
+                                .getContent();
                 String deptName = "All Departments";
                 if (departmentId != null && !departmentId.isEmpty()) {
                         deptName = departmentId.size() == 1
@@ -404,11 +409,12 @@ public class ReportController {
                                         : "Multiple Departments (" + departmentId.size() + ")";
                 }
 
+                // PDF Export updated to accept list of months
                 byte[] pdfBytes = pdfExportService.exportMonthlyReport(report, year, month, deptName);
 
                 return org.springframework.http.ResponseEntity.ok()
                                 .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
-                                                "attachment; filename=monthly_report_" + month + "_" + year + "_"
+                                                "attachment; filename=monthly_report_" + year + "_"
                                                                 + System.currentTimeMillis() + ".pdf")
                                 .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
                                 .body(pdfBytes);
@@ -553,13 +559,15 @@ public class ReportController {
         @GetMapping("/reports/monthly/excel")
         public org.springframework.http.ResponseEntity<byte[]> downloadMonthlyReportExcel(
                         @RequestParam(required = false) Integer year,
-                        @RequestParam(required = false) Integer month,
+                        @RequestParam(required = false) List<Integer> month,
                         @RequestParam(required = false) List<Long> departmentId) throws java.io.IOException {
-                if (year == null || month == null) {
-                        LocalDate now = LocalDate.now();
-                        year = now.getYear();
-                        month = now.getMonthValue();
+                if (year == null)
+                        year = LocalDate.now().getYear();
+                if (month == null || month.isEmpty()) {
+                        month = new java.util.ArrayList<>();
+                        month.add(LocalDate.now().getMonthValue());
                 }
+
                 List<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> report = reportService
                                 .getMonthlyReport(year, month,
                                                 departmentId, org.springframework.data.domain.PageRequest.of(0, 10000))
@@ -569,7 +577,7 @@ public class ReportController {
 
                 return org.springframework.http.ResponseEntity.ok()
                                 .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
-                                                "attachment; filename=monthly_report_" + month + "_" + year + ".xlsx")
+                                                "attachment; filename=monthly_report_" + year + ".xlsx")
                                 .contentType(org.springframework.http.MediaType.parseMediaType(
                                                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                                 .body(bytes);
@@ -578,13 +586,15 @@ public class ReportController {
         @GetMapping("/reports/monthly/csv")
         public org.springframework.http.ResponseEntity<byte[]> downloadMonthlyReportCsv(
                         @RequestParam(required = false) Integer year,
-                        @RequestParam(required = false) Integer month,
+                        @RequestParam(required = false) List<Integer> month,
                         @RequestParam(required = false) List<Long> departmentId) throws java.io.IOException {
-                if (year == null || month == null) {
-                        LocalDate now = LocalDate.now();
-                        year = now.getYear();
-                        month = now.getMonthValue();
+                if (year == null)
+                        year = LocalDate.now().getYear();
+                if (month == null || month.isEmpty()) {
+                        month = new java.util.ArrayList<>();
+                        month.add(LocalDate.now().getMonthValue());
                 }
+
                 List<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> report = reportService
                                 .getMonthlyReport(year, month,
                                                 departmentId, org.springframework.data.domain.PageRequest.of(0, 10000))
@@ -594,7 +604,7 @@ public class ReportController {
 
                 return org.springframework.http.ResponseEntity.ok()
                                 .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
-                                                "attachment; filename=monthly_report_" + month + "_" + year + ".csv")
+                                                "attachment; filename=monthly_report_" + year + ".csv")
                                 .contentType(org.springframework.http.MediaType.parseMediaType("text/csv"))
                                 .body(bytes);
         }

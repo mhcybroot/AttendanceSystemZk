@@ -217,7 +217,8 @@ public class ExportService {
             Sheet sheet = workbook.createSheet("Monthly Report");
 
             Row headerRow = sheet.createRow(0);
-            String[] columns = { "ID", "Name", "Department", "Present", "Absent", "Late", "Early", "Total Leave",
+            String[] columns = { "ID", "Name", "Department", "Period", "Present", "Absent", "Late", "Early",
+                    "Total Leave",
                     "Paid Leave", "Unpaid Leave" };
 
             CellStyle boldStyle = workbook.createCellStyle();
@@ -238,6 +239,10 @@ public class ExportService {
                 row.createCell(col++).setCellValue(dto.getEmployeeId());
                 row.createCell(col++).setCellValue(dto.getEmployeeName());
                 row.createCell(col++).setCellValue(dto.getDepartmentName());
+                // Add Period
+                String period = java.time.Month.of(dto.getMonth()).toString() + "-" + dto.getYear();
+                row.createCell(col++).setCellValue(period);
+
                 row.createCell(col++).setCellValue(dto.getPresentCount());
                 row.createCell(col++).setCellValue(dto.getAbsentCount());
                 row.createCell(col++).setCellValue(dto.getLateCount());
@@ -259,16 +264,19 @@ public class ExportService {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
                 PrintWriter writer = new PrintWriter(out)) {
             CSVFormat format = CSVFormat.DEFAULT.builder()
-                    .setHeader("ID", "Name", "Department", "Present", "Absent", "Late", "Early", "Total Leave",
+                    .setHeader("ID", "Name", "Department", "Period", "Present", "Absent", "Late", "Early",
+                            "Total Leave",
                             "Paid Leave", "Unpaid Leave")
                     .build();
 
             try (CSVPrinter printer = new CSVPrinter(writer, format)) {
                 for (MonthlySummaryDto dto : report) {
+                    String period = java.time.Month.of(dto.getMonth()).toString() + "-" + dto.getYear();
                     printer.printRecord(
                             dto.getEmployeeId(),
                             dto.getEmployeeName(),
                             dto.getDepartmentName(),
+                            period,
                             dto.getPresentCount(),
                             dto.getAbsentCount(),
                             dto.getLateCount(),
