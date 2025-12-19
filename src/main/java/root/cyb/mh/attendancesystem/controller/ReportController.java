@@ -458,4 +458,140 @@ public class ReportController {
                                 .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
                                 .body(pdfBytes);
         }
+
+        @Autowired
+        private root.cyb.mh.attendancesystem.service.ExportService exportService;
+
+        @GetMapping("/reports/daily/excel")
+        public org.springframework.http.ResponseEntity<byte[]> downloadDailyReportExcel(
+                        @RequestParam(required = false) LocalDate date,
+                        @RequestParam(required = false) Long departmentId,
+                        @RequestParam(required = false) String status) throws java.io.IOException {
+                if (date == null)
+                        date = LocalDate.now();
+                List<root.cyb.mh.attendancesystem.dto.DailyAttendanceDto> report = reportService.getDailyReport(date,
+                                departmentId, status, org.springframework.data.domain.PageRequest.of(0, 10000))
+                                .getContent();
+
+                byte[] bytes = exportService.exportDailyExcel(report);
+
+                return org.springframework.http.ResponseEntity.ok()
+                                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                                                "attachment; filename=daily_report_" + date + ".xlsx")
+                                .contentType(org.springframework.http.MediaType.parseMediaType(
+                                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                                .body(bytes);
+        }
+
+        @GetMapping("/reports/daily/csv")
+        public org.springframework.http.ResponseEntity<byte[]> downloadDailyReportCsv(
+                        @RequestParam(required = false) LocalDate date,
+                        @RequestParam(required = false) Long departmentId,
+                        @RequestParam(required = false) String status) throws java.io.IOException {
+                if (date == null)
+                        date = LocalDate.now();
+                List<root.cyb.mh.attendancesystem.dto.DailyAttendanceDto> report = reportService.getDailyReport(date,
+                                departmentId, status, org.springframework.data.domain.PageRequest.of(0, 10000))
+                                .getContent();
+
+                byte[] bytes = exportService.exportDailyCsv(report);
+
+                return org.springframework.http.ResponseEntity.ok()
+                                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                                                "attachment; filename=daily_report_" + date + ".csv")
+                                .contentType(org.springframework.http.MediaType.parseMediaType("text/csv"))
+                                .body(bytes);
+        }
+
+        @GetMapping("/reports/weekly/excel")
+        public org.springframework.http.ResponseEntity<byte[]> downloadWeeklyReportExcel(
+                        @RequestParam(required = false) LocalDate date,
+                        @RequestParam(required = false) Long departmentId) throws java.io.IOException {
+                if (date == null)
+                        date = LocalDate.now();
+                LocalDate startOfWeek = date
+                                .with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+                List<root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto> report = reportService.getWeeklyReport(
+                                startOfWeek, departmentId, org.springframework.data.domain.PageRequest.of(0, 10000))
+                                .getContent();
+
+                byte[] bytes = exportService.exportWeeklyExcel(report, startOfWeek);
+
+                return org.springframework.http.ResponseEntity.ok()
+                                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                                                "attachment; filename=weekly_report_" + startOfWeek + ".xlsx")
+                                .contentType(org.springframework.http.MediaType.parseMediaType(
+                                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                                .body(bytes);
+        }
+
+        @GetMapping("/reports/weekly/csv")
+        public org.springframework.http.ResponseEntity<byte[]> downloadWeeklyReportCsv(
+                        @RequestParam(required = false) LocalDate date,
+                        @RequestParam(required = false) Long departmentId) throws java.io.IOException {
+                if (date == null)
+                        date = LocalDate.now();
+                LocalDate startOfWeek = date
+                                .with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+                List<root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto> report = reportService.getWeeklyReport(
+                                startOfWeek, departmentId, org.springframework.data.domain.PageRequest.of(0, 10000))
+                                .getContent();
+
+                byte[] bytes = exportService.exportWeeklyCsv(report, startOfWeek);
+
+                return org.springframework.http.ResponseEntity.ok()
+                                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                                                "attachment; filename=weekly_report_" + startOfWeek + ".csv")
+                                .contentType(org.springframework.http.MediaType.parseMediaType("text/csv"))
+                                .body(bytes);
+        }
+
+        @GetMapping("/reports/monthly/excel")
+        public org.springframework.http.ResponseEntity<byte[]> downloadMonthlyReportExcel(
+                        @RequestParam(required = false) Integer year,
+                        @RequestParam(required = false) Integer month,
+                        @RequestParam(required = false) Long departmentId) throws java.io.IOException {
+                if (year == null || month == null) {
+                        LocalDate now = LocalDate.now();
+                        year = now.getYear();
+                        month = now.getMonthValue();
+                }
+                List<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> report = reportService
+                                .getMonthlyReport(year, month,
+                                                departmentId, org.springframework.data.domain.PageRequest.of(0, 10000))
+                                .getContent();
+
+                byte[] bytes = exportService.exportMonthlyExcel(report);
+
+                return org.springframework.http.ResponseEntity.ok()
+                                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                                                "attachment; filename=monthly_report_" + month + "_" + year + ".xlsx")
+                                .contentType(org.springframework.http.MediaType.parseMediaType(
+                                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                                .body(bytes);
+        }
+
+        @GetMapping("/reports/monthly/csv")
+        public org.springframework.http.ResponseEntity<byte[]> downloadMonthlyReportCsv(
+                        @RequestParam(required = false) Integer year,
+                        @RequestParam(required = false) Integer month,
+                        @RequestParam(required = false) Long departmentId) throws java.io.IOException {
+                if (year == null || month == null) {
+                        LocalDate now = LocalDate.now();
+                        year = now.getYear();
+                        month = now.getMonthValue();
+                }
+                List<root.cyb.mh.attendancesystem.dto.MonthlySummaryDto> report = reportService
+                                .getMonthlyReport(year, month,
+                                                departmentId, org.springframework.data.domain.PageRequest.of(0, 10000))
+                                .getContent();
+
+                byte[] bytes = exportService.exportMonthlyCsv(report);
+
+                return org.springframework.http.ResponseEntity.ok()
+                                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                                                "attachment; filename=monthly_report_" + month + "_" + year + ".csv")
+                                .contentType(org.springframework.http.MediaType.parseMediaType("text/csv"))
+                                .body(bytes);
+        }
 }

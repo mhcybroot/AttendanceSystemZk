@@ -31,8 +31,33 @@
                                 th:value="${selectedYear}" placeholder="Year">
 
                             <button type="submit" class="btn btn-primary">View Month</button>
-                            <a th:href="@{/reports/monthly/pdf(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept})}"
-                                class="btn btn-dark ms-2">Download PDF</a>
+                            <!-- Multi-Format Export -->
+                            <div class="dropdown d-inline-block ms-2">
+                                <button class="btn btn-dark dropdown-toggle" type="button" id="exportDropdown"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-download me-1"></i> Export
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                                    <li>
+                                        <a class="dropdown-item"
+                                            th:href="@{/reports/monthly/pdf(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept})}">
+                                            <i class="fas fa-file-pdf text-danger me-2"></i> PDF
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                            th:href="@{/reports/monthly/excel(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept})}">
+                                            <i class="fas fa-file-excel text-success me-2"></i> Excel
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                            th:href="@{/reports/monthly/csv(year=${selectedYear}, month=${selectedMonth}, departmentId=${selectedDept})}">
+                                            <i class="fas fa-file-csv text-primary me-2"></i> CSV
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         </form>
                     </div>
                 </div>
