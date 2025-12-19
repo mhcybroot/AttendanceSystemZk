@@ -6,4 +6,5 @@ import root.cyb.mh.attendancesystem.model.Employee;
 
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, String> {
+    java.util.List<Employee> findByDepartmentId(Long departmentId);
 }

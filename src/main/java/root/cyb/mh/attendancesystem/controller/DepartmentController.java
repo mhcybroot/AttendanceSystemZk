@@ -16,6 +16,9 @@ public class DepartmentController {
     @Autowired
     private DepartmentRepository departmentRepository;
 
+    @Autowired
+    private root.cyb.mh.attendancesystem.repository.EmployeeRepository employeeRepository;
+
     @GetMapping("/departments")
     public String departments(Model model,
             @RequestParam(defaultValue = "id") String sortField,
@@ -50,8 +53,16 @@ public class DepartmentController {
     }
 
     @GetMapping("/departments/delete/{id}")
-    public String deleteDepartment(@PathVariable Long id) {
+    public String deleteDepartment(@PathVariable Long id,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        // Check if employees exist in this department
+        if (!employeeRepository.findByDepartmentId(id).isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Cannot delete department. It has assigned employees.");
+            return "redirect:/departments";
+        }
         departmentRepository.deleteById(id);
+        redirectAttributes.addFlashAttribute("successMessage", "Department deleted successfully.");
         return "redirect:/departments";
     }
 }
