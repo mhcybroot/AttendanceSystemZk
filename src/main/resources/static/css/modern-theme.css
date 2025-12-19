@@ -1,0 +1,227 @@
+/* Global Modern Theme Variables */
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --secondary-gradient: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+    --glass-bg: rgba(255, 255, 255, 0.82);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --shadow-soft: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    --shadow-hover: 0 12px 40px 0 rgba(31, 38, 135, 0.15);
+    --font-main: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+    --border-radius-card: 16px;
+    --border-radius-btn: 50px;
+}
+
+/* Base Body Styles */
+body {
+    background: #f0f2f5;
+    background-image:
+        radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 0) 0, hsla(253, 16%, 7%, 0) 50%),
+        radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 0) 0, hsla(225, 39%, 30%, 0) 50%),
+        radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 0) 0, hsla(339, 49%, 30%, 0) 50%);
+    background-attachment: fixed;
+    font-family: var(--font-main);
+    color: #2d3748;
+}
+
+/* Glassmorphism Cards */
+.card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-card);
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+    overflow: hidden;
+    /* For inner highlights */
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+}
+
+.card-header {
+    background: transparent;
+    /* Remove default bg */
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-weight: 600;
+    color: #4a5568;
+}
+
+/* Sidebar Modernization */
+#sidebar-wrapper {
+    background: #2d3748 !important;
+    /* Fallback */
+    background: linear-gradient(180deg, #2d3436 0%, #000000 100%) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#sidebar-wrapper .sidebar-heading {
+    background: transparent !important;
+    font-size: 1.5rem;
+    letter-spacing: 1px;
+    background: -webkit-linear-gradient(#fff, #aaa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#sidebar-wrapper .list-group-item {
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    border: none;
+    margin: 4px 12px;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+#sidebar-wrapper .list-group-item:hover,
+#sidebar-wrapper .list-group-item.active {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #fff !important;
+    padding-left: 1.5rem;
+    /* Subtle indent via padding instead of transform */
+    box-shadow: none;
+    /* Remove shadow that might bleed */
+    border-left: 4px solid #667eea;
+    /* Clean indicator */
+}
+
+/* Modern Buttons */
+.btn-primary {
+    background: var(--primary-gradient);
+    border: none;
+    border-radius: var(--border-radius-btn);
+    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
+    transition: all 0.3s ease;
+    font-weight: 500;
+    padding: 0.5rem 1.5rem;
+}
+
+.btn-primary:hover {
+    filter: brightness(110%);
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    border: none;
+    color: #1a472a;
+    /* Darker text for contrast on bright green */
+    border-radius: var(--border-radius-btn);
+    transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(67, 233, 123, 0.4);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 20px, 0);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.card {
+    animation: fadeInUp 0.6s ease-out;
+    /* Animate cards on load */
+    animation-fill-mode: both;
+}
+
+/* Stagger animations for multiple cards */
+.row .col-md-3:nth-child(1) .card {
+    animation-delay: 0.1s;
+}
+
+.row .col-md-3:nth-child(2) .card {
+    animation-delay: 0.2s;
+}
+
+.row .col-md-3:nth-child(3) .card {
+    animation-delay: 0.3s;
+}
+
+.row .col-md-3:nth-child(4) .card {
+    animation-delay: 0.4s;
+}
+
+/* Table Improvements */
+.table {
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    /* Gap between rows */
+}
+
+.table thead th {
+    border: none;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    color: #a0aec0;
+    padding-bottom: 15px;
+}
+
+.table tbody tr {
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+    /* Doesn't work directly on TR, needs TD styling */
+    transition: transform 0.2s ease;
+}
+
+.table tbody tr:hover {
+    transform: scale(1.01);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    background: #fff;
+    /* Ensure it stays white/distinct */
+    z-index: 10;
+    position: relative;
+}
+
+.table td {
+    vertical-align: middle;
+    border: none;
+    padding: 1rem;
+}
+
+/* Fix rounding for first and last cells to fake rounded rows */
+.table tbody td:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+.table tbody td:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+/* Dashboard Metric Cards Specifically */
+.metric-card-link .card {
+    border: none;
+    /* Already handled but ensure clean */
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.6));
+}
+
+.metric-card-link h1 {
+    font-weight: 800;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Alert Styling */
+.alert {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}

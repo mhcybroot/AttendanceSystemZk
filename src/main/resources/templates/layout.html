@@ -7,51 +7,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="/css/modern-theme.css" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f6f9;
+        /* Essential Layout Overrides Only - Global styles moved to modern-theme.css */
+
+        /* Layout Structure */
+        #wrapper {
             overflow-x: hidden;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            /* Subtle global gradient */
+            min-height: 100vh;
         }
 
-        /* Sidebar */
         #sidebar-wrapper {
             min-height: 100vh;
             margin-left: -15rem;
             transition: margin 0.25s ease-out;
-            background-color: #343a40;
-            color: #fff;
-        }
-
-        #sidebar-wrapper .sidebar-heading {
-            padding: 0.875rem 1.25rem;
-            font-size: 1.2rem;
-            font-weight: bold;
-            background-color: #212529;
-            color: #fff;
-            text-align: center;
         }
 
         #sidebar-wrapper .list-group {
             width: 15rem;
-        }
-
-        #sidebar-wrapper .list-group-item {
-            background-color: #343a40;
-            color: #adb5bd;
-            border: none;
-            padding: 1rem 1.25rem;
-        }
-
-        #sidebar-wrapper .list-group-item:hover {
-            background-color: #495057;
-            color: #fff;
-            text-decoration: none;
-        }
-
-        #sidebar-wrapper .list-group-item.active {
-            background-color: #0d6efd;
-            color: #fff;
         }
 
         #page-content-wrapper {
@@ -75,13 +51,6 @@
             body.sb-sidenav-toggled #sidebar-wrapper {
                 margin-left: -15rem;
             }
-        }
-
-        /* Generic Card Styling for all pages */
-        .card {
-            border: none;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-            border-radius: 8px;
         }
     </style>
 </head>
