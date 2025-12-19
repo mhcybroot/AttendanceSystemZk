@@ -1,48 +1,173 @@
-<nav th:fragment="pagination(page, baseUrl)" aria-label="Page navigation" th:if="${page.totalPages > 1}"
-    class="d-flex justify-content-between align-items-center mt-3">
+<nav th:fragment="pagination(page, baseUrl)" aria-label="Page navigation" th:if="${page.totalPages > 0}"
+    class="d-flex justify-content-center mt-4 mb-4">
 
-    <!-- Summary Text (Left) -->
-    <div class="text-muted small">
-        Showing <span class="fw-bold">[[${page.numberOfElements}]]</span> of <span
-            class="fw-bold">[[${page.totalElements}]]</span> items
-        (Page <span class="fw-bold">[[${page.number + 1}]]</span> of <span
-            class="fw-bold">[[${page.totalPages}]]</span>)
-    </div>
+    <!-- Custom Styles for Premium Pagination -->
+    <style>
+        .premium-pagination-container {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 10px 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            animation: slideUpFade 0.5s ease-out;
+            transition: all 0.3s ease;
+        }
 
-    <!-- Pagination Controls (Right) -->
-    <ul class="pagination mb-0">
-        <!-- First Page -->
-        <li class="page-item" th:classappend="${page.first} ? 'disabled'">
-            <a class="page-link"
-                th:href="@{${baseUrl}(page=0, size=${page.size}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, departmentId=${selectedDeptId}, departmentId=${selectedDept}, date=${date}, startOfWeek=${startOfWeek}, year=${selectedYear}, month=${selectedMonth}, status=${selectedStatus})}">First</a>
-        </li>
+        .premium-pagination-container:hover {
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
 
-        <!-- Previous Page -->
-        <li class="page-item" th:classappend="${page.first} ? 'disabled'">
-            <a class="page-link"
-                th:href="@{${baseUrl}(page=${page.number - 1}, size=${page.size}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, departmentId=${selectedDeptId}, departmentId=${selectedDept}, date=${date}, startOfWeek=${startOfWeek}, year=${selectedYear}, month=${selectedMonth}, status=${selectedStatus})}">Previous</a>
-        </li>
+        .page-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: #6c757d;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
 
-        <!-- Page Numbers (Window of 5) -->
-        <li class="page-item" th:each="i : ${#numbers.sequence(
+        .page-btn:hover:not(.disabled) {
+            background: #e9ecef;
+            color: #495057;
+            transform: scale(1.1);
+        }
+
+        .page-btn.active {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
+            transform: scale(1.1);
+        }
+
+        .page-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .page-info-pill {
+            background: #f8f9fa;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .size-selector {
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            color: #495057;
+            cursor: pointer;
+            padding-right: 15px;
+            margin-left: 5px;
+        }
+
+        .size-selector:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        @keyframes slideUpFade {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+
+    <div class="premium-pagination-container">
+        <!-- Info Pill & Size Selector -->
+        <div class="page-info-pill">
+            <span>
+                <i class="fas fa-list-ul me-1 text-primary"></i>
+                <span class="fw-bold text-dark">[[${page.numberOfElements}]]</span> /
+                [[${page.totalElements}]]
+            </span>
+            <div class="vr mx-1"></div>
+            <span>
+                Items:
+                <select class="size-selector" onchange="changePageSize(this)">
+                    <option value="10" th:selected="${page.size == 10}">10</option>
+                    <option value="25" th:selected="${page.size == 25}">25</option>
+                    <option value="50" th:selected="${page.size == 50}">50</option>
+                    <option value="100" th:selected="${page.size == 100}">100</option>
+                </select>
+            </span>
+        </div>
+
+        <!-- Controls -->
+        <div class="d-flex align-items-center gap-2">
+            <!-- First -->
+            <a href="#" class="page-btn" th:classappend="${page.first} ? 'disabled'"
+                th:onclick="'goToPage(0); return false;'" title="First Page">
+                <i class="fas fa-angle-double-left"></i>
+            </a>
+
+            <!-- Prev -->
+            <a href="#" class="page-btn" th:classappend="${page.first} ? 'disabled'"
+                th:onclick="'goToPage(' + (${page.number} - 1) + '); return false;'" title="Previous">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+
+            <!-- Numbers -->
+            <th:block th:each="i : ${#numbers.sequence(
                 page.number > 2 ? (page.number + 2 < page.totalPages ? page.number - 2 : (page.totalPages - 5 > 0 ? page.totalPages - 5 : 0)) : 0,
                 page.number + 2 < page.totalPages ? (page.number < 2 ? (page.totalPages > 5 ? 4 : page.totalPages - 1) : page.number + 2) : page.totalPages - 1
-            )}" th:classappend="${i == page.number} ? 'active'">
-            <a class="page-link"
-                th:href="@{${baseUrl}(page=${i}, size=${page.size}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, departmentId=${selectedDeptId}, departmentId=${selectedDept}, date=${date}, startOfWeek=${startOfWeek}, year=${selectedYear}, month=${selectedMonth}, status=${selectedStatus})}"
-                th:text="${i + 1}">1</a>
-        </li>
+            )}">
+                <a href="#" class="page-btn" th:classappend="${i == page.number} ? 'active'"
+                    th:onclick="'goToPage(' + ${i} + '); return false;'" th:text="${i + 1}">1</a>
+            </th:block>
 
-        <!-- Next Page -->
-        <li class="page-item" th:classappend="${page.last} ? 'disabled'">
-            <a class="page-link"
-                th:href="@{${baseUrl}(page=${page.number + 1}, size=${page.size}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, departmentId=${selectedDeptId}, departmentId=${selectedDept}, date=${date}, startOfWeek=${startOfWeek}, year=${selectedYear}, month=${selectedMonth}, status=${selectedStatus})}">Next</a>
-        </li>
+            <!-- Next -->
+            <a href="#" class="page-btn" th:classappend="${page.last} ? 'disabled'"
+                th:onclick="'goToPage(' + (${page.number} + 1) + '); return false;'" title="Next">
+                <i class="fas fa-chevron-right"></i>
+            </a>
 
-        <!-- Last Page -->
-        <li class="page-item" th:classappend="${page.last} ? 'disabled'">
-            <a class="page-link"
-                th:href="@{${baseUrl}(page=${page.totalPages - 1}, size=${page.size}, sortField=${sortField}, sortDir=${sortDir}, keyword=${keyword}, departmentId=${selectedDeptId}, departmentId=${selectedDept}, date=${date}, startOfWeek=${startOfWeek}, year=${selectedYear}, month=${selectedMonth}, status=${selectedStatus})}">Last</a>
-        </li>
-    </ul>
+            <!-- Last -->
+            <a href="#" class="page-btn" th:classappend="${page.last} ? 'disabled'"
+                th:onclick="'goToPage(' + (${page.totalPages} - 1) + '); return false;'" title="Last Page">
+                <i class="fas fa-angle-double-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- JS Logic -->
+    <script th:inline="javascript">
+        function changePageSize(select) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('size', select.value);
+            url.searchParams.set('page', 0);
+            window.location.href = url.toString();
+        }
+
+        function goToPage(pageNumber) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('page', pageNumber);
+            window.location.href = url.toString();
+        }
+    </script>
 </nav>
