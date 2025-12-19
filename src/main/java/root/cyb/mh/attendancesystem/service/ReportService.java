@@ -41,7 +41,9 @@ public class ReportService {
     @Autowired
     private ShiftService shiftService;
 
-    public Page<DailyAttendanceDto> getDailyReport(LocalDate date, Long departmentId, Pageable pageable) {
+    public Page<DailyAttendanceDto> getDailyReport(LocalDate date, Long departmentId, String statusFilter,
+            Pageable pageable) {
+
         List<DailyAttendanceDto> report = new ArrayList<>();
 
         // Get Work Schedule
@@ -51,19 +53,20 @@ public class ReportService {
         List<Employee> allFilteredEmployees;
         if (departmentId != null) {
             allFilteredEmployees = employeeRepository.findAll().stream()
+                    .filter(e -> !e.isGuest()) // Exclude Guests
                     .filter(e -> e.getDepartment() != null && e.getDepartment().getId().equals(departmentId))
                     .collect(Collectors.toList());
         } else {
-            allFilteredEmployees = employeeRepository.findAll();
+            allFilteredEmployees = employeeRepository.findAll().stream()
+                    .filter(e -> !e.isGuest()) // Exclude Guests
+                    .collect(Collectors.toList());
         }
 
-        // Manual Pagination of the list
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), allFilteredEmployees.size());
-        List<Employee> employees = new ArrayList<>();
-        if (start <= allFilteredEmployees.size()) {
-            employees = allFilteredEmployees.subList(start, end);
-        }
+        // Calculate Status for ALL employees first (to allow filtering)
+        // Note: This might be performance heavy if we have 1000s of employees.
+        // But for <500 it's fine. Optimizing to filter at DB level is hard for
+        // "Present" (logic is complex).
+        List<DailyAttendanceDto> fullReport = new ArrayList<>();
 
         // Get All Logs for the Date
         List<AttendanceLog> logs = attendanceLogRepository.findAll().stream()
@@ -79,7 +82,7 @@ public class ReportService {
                 .filter(l -> !date.isBefore(l.getStartDate()) && !date.isAfter(l.getEndDate()))
                 .collect(Collectors.toList());
 
-        for (Employee emp : employees) {
+        for (Employee emp : allFilteredEmployees) {
             DailyAttendanceDto dto = new DailyAttendanceDto();
             dto.setEmployeeId(emp.getId());
             dto.setEmployeeName(emp.getName());
@@ -100,7 +103,6 @@ public class ReportService {
             if (isWeekend || isPublicHoliday) {
                 dto.setStatus("WEEKEND/HOLIDAY");
                 dto.setStatusColor("secondary"); // Gray
-                // If they came anyway, count as Present for daily view too
                 if (!empLogs.isEmpty()) {
                     dto.setStatus("PRESENT (HOLIDAY)");
                     dto.setStatusColor("success");
@@ -140,22 +142,58 @@ public class ReportService {
 
                 if (isLate && isEarly) {
                     dto.setStatus("LATE & EARLY LEAVE");
-                    dto.setStatusColor("warning"); // Orange-ish
+                    dto.setStatusColor("warning");
                 } else if (isLate) {
                     dto.setStatus("LATE ENTRY");
                     dto.setStatusColor("warning");
                 } else if (isEarly) {
                     dto.setStatus("EARLY LEAVE");
-                    dto.setStatusColor("info"); // Light blue
+                    dto.setStatusColor("info");
                 } else {
                     dto.setStatus("PRESENT");
                     dto.setStatusColor("success");
                 }
             }
-            report.add(dto);
+            fullReport.add(dto);
         }
 
-        return new PageImpl<>(report, pageable, allFilteredEmployees.size());
+        // Apply Status Filter
+        if (statusFilter != null && !statusFilter.isEmpty()) {
+            fullReport = fullReport.stream().filter(dto -> {
+                if ("PRESENT".equalsIgnoreCase(statusFilter)) {
+                    return dto.getStatus().contains("PRESENT") || dto.getStatus().contains("LATE")
+                            || dto.getStatus().contains("EARLY");
+                }
+                if ("ABSENT".equalsIgnoreCase(statusFilter)) {
+                    return dto.getStatus().contains("ABSENT");
+                }
+                if ("LEAVE".equalsIgnoreCase(statusFilter)) {
+                    // Match "LEAVE" but exclude "EARLY LEAVE" or "LATE & EARLY LEAVE" which are
+                    // presence statuses
+                    return dto.getStatus().contains("LEAVE") && !dto.getStatus().contains("EARLY");
+                }
+                if ("LATE".equalsIgnoreCase(statusFilter)) {
+                    return dto.getStatus().contains("LATE");
+                }
+                return true;
+            }).collect(Collectors.toList());
+        }
+
+        // Pagination
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), fullReport.size());
+        List<DailyAttendanceDto> pagedContent = new ArrayList<>();
+        if (start <= fullReport.size()) {
+            pagedContent = fullReport.subList(start, end);
+        }
+
+        return new PageImpl<>(pagedContent, pageable, fullReport.size());
+    }
+
+    // Deprecated/Unused helper or split logic below... cleaning up old method body
+    // that was replaced
+    public void _removed_old_logic_placeholder() {
+
     }
 
     public Page<root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto> getWeeklyReport(LocalDate startOfWeek,

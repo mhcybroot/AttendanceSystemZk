@@ -34,6 +34,9 @@ public class Employee {
 
     private Integer annualLeaveQuota; // Null means use global default
 
+    @jakarta.persistence.Column(columnDefinition = "boolean default false")
+    private boolean isGuest = false;
+
     public int getEffectiveQuota(int globalDefault) {
         return annualLeaveQuota != null ? annualLeaveQuota : globalDefault;
     }

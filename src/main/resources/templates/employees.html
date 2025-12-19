@@ -92,7 +92,11 @@
                                             <span th:if="${emp.photoBase64 == null}" class="text-muted">No IMG</span>
                                         </td>
                                         <td th:text="${emp.id}">1</td>
-                                        <td th:text="${emp.name}">John Doe</td>
+                                        <td>
+                                            <span th:text="${emp.name}">John Doe</span>
+                                            <span th:if="${emp.isGuest}"
+                                                class="badge bg-info text-dark ms-1">Guest</span>
+                                        </td>
                                         <td th:text="${emp.department != null ? emp.department.name : 'Unassigned'}">
                                             Engineering
                                         </td>
@@ -103,7 +107,7 @@
                                                 th:data-id="${emp.id}" th:data-name="${emp.name}"
                                                 th:data-role="${emp.role}" th:data-email="${emp.email}"
                                                 th:data-dept-id="${emp.department != null ? emp.department.id : ''}"
-                                                onclick="editEmployee(this)">
+                                                th:data-is-guest="${emp.isGuest}" onclick="editEmployee(this)">
                                                 Edit
                                             </button>
                                             <a th:href="@{/employees/delete/{id}(id=${emp.id})}"
@@ -158,6 +162,10 @@
                                         <label class="form-label">Role</label>
                                         <input type="text" class="form-control" id="empRole" name="role"
                                             placeholder="Staff">
+                                    </div>
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" class="form-check-input" id="empIsGuest" name="guest">
+                                        <label class="form-check-label" for="empIsGuest">Is Guest</label>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Email</label>
@@ -218,6 +226,7 @@
                 var role = btn.getAttribute('data-role');
                 var email = btn.getAttribute('data-email');
                 var deptId = btn.getAttribute('data-dept-id');
+                var isGuest = btn.getAttribute('data-is-guest') === 'true';
 
                 document.getElementById('empModalTitle').innerText = 'Edit Employee';
                 document.getElementById('empId').value = id;
@@ -226,6 +235,7 @@
                 document.getElementById('empRole').value = role;
                 document.getElementById('empEmail').value = email;
                 document.getElementById('empDept').value = deptId;
+                document.getElementById('empIsGuest').checked = isGuest;
                 new bootstrap.Modal(document.getElementById('addEmployeeModal')).show();
             }
 
@@ -238,6 +248,7 @@
                 document.getElementById('empRole').value = '';
                 document.getElementById('empEmail').value = '';
                 document.getElementById('empDept').value = '';
+                document.getElementById('empIsGuest').checked = false;
                 document.getElementById('empUsername').value = ''; // Clear username
             });
             document.getElementById('empModalTitle').innerText = 'Add Employee';

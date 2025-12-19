@@ -21,4 +21,8 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     // Count approved leaves for a specific date
     long countByStartDateLessThanEqualAndEndDateGreaterThanEqualAndStatus(java.time.LocalDate date1,
             java.time.LocalDate date2, LeaveRequest.Status status);
+
+    // Find approved leaves for a specific date (for Dashboard filtering)
+    List<LeaveRequest> findByStartDateLessThanEqualAndEndDateGreaterThanEqualAndStatus(java.time.LocalDate date1,
+            java.time.LocalDate date2, LeaveRequest.Status status);
 }

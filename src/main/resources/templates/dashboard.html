@@ -78,39 +78,89 @@
             </style>
 
             <!-- Metrics -->
+            <!-- Row 1: General Stats & Leave -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <a href="/employees" style="text-decoration: none; color: inherit;">
+                        <div class="metric-card">
+                            <div class="metric-info">
+                                <h3 th:text="${totalEmployees}">0</h3>
+                                <p>Total Employees</p>
+                            </div>
+                            <div class="metric-icon bg-icon-primary">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="/departments" style="text-decoration: none; color: inherit;">
+                        <div class="metric-card">
+                            <div class="metric-info">
+                                <h3 th:text="${totalDepartments}">0</h3>
+                                <p>Departments</p>
+                            </div>
+                            <div class="metric-icon bg-icon-info">
+                                <i class="fas fa-building"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="/reports?status=LEAVE" style="text-decoration: none; color: inherit;">
+                        <div class="metric-card">
+                            <div class="metric-info">
+                                <h3 th:text="${leaveCount}">0</h3>
+                                <p>On Leave</p>
+                            </div>
+                            <div class="metric-icon bg-icon-info">
+                                <i class="fas fa-plane-departure"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Row 2: Attendance Stats -->
             <div class="row">
                 <div class="col-md-4">
-                    <div class="metric-card">
-                        <div class="metric-info">
-                            <h3 th:text="${totalEmployees}">0</h3>
-                            <p>Total Employees</p>
+                    <a href="/reports?status=PRESENT" style="text-decoration: none; color: inherit;">
+                        <div class="metric-card">
+                            <div class="metric-info">
+                                <h3 th:text="${presentCount}">0</h3>
+                                <p>Present Today</p>
+                            </div>
+                            <div class="metric-icon bg-icon-success">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
                         </div>
-                        <div class="metric-icon bg-icon-primary">
-                            <i class="fas fa-users"></i>
-                        </div>
-                    </div>
+                    </a>
                 </div>
                 <div class="col-md-4">
-                    <div class="metric-card">
-                        <div class="metric-info">
-                            <h3 th:text="${totalDepartments}">0</h3>
-                            <p>Departments</p>
+                    <a href="/reports?status=ABSENT" style="text-decoration: none; color: inherit;">
+                        <div class="metric-card">
+                            <div class="metric-info">
+                                <h3 th:text="${absentCount}">0</h3>
+                                <p>Absent Today</p>
+                            </div>
+                            <div class="metric-icon bg-icon-danger">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
                         </div>
-                        <div class="metric-icon bg-icon-info">
-                            <i class="fas fa-building"></i>
-                        </div>
-                    </div>
+                    </a>
                 </div>
                 <div class="col-md-4">
-                    <div class="metric-card">
-                        <div class="metric-info">
-                            <h3 th:text="${presentCount}">0</h3>
-                            <p>Present Today</p>
+                    <a href="/reports?status=LATE" style="text-decoration: none; color: inherit;">
+                        <div class="metric-card">
+                            <div class="metric-info">
+                                <h3 th:text="${lateCount}">0</h3>
+                                <p>Late Today</p>
+                            </div>
+                            <div class="metric-icon bg-icon-warning">
+                                <i class="fas fa-clock"></i>
+                            </div>
                         </div>
-                        <div class="metric-icon bg-icon-success">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                    </div>
+                    </a>
                 </div>
             </div>
 

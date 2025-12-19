@@ -53,14 +53,45 @@ public class EmployeeController {
 
     @PostMapping
     public String saveEmployee(@ModelAttribute Employee employee, @RequestParam(required = false) Long departmentId) {
+        Employee employeeToSave = employee;
+
+        // Check if updating existing employee
+        if (employee.getId() != null && !employee.getId().isEmpty()) {
+            java.util.Optional<Employee> existingOpt = employeeRepository.findById(employee.getId());
+            if (existingOpt.isPresent()) {
+                Employee existing = existingOpt.get();
+                // Update editable fields
+                existing.setName(employee.getName());
+                existing.setRole(employee.getRole());
+                existing.setEmail(employee.getEmail());
+                existing.setGuest(employee.isGuest()); // Use correct getter/setter
+
+                // Update Password only if provided
+                if (employee.getUsername() != null && !employee.getUsername().isEmpty()) {
+                    existing.setUsername(passwordEncoder.encode(employee.getUsername()));
+                }
+
+                // Department logic below will set department on 'existing'
+                employeeToSave = existing;
+            } else {
+                // New Employee with explicit ID (if allowed) or first time save
+                // Hash password for new employee
+                if (employee.getUsername() != null && !employee.getUsername().isEmpty()) {
+                    employee.setUsername(passwordEncoder.encode(employee.getUsername()));
+                }
+            }
+        } else {
+            // New Employee (though ID is typically required for this app)
+            if (employee.getUsername() != null && !employee.getUsername().isEmpty()) {
+                employee.setUsername(passwordEncoder.encode(employee.getUsername()));
+            }
+        }
+
         if (departmentId != null) {
-            departmentRepository.findById(departmentId).ifPresent(employee::setDepartment);
+            departmentRepository.findById(departmentId).ifPresent(employeeToSave::setDepartment);
         }
-        // Hash the username (which acts as password)
-        if (employee.getUsername() != null && !employee.getUsername().isEmpty()) {
-            employee.setUsername(passwordEncoder.encode(employee.getUsername()));
-        }
-        employeeRepository.save(employee);
+
+        employeeRepository.save(employeeToSave);
         return "redirect:/employees";
     }
 

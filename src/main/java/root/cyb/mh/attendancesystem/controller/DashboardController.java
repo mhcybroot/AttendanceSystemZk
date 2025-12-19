@@ -39,19 +39,38 @@ public class DashboardController {
         public String dashboard(Model model) {
                 LocalDate today = LocalDate.now();
 
-                // Count Stats
-                long totalEmployees = employeeRepository.count();
+                // Fetch All Employees
+                List<root.cyb.mh.attendancesystem.model.Employee> allEmployees = employeeRepository.findAll();
+
+                // Identify Guests
+                List<String> guestIds = allEmployees.stream()
+                                .filter(root.cyb.mh.attendancesystem.model.Employee::isGuest)
+                                .map(root.cyb.mh.attendancesystem.model.Employee::getId)
+                                .collect(Collectors.toList());
+
+                // Count Stats (Excluding Guests)
+                long totalEmployees = allEmployees.size() - guestIds.size();
                 long totalDepartments = departmentRepository.count();
 
-                // Today's Attendance Stats
+                // Today's Attendance Stats (Present/Late/Early)
                 List<DailyAttendanceDto> dailyReport = reportService
-                                .getDailyReport(today, null, org.springframework.data.domain.PageRequest.of(0, 5000))
+                                .getDailyReport(today, null, null,
+                                                org.springframework.data.domain.PageRequest.of(0, 5000))
                                 .getContent();
+
+                // Filter out guests from daily report
                 long presentCount = dailyReport.stream()
+                                .filter(d -> !guestIds.contains(d.getEmployeeId()))
                                 .filter(d -> d.getStatus().contains("PRESENT") || d.getStatus().contains("LATE")
                                                 || d.getStatus().contains("EARLY"))
                                 .count();
-                // Recent Activity (Last 5 logs)
+
+                // Recent Activity (Last 5 logs) - Keep showing all logs, or filter?
+                // User said "Today's Status will skip if employee is guest".
+                // Logs are "Recent Activity", likely okay to show anyone who punched.
+                // But to be consistent with "excluding guests", maybe we should filter too?
+                // The requirement was specific to "Today's Status" (the counters).
+                // I will keep Recent Activity as is (raw logs) unless requested.
                 List<AttendanceLog> recentLogs = attendanceLogRepository.findByTimestampBetween(
                                 today.atStartOfDay(), today.atTime(LocalTime.MAX))
                                 .stream()
@@ -59,21 +78,26 @@ public class DashboardController {
                                 .limit(5)
                                 .collect(Collectors.toList());
 
-                // Enrich logs with names
                 recentLogs.forEach(log -> {
                         employeeRepository.findById(log.getEmployeeId()).ifPresent(emp -> {
-                                // This block was just checking/loading, effectively doing nothing but ensuring
-                                // lazy load if any
-                                // Since we use DTO or direct access in view, this might be redundant but safe
-                                // to keep for now
                         });
                 });
 
-                // Leaves Today
-                long leaveCount = leaveRequestRepository
-                                .countByStartDateLessThanEqualAndEndDateGreaterThanEqualAndStatus(
+                // Leaves Today (Excluding Guests)
+                List<root.cyb.mh.attendancesystem.model.LeaveRequest> todayLeaves = leaveRequestRepository
+                                .findByStartDateLessThanEqualAndEndDateGreaterThanEqualAndStatus(
                                                 today, today,
                                                 root.cyb.mh.attendancesystem.model.LeaveRequest.Status.APPROVED);
+
+                long leaveCount = todayLeaves.stream()
+                                .filter(l -> !guestIds.contains(l.getEmployee().getId()))
+                                .count();
+
+                // Late Count (Excluding Guests)
+                long lateCount = dailyReport.stream()
+                                .filter(d -> !guestIds.contains(d.getEmployeeId()))
+                                .filter(d -> d.getStatus().contains("LATE"))
+                                .count();
 
                 // Status Breakdown
                 long absentCount = totalEmployees - presentCount - leaveCount;
@@ -85,15 +109,15 @@ public class DashboardController {
                 model.addAttribute("presentCount", presentCount);
                 model.addAttribute("absentCount", absentCount);
                 model.addAttribute("leaveCount", leaveCount);
+                model.addAttribute("lateCount", lateCount);
                 model.addAttribute("recentLogs", recentLogs);
 
                 // Chart 1: Today's Status (Donut)
-                // Order: Present, On Leave, Absent
                 java.util.List<Long> statusChartData = java.util.Arrays.asList(presentCount, leaveCount,
                                 absentCount);
                 model.addAttribute("statusChartData", statusChartData);
 
-                model.addAttribute("employeeMap", employeeRepository.findAll().stream()
+                model.addAttribute("employeeMap", allEmployees.stream()
                                 .collect(Collectors.toMap(root.cyb.mh.attendancesystem.model.Employee::getId,
                                                 root.cyb.mh.attendancesystem.model.Employee::getName)));
 
