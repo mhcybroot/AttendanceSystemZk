@@ -284,4 +284,237 @@ public class ExportService {
 
     // --- Employee Detail (No Range for now, simple monthly detail) ---
     // Can expand if needed
+    // --- Single Employee Weekly Detail ---
+
+    public byte[] exportEmployeeWeeklyDetailExcel(EmployeeWeeklyDetailDto report) throws IOException {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Employee Weekly Report");
+
+            // Info Header
+            Row infoRow = sheet.createRow(0);
+            infoRow.createCell(0)
+                    .setCellValue("Employee: " + report.getEmployeeName() + " (" + report.getEmployeeId() + ")");
+
+            Row deptRow = sheet.createRow(1);
+            deptRow.createCell(0).setCellValue("Department: " + report.getDepartmentName());
+
+            Row headerRow = sheet.createRow(3);
+            String[] columns = { "Date", "Day", "In Time", "Out Time", "Late", "Early", "Status" };
+
+            CellStyle boldStyle = workbook.createCellStyle();
+            Font font = workbook.createFont();
+            font.setBold(true);
+            boldStyle.setFont(font);
+
+            for (int i = 0; i < columns.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(columns[i]);
+                cell.setCellStyle(boldStyle);
+            }
+
+            int rowIdx = 4;
+            for (EmployeeWeeklyDetailDto.DailyDetail day : report.getDailyDetails()) {
+                Row row = sheet.createRow(rowIdx++);
+                int col = 0;
+                row.createCell(col++).setCellValue(day.getDate().toString());
+                row.createCell(col++).setCellValue(day.getDayOfWeek().toString());
+                row.createCell(col++).setCellValue(day.getInTime() != null ? day.getInTime().toString() : "-");
+                row.createCell(col++).setCellValue(day.getOutTime() != null ? day.getOutTime().toString() : "-");
+                row.createCell(col++)
+                        .setCellValue(day.getLateDurationMinutes() > 0 ? day.getLateDurationMinutes() + " min" : "-");
+                row.createCell(col++).setCellValue(
+                        day.getEarlyLeaveDurationMinutes() > 0 ? day.getEarlyLeaveDurationMinutes() + " min" : "-");
+                row.createCell(col++).setCellValue(day.getStatus());
+            }
+
+            // Summary Row
+            rowIdx++;
+            Row summaryRow = sheet.createRow(rowIdx);
+            summaryRow.createCell(0).setCellValue("Summary:");
+            summaryRow.createCell(1).setCellValue("P: " + report.getTotalPresent() + ", A: " + report.getTotalAbsent() +
+                    ", L: " + report.getTotalLates() + ", E: " + report.getTotalEarlyLeaves() +
+                    ", LV: " + report.getTotalLeaves());
+
+            for (int i = 0; i < columns.length; i++)
+                sheet.autoSizeColumn(i);
+            workbook.write(out);
+            return out.toByteArray();
+        }
+    }
+
+    public byte[] exportEmployeeWeeklyDetailCsv(EmployeeWeeklyDetailDto report) throws IOException {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream(); PrintWriter writer = new PrintWriter(out)) {
+            CSVFormat format = CSVFormat.DEFAULT.builder()
+                    .setHeader("Date", "Day", "In Time", "Out Time", "Late", "Early", "Status")
+                    .build();
+
+            try (CSVPrinter printer = new CSVPrinter(writer, format)) {
+                // Info as comment or first rows? CSV usually raw data. Let's keep it raw data
+                // table.
+                for (EmployeeWeeklyDetailDto.DailyDetail day : report.getDailyDetails()) {
+                    printer.printRecord(
+                            day.getDate(),
+                            day.getDayOfWeek(),
+                            day.getInTime() != null ? day.getInTime() : "-",
+                            day.getOutTime() != null ? day.getOutTime() : "-",
+                            day.getLateDurationMinutes() > 0 ? day.getLateDurationMinutes() + " min" : "-",
+                            day.getEarlyLeaveDurationMinutes() > 0 ? day.getEarlyLeaveDurationMinutes() + " min" : "-",
+                            day.getStatus());
+                }
+            }
+            return out.toByteArray();
+        }
+    }
+
+    // --- Single Employee Monthly Detail (and Range) ---
+
+    public byte[] exportEmployeeMonthlyDetailExcel(EmployeeMonthlyDetailDto report) throws IOException {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Monthly Sheet");
+            // Create style here to pass
+            CellStyle bold = workbook.createCellStyle();
+            Font f = workbook.createFont();
+            f.setBold(true);
+            bold.setFont(f);
+
+            createMonthlyDetailSheet(sheet, report, bold);
+            workbook.write(out);
+            return out.toByteArray();
+        }
+    }
+
+    public byte[] exportEmployeeRangeReportExcel(EmployeeRangeReportDto report) throws IOException {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+            // Create Styles Helper
+            CellStyle boldStyle = workbook.createCellStyle();
+            Font font = workbook.createFont();
+            font.setBold(true);
+            boldStyle.setFont(font);
+
+            // Summary Sheet
+            Sheet summarySheet = workbook.createSheet("Overall Summary");
+            Row r0 = summarySheet.createRow(0);
+            r0.createCell(0).setCellValue("Report for: " + report.getEmployeeName());
+            Row r1 = summarySheet.createRow(1);
+            r1.createCell(0).setCellValue("Period: " + report.getStartDate() + " to " + report.getEndDate());
+
+            Row r3 = summarySheet.createRow(3);
+            r3.createCell(0).setCellValue("Total Present: " + report.getTotalPresent());
+            Row r4 = summarySheet.createRow(4);
+            r4.createCell(0).setCellValue("Total Absent: " + report.getTotalAbsent());
+            Row r5 = summarySheet.createRow(5);
+            r5.createCell(0).setCellValue("Total Leaves: " + report.getTotalLeaves());
+
+            // Individual Sheets for months
+            int sheetCounter = 1;
+            for (EmployeeMonthlyDetailDto monthly : report.getMonthlyReports()) {
+                // Safe Sheet Name
+                String safeName = monthly.getMonth() + "-" + monthly.getYear();
+                // Ensure uniqueness if for some reason duplicates exist (though unlikely with
+                // current logic)
+                if (workbook.getSheet(safeName) != null) {
+                    safeName = safeName + " (" + sheetCounter++ + ")";
+                }
+
+                // Create sheet with safe name
+                Sheet mSheet = null;
+                try {
+                    mSheet = workbook.createSheet(safeName);
+                } catch (IllegalArgumentException e) {
+                    // Fallback for invalid chars
+                    mSheet = workbook.createSheet("Month-" + sheetCounter++);
+                }
+
+                createMonthlyDetailSheet(mSheet, monthly, boldStyle);
+            }
+
+            workbook.write(out);
+            return out.toByteArray();
+        }
+    }
+
+    private void createMonthlyDetailSheet(Sheet sheet, EmployeeMonthlyDetailDto report, CellStyle boldStyle) {
+        // Reuse passed style
+        if (boldStyle == null) {
+            boldStyle = sheet.getWorkbook().createCellStyle();
+            Font f = sheet.getWorkbook().createFont();
+            f.setBold(true);
+            boldStyle.setFont(f);
+        }
+
+        Row h1 = sheet.createRow(0);
+        h1.createCell(0).setCellValue("Month: " + report.getMonth() + "/" + report.getYear());
+
+        Row headerRow = sheet.createRow(2);
+        String[] columns = { "Date", "Day", "In Time", "Out Time", "Late", "Early", "Status" };
+
+        for (int i = 0; i < columns.length; i++) {
+            Cell c = headerRow.createCell(i);
+            c.setCellValue(columns[i]);
+            c.setCellStyle(boldStyle);
+        }
+
+        int idx = 3;
+        for (EmployeeWeeklyDetailDto.DailyDetail day : report.getDailyDetails()) {
+            Row row = sheet.createRow(idx++);
+            int c = 0;
+            row.createCell(c++).setCellValue(day.getDate().toString());
+            row.createCell(c++).setCellValue(day.getDayOfWeek().toString());
+            row.createCell(c++).setCellValue(day.getInTime() != null ? day.getInTime().toString() : "-");
+            row.createCell(c++).setCellValue(day.getOutTime() != null ? day.getOutTime().toString() : "-");
+            row.createCell(c++)
+                    .setCellValue(day.getLateDurationMinutes() > 0 ? day.getLateDurationMinutes() + " min" : "-");
+            row.createCell(c++).setCellValue(
+                    day.getEarlyLeaveDurationMinutes() > 0 ? day.getEarlyLeaveDurationMinutes() + " min" : "-");
+            row.createCell(c++).setCellValue(day.getStatus());
+        }
+        for (int i = 0; i < columns.length; i++)
+            sheet.autoSizeColumn(i);
+    }
+
+    public byte[] exportEmployeeMonthlyDetailCsv(EmployeeMonthlyDetailDto report) throws IOException {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream(); PrintWriter writer = new PrintWriter(out)) {
+            CSVFormat format = CSVFormat.DEFAULT.builder()
+                    .setHeader("Date", "Day", "In Time", "Out Time", "Late", "Early", "Status")
+                    .build();
+            try (CSVPrinter printer = new CSVPrinter(writer, format)) {
+                for (EmployeeWeeklyDetailDto.DailyDetail day : report.getDailyDetails()) {
+                    printer.printRecord(
+                            day.getDate(), day.getDayOfWeek(),
+                            day.getInTime() != null ? day.getInTime() : "-",
+                            day.getOutTime() != null ? day.getOutTime() : "-",
+                            day.getLateDurationMinutes() > 0 ? day.getLateDurationMinutes() + " min" : "-",
+                            day.getEarlyLeaveDurationMinutes() > 0 ? day.getEarlyLeaveDurationMinutes() + " min" : "-",
+                            day.getStatus());
+                }
+            }
+            return out.toByteArray();
+        }
+    }
+
+    public byte[] exportEmployeeRangeReportCsv(EmployeeRangeReportDto report) throws IOException {
+        // Flatten all months into one CSV
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream(); PrintWriter writer = new PrintWriter(out)) {
+            CSVFormat format = CSVFormat.DEFAULT.builder()
+                    .setHeader("Month", "Year", "Date", "Day", "In Time", "Out Time", "Late", "Early", "Status")
+                    .build();
+            try (CSVPrinter printer = new CSVPrinter(writer, format)) {
+                for (EmployeeMonthlyDetailDto monthly : report.getMonthlyReports()) {
+                    for (EmployeeWeeklyDetailDto.DailyDetail day : monthly.getDailyDetails()) {
+                        printer.printRecord(
+                                monthly.getMonth(), monthly.getYear(),
+                                day.getDate(), day.getDayOfWeek(),
+                                day.getInTime() != null ? day.getInTime() : "-",
+                                day.getOutTime() != null ? day.getOutTime() : "-",
+                                day.getLateDurationMinutes() > 0 ? day.getLateDurationMinutes() + " min" : "-",
+                                day.getEarlyLeaveDurationMinutes() > 0 ? day.getEarlyLeaveDurationMinutes() + " min"
+                                        : "-",
+                                day.getStatus());
+                    }
+                }
+            }
+            return out.toByteArray();
+        }
+    }
 }

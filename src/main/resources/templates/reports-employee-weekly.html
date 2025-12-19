@@ -11,6 +11,33 @@
             <div class="container-fluid mt-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h2>Employee Weekly Detail</h2>
+                    <!-- Multi-Format Export -->
+                    <div class="dropdown d-inline-block ms-auto align-top">
+                        <button class="btn btn-dark dropdown-toggle" type="button" id="exportDropdown"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-download me-1"></i> Export
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                            <li>
+                                <a class="dropdown-item"
+                                    th:href="@{/reports/weekly/{id}/pdf(id=${report.employeeId}, date=${startOfWeek})}">
+                                    <i class="fas fa-file-pdf text-danger me-2"></i> PDF
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                    th:href="@{/reports/weekly/{id}/excel(id=${report.employeeId}, date=${startOfWeek})}">
+                                    <i class="fas fa-file-excel text-success me-2"></i> Excel
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                    th:href="@{/reports/weekly/{id}/csv(id=${report.employeeId}, date=${startOfWeek})}">
+                                    <i class="fas fa-file-csv text-primary me-2"></i> CSV
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                     <a href="/reports/weekly" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left me-1"></i> Back to Weekly Report
                     </a>

@@ -70,17 +70,33 @@
                         </a>
 
                         <!-- Download Link Logic -->
-                        <!-- If Range -->
-                        <a th:if="${rangeReport != null}"
-                            th:href="@{'/reports/monthly/' + ${rangeReport.employeeId} + '/pdf?period=' + ${selectedPeriod}}"
-                            class="btn btn-dark ms-2 align-top">Download PDF</a>
-
-                        <!-- If Single -->
-                        <a th:if="${report != null}"
-                            th:href="@{'/reports/monthly/' + ${report.employeeId} + '/pdf?year=' + ${report.year} + '&month=' + ${report.month}}"
-                            class="btn btn-dark ms-2 align-top">Download PDF</a>
-
-                        <button onclick="window.print()" class="btn btn-primary ms-2 align-top">Print</button>
+                        <!-- Multi-Format Export -->
+                        <div class="dropdown d-inline-block ms-2 align-top">
+                            <button class="btn btn-dark dropdown-toggle" type="button" id="exportDropdown"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-download me-1"></i> Export
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                                <li>
+                                    <a class="dropdown-item"
+                                        th:href="@{/reports/monthly/{id}/pdf(id=${report != null ? report.employeeId : rangeReport.employeeId}, year=${selectedYear}, month=${selectedMonth}, period=${selectedPeriod})}">
+                                        <i class="fas fa-file-pdf text-danger me-2"></i> PDF
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item"
+                                        th:href="@{/reports/monthly/{id}/excel(id=${report != null ? report.employeeId : rangeReport.employeeId}, year=${selectedYear}, month=${selectedMonth}, period=${selectedPeriod})}">
+                                        <i class="fas fa-file-excel text-success me-2"></i> Excel
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item"
+                                        th:href="@{/reports/monthly/{id}/csv(id=${report != null ? report.employeeId : rangeReport.employeeId}, year=${selectedYear}, month=${selectedMonth}, period=${selectedPeriod})}">
+                                        <i class="fas fa-file-csv text-primary me-2"></i> CSV
+                                    </a>
+                                </li>
+                            </ul>
+                        </div><button onclick="window.print()" class="btn btn-primary ms-2 align-top">Print</button>
                     </div>
                 </div>
 

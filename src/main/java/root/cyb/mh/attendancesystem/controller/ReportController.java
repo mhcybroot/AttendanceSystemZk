@@ -594,4 +594,142 @@ public class ReportController {
                                 .contentType(org.springframework.http.MediaType.parseMediaType("text/csv"))
                                 .body(bytes);
         }
+
+        @GetMapping("/reports/weekly/{employeeId}/excel")
+        public org.springframework.http.ResponseEntity<byte[]> downloadEmployeeWeeklyReportExcel(
+                        @org.springframework.web.bind.annotation.PathVariable String employeeId,
+                        @RequestParam(required = false) LocalDate date) throws java.io.IOException {
+                if (date == null)
+                        date = LocalDate.now();
+                LocalDate startOfWeek = date
+                                .with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+
+                root.cyb.mh.attendancesystem.dto.EmployeeWeeklyDetailDto report = reportService
+                                .getEmployeeWeeklyReport(employeeId, startOfWeek);
+                byte[] bytes = exportService.exportEmployeeWeeklyDetailExcel(report);
+
+                return org.springframework.http.ResponseEntity.ok()
+                                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                                                "attachment; filename=emp_weekly_" + employeeId + "_" + startOfWeek
+                                                                + ".xlsx")
+                                .contentType(org.springframework.http.MediaType.parseMediaType(
+                                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                                .body(bytes);
+        }
+
+        @GetMapping("/reports/weekly/{employeeId}/csv")
+        public org.springframework.http.ResponseEntity<byte[]> downloadEmployeeWeeklyReportCsv(
+                        @org.springframework.web.bind.annotation.PathVariable String employeeId,
+                        @RequestParam(required = false) LocalDate date) throws java.io.IOException {
+                if (date == null)
+                        date = LocalDate.now();
+                LocalDate startOfWeek = date
+                                .with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+
+                root.cyb.mh.attendancesystem.dto.EmployeeWeeklyDetailDto report = reportService
+                                .getEmployeeWeeklyReport(employeeId, startOfWeek);
+                byte[] bytes = exportService.exportEmployeeWeeklyDetailCsv(report);
+
+                return org.springframework.http.ResponseEntity.ok()
+                                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                                                "attachment; filename=emp_weekly_" + employeeId + "_" + startOfWeek
+                                                                + ".csv")
+                                .contentType(org.springframework.http.MediaType.parseMediaType("text/csv"))
+                                .body(bytes);
+        }
+
+        @GetMapping("/reports/monthly/{employeeId}/excel")
+        public org.springframework.http.ResponseEntity<byte[]> downloadEmployeeMonthlyReportExcel(
+                        @org.springframework.web.bind.annotation.PathVariable String employeeId,
+                        @RequestParam(required = false) Integer year,
+                        @RequestParam(required = false) Integer month,
+                        @RequestParam(required = false) String period) throws java.io.IOException {
+
+                byte[] bytes;
+                String filename;
+                LocalDate now = LocalDate.now();
+
+                if (period != null && !period.isEmpty()) {
+                        // Range Logic Reuse
+                        LocalDate startDate;
+                        LocalDate endDate = now;
+                        if ("3M".equals(period))
+                                startDate = now.minusMonths(2).withDayOfMonth(1);
+                        else if ("6M".equals(period))
+                                startDate = now.minusMonths(5).withDayOfMonth(1);
+                        else if ("1Y".equals(period))
+                                startDate = now.minusMonths(11).withDayOfMonth(1);
+                        else
+                                startDate = now.withDayOfMonth(1);
+
+                        root.cyb.mh.attendancesystem.dto.EmployeeRangeReportDto report = reportService
+                                        .getEmployeeRangeReport(employeeId, startDate, endDate);
+                        bytes = exportService.exportEmployeeRangeReportExcel(report);
+                        filename = "emp_range_" + employeeId + "_" + period + ".xlsx";
+
+                } else {
+                        if (year == null || month == null) {
+                                year = now.getYear();
+                                month = now.getMonthValue();
+                        }
+                        root.cyb.mh.attendancesystem.dto.EmployeeMonthlyDetailDto report = reportService
+                                        .getEmployeeMonthlyReport(employeeId, year, month);
+                        bytes = exportService.exportEmployeeMonthlyDetailExcel(report);
+                        filename = "emp_monthly_" + employeeId + "_" + month + "_" + year + ".xlsx";
+                }
+
+                return org.springframework.http.ResponseEntity.ok()
+                                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                                                "attachment; filename=" + filename)
+                                .contentType(org.springframework.http.MediaType.parseMediaType(
+                                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                                .body(bytes);
+        }
+
+        @GetMapping("/reports/monthly/{employeeId}/csv")
+        public org.springframework.http.ResponseEntity<byte[]> downloadEmployeeMonthlyReportCsv(
+                        @org.springframework.web.bind.annotation.PathVariable String employeeId,
+                        @RequestParam(required = false) Integer year,
+                        @RequestParam(required = false) Integer month,
+                        @RequestParam(required = false) String period) throws java.io.IOException {
+
+                byte[] bytes;
+                String filename;
+                LocalDate now = LocalDate.now();
+
+                if (period != null && !period.isEmpty()) {
+                        // Range Logic Reuse
+                        LocalDate startDate;
+                        LocalDate endDate = now;
+                        if ("3M".equals(period))
+                                startDate = now.minusMonths(2).withDayOfMonth(1);
+                        else if ("6M".equals(period))
+                                startDate = now.minusMonths(5).withDayOfMonth(1);
+                        else if ("1Y".equals(period))
+                                startDate = now.minusMonths(11).withDayOfMonth(1);
+                        else
+                                startDate = now.withDayOfMonth(1);
+
+                        root.cyb.mh.attendancesystem.dto.EmployeeRangeReportDto report = reportService
+                                        .getEmployeeRangeReport(employeeId, startDate, endDate);
+                        bytes = exportService.exportEmployeeRangeReportCsv(report);
+                        filename = "emp_range_" + employeeId + "_" + period + ".csv";
+
+                } else {
+                        if (year == null || month == null) {
+                                year = now.getYear();
+                                month = now.getMonthValue();
+                        }
+                        root.cyb.mh.attendancesystem.dto.EmployeeMonthlyDetailDto report = reportService
+                                        .getEmployeeMonthlyReport(employeeId, year, month);
+                        bytes = exportService.exportEmployeeMonthlyDetailCsv(report);
+                        filename = "emp_monthly_" + employeeId + "_" + month + "_" + year + ".csv";
+                }
+
+                return org.springframework.http.ResponseEntity.ok()
+                                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                                                "attachment; filename=" + filename)
+                                .contentType(org.springframework.http.MediaType.parseMediaType("text/csv"))
+                                .body(bytes);
+        }
 }
