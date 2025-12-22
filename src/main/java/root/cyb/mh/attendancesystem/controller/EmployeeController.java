@@ -67,6 +67,7 @@ public class EmployeeController {
                 existing.setGuest(employee.isGuest()); // Use correct getter/setter
                 existing.setAnnualLeaveQuota(employee.getAnnualLeaveQuota()); // Update Quota
                 existing.setJoiningDate(employee.getJoiningDate()); // Update Joining Date
+                existing.setMonthlySalary(employee.getMonthlySalary()); // Update Monthly Salary
 
                 // Update Password only if provided
                 if (employee.getUsername() != null && !employee.getUsername().isEmpty()) {

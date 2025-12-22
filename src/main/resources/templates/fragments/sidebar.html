@@ -41,6 +41,12 @@
                     th:classappend="${activeLink == 'leave-calendar'} ? 'active'">
                     <i class="fas fa-calendar-check me-2"></i> Leave Calendar
                 </a>
+
+                <div class="sidebar-heading border-bottom bg-dark text-muted small py-2">FINANCE</div>
+                <a href="/payroll" class="list-group-item list-group-item-action"
+                    th:classappend="${activeLink == 'payroll'} ? 'active'">
+                    <i class="fas fa-money-bill-wave me-2"></i> Payroll
+                </a>
             </div>
 
             <!-- Employee Navigation -->
@@ -56,6 +62,10 @@
                 <a href="/leave/employee" class="list-group-item list-group-item-action"
                     th:classappend="${activeLink == 'leave'} ? 'active'">
                     <i class="fas fa-calendar-check me-2"></i> My Leave
+                </a>
+                <a href="/employee/payroll" class="list-group-item list-group-item-action"
+                    th:classappend="${activeLink == 'payroll'} ? 'active'">
+                    <i class="fas fa-file-invoice-dollar me-2"></i> My Payslips
                 </a>
             </div>
 

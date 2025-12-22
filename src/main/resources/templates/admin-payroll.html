@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Payroll Management</title>
+</head>
+
+<body>
+    <div th:replace="~{layout :: layout(~{::section}, ~{::script}, 'payroll')}">
+        <section>
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Payroll Management</h1>
+            </div>
+
+            <!-- Generator Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header-custom">
+                    <i class="fas fa-cogs me-2"></i> Generate Payroll
+                </div>
+                <div class="card-body">
+                    <form action="/payroll/run" method="post" class="row g-3 align-items-center">
+                        <div class="col-auto">
+                            <label for="month" class="col-form-label">Select Month:</label>
+                        </div>
+                        <div class="col-auto">
+                            <input type="month" id="month" name="month" class="form-control" required>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-play me-2"></i> Run Payroll
+                            </button>
+                        </div>
+                        <div class="col-auto text-muted small">
+                            * Calculates for all employees. Skips if already generated.
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Recent Payslips -->
+            <div class="card shadow-sm">
+                <div class="card-header-custom">
+                    <i class="fas fa-history me-2"></i> Recent Payslips
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Month</th>
+                                    <th>Employee</th>
+                                    <th>Basic Salary</th>
+                                    <th>Working Days</th>
+                                    <th>Deducted (Days)</th>
+                                    <th>Net Salary</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="slip : ${payslips}">
+                                    <td th:text="${slip.month}">2023-12</td>
+                                    <td>
+                                        <div class="fw-bold" th:text="${slip.employee.name}">John Doe</div>
+                                        <small class="text-muted" th:text="${slip.employee.id}">ID: 1</small>
+                                    </td>
+                                    <td th:text="${slip.basicSalary}">3000.0</td>
+                                    <td th:text="${slip.totalWorkingDays}">20</td>
+                                    <td>
+                                        <span class="text-danger fw-bold"
+                                            th:text="${'-' + slip.deductionAmount}">-100.0</span>
+                                        <small class="text-muted d-block"
+                                            th:text="${(slip.absentDays + slip.unpaidLeaveDays) + ' days'}">2
+                                            days</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success fs-6" th:text="${slip.netSalary}">2900.0</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary" th:text="${slip.status}">DRAFT</span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${payslips.isEmpty()}">
+                                    <td colspan="7" class="text-center text-muted py-4">
+                                        No payslips generated yet.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <script></script>
+    </div>
+</body>
+
+</html>

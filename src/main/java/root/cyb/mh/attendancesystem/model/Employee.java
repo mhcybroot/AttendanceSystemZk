@@ -41,6 +41,9 @@ public class Employee {
 
     private String avatarPath;
 
+    // Payroll
+    private Double monthlySalary;
+
     public int getEffectiveQuota(int globalDefault) {
         return annualLeaveQuota != null ? annualLeaveQuota : globalDefault;
     }

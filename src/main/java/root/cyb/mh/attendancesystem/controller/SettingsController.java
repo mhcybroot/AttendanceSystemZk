@@ -47,6 +47,10 @@ public class SettingsController {
         // Save Default Annual Leave Quota
         existing.setDefaultAnnualLeaveQuota(schedule.getDefaultAnnualLeaveQuota());
 
+        // Save Late Penalty Settings
+        existing.setLatePenaltyThreshold(schedule.getLatePenaltyThreshold());
+        existing.setLatePenaltyDeduction(schedule.getLatePenaltyDeduction());
+
         // Convert list [6, 7] to string "6,7"
         if (weekendDaysList != null) {
             existing.setWeekendDays(

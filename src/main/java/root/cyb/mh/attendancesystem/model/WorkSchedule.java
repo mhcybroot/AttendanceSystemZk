@@ -29,6 +29,10 @@ public class WorkSchedule {
 
     private Integer defaultAnnualLeaveQuota = 12; // Days per year
 
+    // Late Penalty Config
+    private Integer latePenaltyThreshold = 3; // e.g. every 3 late days
+    private Double latePenaltyDeduction = 0.5; // deduct 0.5 day salary
+
     // Default constructor with standard values if needed
     public WorkSchedule() {
         this.startTime = LocalTime.of(9, 0);

@@ -55,9 +55,15 @@
                                         </small>
                                     </td>
                                     <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-secondary me-1"
+                                            th:onclick="viewRequest([[${req.employee.name}]], [[${req.employee.department != null ? req.employee.department.name : 'No Dept'}]], [[${req.leaveType}]], [[${req.startDate} + ' to ' + ${req.endDate}]], [[${req.reason}]], [[${req.status}]])"
+                                            title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+
                                         <!-- Actions only available if Pending OR if User is Admin (Override) -->
                                         <!-- HR Constraint: Can only edit PENDING -->
-                                        <div
+                                        <div class="d-inline-block"
                                             th:if="${req.status.name() == 'PENDING' or #authorization.expression('hasRole(''ADMIN'')')}">
                                             <button class="btn btn-sm btn-success me-1" data-bs-toggle="modal"
                                                 data-bs-target="#actionModal" th:data-id="${req.id}"
@@ -120,6 +126,42 @@
                     </form>
                 </div>
             </div>
+
+            <!-- View Details Modal -->
+            <div class="modal fade" id="viewModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Leave Request Details</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <h5 id="viewName" class="mb-1">John Doe</h5>
+                            <p class="text-muted small mb-3" id="viewDept">Department</p>
+
+                            <dl class="row">
+                                <dt class="col-sm-4">Leave Type:</dt>
+                                <dd class="col-sm-8"><span class="badge bg-secondary" id="viewType">TYPE</span></dd>
+
+                                <dt class="col-sm-4">Dates:</dt>
+                                <dd class="col-sm-8" id="viewDates">Jan 1 - Jan 2</dd>
+
+                                <dt class="col-sm-4">Status:</dt>
+                                <dd class="col-sm-8" id="viewStatus">PENDING</dd>
+
+                                <dt class="col-sm-4 mt-2">Reason:</dt>
+                                <dd class="col-sm-12 mt-1 p-3 bg-light rounded" id="viewReason">
+                                    Full reason text...
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </section>
 
         <script>
@@ -137,6 +179,17 @@
                 modalActionStatus.value = action
                 modalMessage.textContent = `Are you sure you want to mark this request as ${action}?`
             })
+
+            function viewRequest(name, dept, type, dates, reason, status) {
+                document.getElementById('viewName').textContent = name;
+                document.getElementById('viewDept').textContent = dept;
+                document.getElementById('viewType').textContent = type;
+                document.getElementById('viewDates').textContent = dates;
+                document.getElementById('viewReason').textContent = reason;
+                document.getElementById('viewStatus').textContent = status;
+
+                new bootstrap.Modal(document.getElementById('viewModal')).show();
+            }
         </script>
     </div>
 </body>

@@ -115,7 +115,7 @@
                                                 th:data-role="${emp.role}" th:data-email="${emp.email}"
                                                 th:data-dept-id="${emp.department != null ? emp.department.id : ''}"
                                                 th:data-quota="${emp.annualLeaveQuota}"
-                                                th:data-is-guest="${emp.isGuest}"
+                                                th:data-salary="${emp.monthlySalary}" th:data-is-guest="${emp.isGuest}"
                                                 th:data-joining-date="${emp.joiningDate}" onclick="editEmployee(this)">
                                                 Edit
                                             </button>
@@ -191,6 +191,11 @@
                                             placeholder="Leave empty to use Global Default">
                                     </div>
                                     <div class="mb-3">
+                                        <label class="form-label">Monthly Salary</label>
+                                        <input type="number" step="0.01" class="form-control" name="monthlySalary"
+                                            id="monthlySalary" placeholder="Enter basic monthly salary">
+                                    </div>
+                                    <div class="mb-3">
                                         <label class="form-label">Joining Date</label>
                                         <input type="date" class="form-control" id="empJoiningDate" name="joiningDate">
                                     </div>
@@ -254,6 +259,7 @@
                 document.getElementById('empEmail').value = email;
                 document.getElementById('empDept').value = deptId;
                 document.getElementById('empQuota').value = btn.getAttribute('data-quota');
+                document.getElementById('monthlySalary').value = btn.getAttribute('data-salary');
                 document.getElementById('empIsGuest').checked = isGuest;
                 document.getElementById('empJoiningDate').value = joiningDate;
                 new bootstrap.Modal(document.getElementById('addEmployeeModal')).show();
@@ -270,6 +276,7 @@
                 document.getElementById('empDept').value = '';
                 document.getElementById('empIsGuest').checked = false;
                 document.getElementById('empQuota').value = '';
+                document.getElementById('monthlySalary').value = '';
                 document.getElementById('empJoiningDate').value = '';
                 document.getElementById('empUsername').value = ''; // Clear username
             });
@@ -283,6 +290,7 @@
             document.getElementById('empEmail').value = '';
             document.getElementById('empDept').value = '';
             document.getElementById('empQuota').value = '';
+            document.getElementById('monthlySalary').value = '';
 
             // Bulk Actions Logic
             function toggleAll(source) {

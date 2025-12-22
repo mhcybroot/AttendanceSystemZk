@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Payroll Details</title>
+    <style>
+        .badge-pill {
+            border-radius: 50rem;
+            padding: 0.5em 1em;
+        }
+
+        .bg-soft-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .bg-soft-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        /* Print Styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #payslipModal,
+            #payslipModal * {
+                visibility: visible;
+            }
+
+            #payslipModal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+            }
+
+            .modal-footer,
+            .btn-close {
+                display: none !important;
+            }
+        }
+
+        .payslip-container {
+            border: 2px solid #333;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            background: white;
+        }
+
+        .payslip-header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+        }
+
+        .payslip-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .payslip-divider {
+            border-top: 1px dashed #999;
+            margin: 10px 0;
+        }
+
+        .net-pay-box {
+            border: 2px solid #333;
+            padding: 10px;
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+
+<body>
+    <div th:replace="~{layout :: layout(~{::section}, ~{::script}, 'payroll')}">
+        <section>
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Payroll: <span th:text="${month}" class="text-primary">2023-12</span></h1>
+
+                <div class="d-flex align-items-center">
+                    <!-- Inline Filter (Like Attendance) -->
+                    <form th:action="@{'/payroll/details/' + ${month}}" method="get" class="d-flex me-3">
+                        <select name="departmentIds" class="form-select me-2" onchange="this.form.submit()">
+                            <option value="">All Departments</option>
+                            <option th:each="dept : ${departments}" th:value="${dept.id}" th:text="${dept.name}"
+                                th:selected="${selectedDeptIds != null && selectedDeptIds.contains(dept.id)}">
+                            </option>
+                        </select>
+                        <noscript><button type="submit" class="btn btn-outline-primary">Filter</button></noscript>
+                    </form>
+
+                    <a href="/payroll" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-3 border-bottom-0" id="payrollTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" id="drafts-tab" data-bs-toggle="tab" data-bs-target="#drafts"
+                        type="button">
+                        <i class="fas fa-file-contract me-2"></i>Drafts
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="paid-tab" data-bs-toggle="tab" data-bs-target="#paid" type="button">
+                        <i class="fas fa-check-circle me-2"></i>Paid History
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="payrollTabsContent">
+
+                <!-- Drafts Tab -->
+                <div class="tab-pane fade show active" id="drafts">
+                    <div class="mb-3 text-end">
+                        <form th:action="@{/payroll/status/bulk-paid}" method="post"
+                            onsubmit="return confirm('Mark ALL Drafts as PAID?');" class="d-inline">
+                            <input type="hidden" name="month" th:value="${month}">
+                            <button type="submit" class="btn btn-success shadow-sm">
+                                <i class="fas fa-check-double me-1"></i> Finalize Batch (Mark Paid)
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="card shadow border-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Attendance</th>
+                                        <th>Deductions</th>
+                                        <th>Net Salary</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="slip : ${payslips}" th:if="${slip.status.name() == 'DRAFT'}">
+                                        <td>
+                                            <div class="fw-bold" th:text="${slip.employee.name}">Name</div>
+                                            <div class="small text-muted"
+                                                th:text="${slip.employee.department != null ? slip.employee.department.name : 'No Dept'}">
+                                                Dept</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark border">
+                                                <i class="fas fa-clock me-1"></i>
+                                                <span th:text="${slip.totalWorkingDays}">20</span> days
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="text-danger"
+                                                th:text="${'-' + #numbers.formatCurrency(slip.deductionAmount)}">-$100</span>
+                                            <div class="small text-muted" th:if="${slip.absentDays > 0}"
+                                                th:text="${slip.absentDays + ' Absent'}">2 Abs</div>
+                                            <div class="small text-danger"
+                                                th:if="${slip.latePenaltyAmount != null and slip.latePenaltyAmount > 0}">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>Late Penalty
+                                            </div>
+                                        </td>
+                                        <td class="fw-bold text-primary"
+                                            th:text="${#numbers.formatCurrency(slip.netSalary)}">$2000</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info me-1"
+                                                th:onclick="showPayslipModal([[${slip.employee.name}]], [[${month}]], [[${slip.basicSalary}]], [[${slip.deductionAmount}]], [[${slip.netSalary}]], [[${slip.totalWorkingDays}]], [[${slip.presentDays}]], [[${slip.absentDays}]], [[${slip.lateDays}]], [[${slip.latePenaltyAmount}]])">
+                                                <i class="fas fa-file-invoice"></i>
+                                            </button>
+                                            <a th:href="@{/payroll/delete/{id}(id=${slip.id})}"
+                                                class="btn btn-sm btn-outline-danger border me-1"
+                                                onclick="return confirm('Are you sure?');">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                            <form th:action="@{/payroll/status/update}" method="post" class="d-inline">
+                                                <input type="hidden" name="payslipId" th:value="${slip.id}">
+                                                <input type="hidden" name="status" value="PAID">
+                                                <button type="submit" class="btn btn-sm btn-success rounded-circle"
+                                                    title="Mark Paid">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paid Tab -->
+                <div class="tab-pane fade" id="paid">
+                    <div class="card shadow-sm border-0 bg-light">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Processed</th>
+                                        <th>Net Salary</th>
+                                        <th>Status</th>
+                                        <th>View</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="slip : ${payslips}" th:if="${slip.status.name() == 'PAID'}">
+                                        <td th:text="${slip.employee.name}">John Doe</td>
+                                        <td th:text="${#temporals.format(slip.generatedAt, 'MMM dd, HH:mm')}">Date</td>
+                                        <td class="fw-bold text-success"
+                                            th:text="${#numbers.formatCurrency(slip.netSalary)}">$2000</td>
+                                        <td><span class="badge bg-soft-success badge-pill">PAID <i
+                                                    class="fas fa-lock ms-1"></i></span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-light border"
+                                                th:onclick="showPayslipModal([[${slip.employee.name}]], [[${month}]], [[${slip.basicSalary}]], [[${slip.deductionAmount}]], [[${slip.netSalary}]], [[${slip.totalWorkingDays}]], [[${slip.presentDays}]], [[${slip.absentDays}]], [[${slip.lateDays}]], [[${slip.latePenaltyAmount}]])">
+                                                <i class="fas fa-print"></i>
+                                            </button>
+                                            <a th:href="@{/payroll/delete/{id}(id=${slip.id})}"
+                                                class="btn btn-sm btn-outline-danger border"
+                                                onclick="return confirm('Delete this record?');">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payslip Modal (Moved to Bottom to avoid Z-Index Issues) -->
+            <div class="modal fade" id="payslipModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Payslip Preview</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="payslip-container border p-4 rounded bg-white">
+                                <!-- Header -->
+                                <div class="text-center mb-4">
+                                    <h2 class="fw-bold mb-0 text-uppercase" th:text="${companyName}">Company Name</h2>
+                                    <p class="text-muted small">Official Payslip</p>
+                                </div>
+
+                                <!-- Info Grid -->
+                                <div class="row mb-4">
+                                    <div class="col-6">
+                                        <h6 class="text-uppercase text-secondary small mb-1">Employee</h6>
+                                        <div class="fw-bold fs-5" id="psName">John Doe</div>
+                                        <div class="small text-muted" id="psRole">Employee</div>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <h6 class="text-uppercase text-secondary small mb-1">Pay Period</h6>
+                                        <div class="fw-bold fs-5" id="psMonth">2023-12</div>
+                                        <div class="small text-muted">Generated Automatically</div>
+                                    </div>
+                                </div>
+
+                                <!-- Attendance Summary -->
+                                <div class="row mb-3 gx-2 text-center text-muted small">
+                                    <div class="col border-end">
+                                        <div class="fw-bold">Working Days</div>
+                                        <div id="psWorkingDays">20</div>
+                                    </div>
+                                    <div class="col border-end">
+                                        <div class="fw-bold text-success">Present</div>
+                                        <div id="psPresent">18</div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="fw-bold text-danger">Absent</div>
+                                        <div id="psAbsent">2</div>
+                                    </div>
+                                </div>
+
+                                <!-- Details Table -->
+                                <div class="table-responsive mb-4">
+                                    <table class="table table-bordered mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="w-50">Earnings</th>
+                                                <th class="text-end">Amount</th>
+                                                <th class="w-50">Deductions</th>
+                                                <th class="text-end">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Basic Salary</td>
+                                                <td class="text-end" id="psBasic">$3000.00</td>
+                                                <td class="text-danger">Total Deductions</td>
+                                                <td class="text-end text-danger" id="psDeductions">-$200.00</td>
+                                            </tr>
+                                            <!-- Late Penalty Dynamic Row -->
+                                            <tr id="lateRow" style="display:none;">
+                                                <td></td>
+                                                <td></td>
+                                                <td class="text-warning">Late Penalty <span id="psLateCount"></span>
+                                                </td>
+                                                <td class="text-end text-warning" id="psLateAmt">-$0.00</td>
+                                            </tr>
+                                        </tbody>
+                                        <tfoot class="table-light">
+                                            <tr>
+                                                <td colspan="3" class="text-end fw-bold text-uppercase">Net Payable</td>
+                                                <td class="text-end fw-bold fs-5 text-dark" id="psNet">$2800.00</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+
+                                <!-- Footer -->
+                                <div class="row mt-5">
+                                    <div class="col-6">
+                                        <div class="border-top border-dark w-75 pt-2 text-center">
+                                            <small class="text-muted text-uppercase">Employee Signature</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <div class="border-top border-dark w-75 ms-auto pt-2 text-center">
+                                            <small class="text-muted text-uppercase">Authorized Signature</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="z-index: 1060; position: relative;">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-success" onclick="downloadPdf()">Download PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <script>
+            function downloadPdf() {
+                const element = document.querySelector('.payslip-container');
+                const body = document.body;
+
+                // 1. Apply Official Mode to Body (triggers CSS)
+                body.classList.add('official-pdf-mode');
+
+                const name = document.getElementById('psName').innerText;
+                const month = document.getElementById('psMonth').innerText;
+
+                const opt = {
+                    margin: 0.5,
+                    filename: `Payslip_${name}_${month}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, scrollX: 0, scrollY: 0 },
+                    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                };
+
+                // 2. Generate and Revert
+                html2pdf().set(opt).from(element).save().then(() => {
+                    body.classList.remove('official-pdf-mode');
+                }).catch(err => {
+                    console.error(err);
+                    body.classList.remove('official-pdf-mode');
+                });
+            }
+
+            function showPayslipModal(name, month, basic, ded, net, working, present, absent, lateDays, lateAmt) {
+                document.getElementById('psName').innerText = name;
+                document.getElementById('psMonth').innerText = 'Month: ' + month;
+                // Simple formatting
+                const fmt = (num) => '$' + parseFloat(num).toFixed(2);
+                document.getElementById('psBasic').innerText = fmt(basic);
+                document.getElementById('psDeductions').innerText = '-' + fmt(ded);
+                document.getElementById('psNet').innerText = fmt(net);
+
+                document.getElementById('psWorkingDays').innerText = working;
+                document.getElementById('psPresent').innerText = present;
+                document.getElementById('psAbsent').innerText = absent;
+
+                // Late Logic
+                if (lateAmt && parseFloat(lateAmt) > 0) {
+                    document.getElementById('lateRow').style.display = 'table-row';
+                    document.getElementById('psLateCount').innerText = '(' + lateDays + ' days)';
+                    document.getElementById('psLateAmt').innerText = '-' + fmt(lateAmt);
+                } else {
+                    document.getElementById('lateRow').style.display = 'none';
+                }
+
+                new bootstrap.Modal(document.getElementById('payslipModal')).show();
+            }
+        </script>
+    </div>
+</body>
+
+</html>
