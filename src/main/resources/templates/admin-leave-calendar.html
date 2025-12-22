@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Who's Out Calendar</title>
+</head>
+
+<body>
+    <div th:replace="~{layout :: layout(~{::section}, ~{::script}, 'leave-calendar')}">
+        <section>
+            <!-- Page Header -->
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Who's Out Calendar</h1>
+            </div>
+
+            <!-- Calendar Card -->
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div id="calendar" style="min-height: 700px;"></div>
+                </div>
+            </div>
+        </section>
+
+        <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+        <script th:inline="javascript">
+            document.addEventListener('DOMContentLoaded', function () {
+                var calendarEl = document.getElementById('calendar');
+                var events = JSON.parse(/*[[${calendarEvents}]]*/ '[]');
+
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,listWeek'
+                    },
+                    events: events,
+                    eventClick: function (info) {
+                        alert('Leave Detail: ' + info.event.title);
+                    },
+                    height: 'auto'
+                });
+                calendar.render();
+            });
+        </script>
+    </div>
+</body>
+
+</html>

@@ -97,4 +97,47 @@ public class LeaveController {
         leaveService.deleteRequest(id);
         return "redirect:/leave/manage";
     }
+
+    @Autowired
+    private root.cyb.mh.attendancesystem.repository.LeaveRequestRepository leaveRequestRepository;
+
+    @GetMapping("/calendar")
+    public String leaveCalendar(Model model) {
+        // Fetch Approved Leaves
+        List<LeaveRequest> approvedLeaves = leaveRequestRepository
+                .findByStatusOrderByCreatedAtDesc(LeaveRequest.Status.APPROVED);
+
+        // Convert to simple JSON for FullCalendar
+        StringBuilder jsonEvents = new StringBuilder("[");
+        for (int i = 0; i < approvedLeaves.size(); i++) {
+            LeaveRequest leave = approvedLeaves.get(i);
+            String empName = leave.getEmployee().getName().replace("\"", "'"); // Escape quotes
+
+            jsonEvents.append("{");
+            jsonEvents.append("\"title\": \"").append(empName).append(" - ").append(leave.getLeaveType()).append("\",");
+            jsonEvents.append("\"start\": \"").append(leave.getStartDate()).append("\",");
+            // Add 1 day to end date because FullCalendar end is exclusive
+            jsonEvents.append("\"end\": \"").append(leave.getEndDate().plusDays(1)).append("\",");
+
+            // Color coding
+            String color = "#0d6efd"; // Default Blue
+            if (leave.getLeaveType().equalsIgnoreCase("SICK"))
+                color = "#dc3545"; // Red
+            else if (leave.getLeaveType().equalsIgnoreCase("CASUAL"))
+                color = "#ffc107"; // Yellow/Warning
+
+            jsonEvents.append("\"color\": \"").append(color).append("\"");
+            jsonEvents.append("}");
+
+            if (i < approvedLeaves.size() - 1) {
+                jsonEvents.append(",");
+            }
+        }
+        jsonEvents.append("]");
+
+        model.addAttribute("calendarEvents", jsonEvents.toString());
+        model.addAttribute("activeLink", "leave-calendar");
+
+        return "admin-leave-calendar";
+    }
 }
