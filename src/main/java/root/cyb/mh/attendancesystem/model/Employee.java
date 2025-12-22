@@ -39,6 +39,8 @@ public class Employee {
 
     private java.time.LocalDate joiningDate;
 
+    private String avatarPath;
+
     public int getEffectiveQuota(int globalDefault) {
         return annualLeaveQuota != null ? annualLeaveQuota : globalDefault;
     }

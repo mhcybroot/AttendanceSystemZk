@@ -22,6 +22,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import root.cyb.mh.attendancesystem.dto.DailyAttendanceDto;
 import root.cyb.mh.attendancesystem.dto.MonthlySummaryDto;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 
 @Controller
 public class EmployeeDashboardController {
@@ -43,6 +51,9 @@ public class EmployeeDashboardController {
 
     @Autowired
     private PdfExportService pdfExportService;
+
+    @Autowired
+    private root.cyb.mh.attendancesystem.service.BadgeService badgeService;
 
     @GetMapping("/employee/dashboard")
     public String dashboard(Model model, Principal principal) {
@@ -76,11 +87,16 @@ public class EmployeeDashboardController {
             model.addAttribute("lateCount", monthlyReport.getTotalLates());
             model.addAttribute("earlyCount", monthlyReport.getTotalEarlyLeaves());
             model.addAttribute("leaveCount", monthlyReport.getTotalLeaves());
+
+            // Calculate Badges
+            List<String> badges = badgeService.calculateBadges(monthlyReport, null);
+            model.addAttribute("badges", badges);
         } else {
             model.addAttribute("daysPresent", 0);
             model.addAttribute("lateCount", 0);
             model.addAttribute("earlyCount", 0);
             model.addAttribute("leaveCount", 0);
+            model.addAttribute("badges", new java.util.ArrayList<>());
         }
 
         // 5. Annual Quota Stats (Using Range Report for Year)
@@ -287,5 +303,32 @@ public class EmployeeDashboardController {
         response.setHeader("Content-Disposition",
                 "attachment; filename=Attendance_Report_" + period + "_" + System.currentTimeMillis() + ".pdf");
         response.getOutputStream().write(pdfBytes);
+    }
+
+    @PostMapping("/employee/profile/upload")
+    public String uploadProfilePicture(@RequestParam("file") MultipartFile file, Principal principal) {
+        if (!file.isEmpty()) {
+            try {
+                String uploadDir = "uploads/";
+                java.io.File directory = new java.io.File(uploadDir);
+                if (!directory.exists()) {
+                    directory.mkdirs();
+                }
+
+                String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+                Path path = Paths.get(uploadDir + fileName);
+                Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
+                String employeeId = principal.getName();
+                Employee employee = employeeRepository.findById(employeeId).orElse(null);
+                if (employee != null) {
+                    employee.setAvatarPath("/uploads/" + fileName);
+                    employeeRepository.save(employee);
+                }
+            } catch (IOException e) {
+                e.printStackTrace(); // Handle error gracefully in real app
+            }
+        }
+        return "redirect:/employee/dashboard";
     }
 }

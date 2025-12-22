@@ -22,7 +22,7 @@ public class ReportController {
 
         @GetMapping("/reports")
         public String reports(@RequestParam(required = false) LocalDate date,
-                        @RequestParam(required = false) Long departmentId,
+                        @RequestParam(required = false) List<Long> departmentId,
                         @RequestParam(required = false) String status,
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "10") int size,
@@ -32,9 +32,6 @@ public class ReportController {
                 if (date == null) {
                         date = LocalDate.now();
                 }
-
-                // ... (Comments about sorting kept conceptual, skipping for brevity in
-                // replacement if unchanged usually, but here I replace the block)
 
                 org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page,
                                 size);
@@ -85,7 +82,8 @@ public class ReportController {
 
                 model.addAttribute("date", date);
                 model.addAttribute("departments", departmentRepository.findAll());
-                model.addAttribute("selectedDeptId", departmentId);
+                // Pass list or singular? UI expects list for checks
+                model.addAttribute("selectedDept", departmentId); // Changed attrib name to match monthly/weekly
                 model.addAttribute("selectedStatus", status);
 
                 model.addAttribute("sortField", sortField);
@@ -97,7 +95,7 @@ public class ReportController {
 
         @GetMapping("/reports/weekly")
         public String weeklyReports(@RequestParam(required = false) LocalDate date,
-                        @RequestParam(required = false) Long departmentId,
+                        @RequestParam(required = false) List<Long> departmentId,
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "10") int size,
                         @RequestParam(defaultValue = "name") String sortField,
@@ -330,7 +328,7 @@ public class ReportController {
         @GetMapping("/reports/daily/pdf")
         public org.springframework.http.ResponseEntity<byte[]> downloadDailyReportPdf(
                         @RequestParam(required = false) LocalDate date,
-                        @RequestParam(required = false) Long departmentId,
+                        @RequestParam(required = false) List<Long> departmentId,
                         @RequestParam(required = false) String status)
                         throws java.io.IOException, com.lowagie.text.DocumentException {
                 if (date == null)
@@ -340,9 +338,12 @@ public class ReportController {
                                 departmentId, status, org.springframework.data.domain.PageRequest.of(0, 10000))
                                 .getContent();
                 String deptName = "All Departments";
-                if (departmentId != null) {
-                        deptName = departmentRepository.findById(departmentId)
-                                        .map(root.cyb.mh.attendancesystem.model.Department::getName).orElse("Unknown");
+                if (departmentId != null && !departmentId.isEmpty()) {
+                        deptName = departmentId.size() == 1
+                                        ? departmentRepository.findById(departmentId.get(0))
+                                                        .map(root.cyb.mh.attendancesystem.model.Department::getName)
+                                                        .orElse("Unknown")
+                                        : "Multiple Departments (" + departmentId.size() + ")";
                 }
 
                 byte[] pdfBytes = pdfExportService.exportDailyReport(report, date, deptName);
@@ -358,7 +359,7 @@ public class ReportController {
         @GetMapping("/reports/weekly/pdf")
         public org.springframework.http.ResponseEntity<byte[]> downloadWeeklyReportPdf(
                         @RequestParam(required = false) LocalDate date,
-                        @RequestParam(required = false) Long departmentId)
+                        @RequestParam(required = false) List<Long> departmentId)
                         throws java.io.IOException, com.lowagie.text.DocumentException {
                 if (date == null)
                         date = LocalDate.now();
@@ -369,9 +370,12 @@ public class ReportController {
                                 startOfWeek,
                                 departmentId, org.springframework.data.domain.PageRequest.of(0, 10000)).getContent();
                 String deptName = "All Departments";
-                if (departmentId != null) {
-                        deptName = departmentRepository.findById(departmentId)
-                                        .map(root.cyb.mh.attendancesystem.model.Department::getName).orElse("Unknown");
+                if (departmentId != null && !departmentId.isEmpty()) {
+                        deptName = departmentId.size() == 1
+                                        ? departmentRepository.findById(departmentId.get(0))
+                                                        .map(root.cyb.mh.attendancesystem.model.Department::getName)
+                                                        .orElse("Unknown")
+                                        : "Multiple Departments (" + departmentId.size() + ")";
                 }
 
                 byte[] pdfBytes = pdfExportService.exportWeeklyReport(report, startOfWeek, deptName);
@@ -475,7 +479,7 @@ public class ReportController {
         @GetMapping("/reports/daily/excel")
         public org.springframework.http.ResponseEntity<byte[]> downloadDailyReportExcel(
                         @RequestParam(required = false) LocalDate date,
-                        @RequestParam(required = false) Long departmentId,
+                        @RequestParam(required = false) List<Long> departmentId,
                         @RequestParam(required = false) String status) throws java.io.IOException {
                 if (date == null)
                         date = LocalDate.now();
@@ -496,7 +500,7 @@ public class ReportController {
         @GetMapping("/reports/daily/csv")
         public org.springframework.http.ResponseEntity<byte[]> downloadDailyReportCsv(
                         @RequestParam(required = false) LocalDate date,
-                        @RequestParam(required = false) Long departmentId,
+                        @RequestParam(required = false) List<Long> departmentId,
                         @RequestParam(required = false) String status) throws java.io.IOException {
                 if (date == null)
                         date = LocalDate.now();
@@ -516,7 +520,7 @@ public class ReportController {
         @GetMapping("/reports/weekly/excel")
         public org.springframework.http.ResponseEntity<byte[]> downloadWeeklyReportExcel(
                         @RequestParam(required = false) LocalDate date,
-                        @RequestParam(required = false) Long departmentId) throws java.io.IOException {
+                        @RequestParam(required = false) List<Long> departmentId) throws java.io.IOException {
                 if (date == null)
                         date = LocalDate.now();
                 LocalDate startOfWeek = date
@@ -538,7 +542,7 @@ public class ReportController {
         @GetMapping("/reports/weekly/csv")
         public org.springframework.http.ResponseEntity<byte[]> downloadWeeklyReportCsv(
                         @RequestParam(required = false) LocalDate date,
-                        @RequestParam(required = false) Long departmentId) throws java.io.IOException {
+                        @RequestParam(required = false) List<Long> departmentId) throws java.io.IOException {
                 if (date == null)
                         date = LocalDate.now();
                 LocalDate startOfWeek = date

@@ -61,14 +61,86 @@
                     <div>
                         <a href="/reports" class="btn btn-outline-secondary me-2">Daily View</a>
                         <a href="/reports/monthly" class="btn btn-outline-secondary me-2">Monthly View</a>
-                        <form action="/reports/weekly" method="get" class="d-inline-flex">
-                            <select name="departmentId" class="form-select me-2" style="width: auto;">
-                                <option value="">All Departments</option>
-                                <option th:each="dept : ${departments}" th:value="${dept.id}" th:text="${dept.name}"
-                                    th:selected="${dept.id == selectedDept}"></option>
-                            </select>
-                            <input type="date" name="date" class="form-control me-2" th:value="${startOfWeek}">
+                        <form action="/reports/weekly" method="get" class="d-inline-flex align-items-center">
+                            <!-- Multi-Select Department Dropdown -->
+                            <div class="dropdown me-2" style="width: auto;">
+                                <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+                                    id="deptDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                    aria-expanded="false">
+                                    Select Departments
+                                </button>
+                                <ul class="dropdown-menu p-3 shadow" aria-labelledby="deptDropdown"
+                                    style="width: 300px; max-height: 400px; overflow-y: auto;">
+                                    <!-- Select All Option -->
+                                    <li class="mb-2 border-bottom pb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="selectAllDepts">
+                                            <label class="form-check-label fw-bold" for="selectAllDepts">
+                                                Select All
+                                            </label>
+                                        </div>
+                                    </li>
+                                    <!-- Department List -->
+                                    <li th:each="dept : ${departments}" class="mb-1">
+                                        <div class="form-check">
+                                            <input class="form-check-input dept-checkbox" type="checkbox"
+                                                name="departmentId" th:value="${dept.id}" th:id="'dept-' + ${dept.id}"
+                                                th:checked="${selectedDept != null and #lists.contains(selectedDept, dept.id)}">
+                                            <label class="form-check-label" th:for="'dept-' + ${dept.id}"
+                                                th:text="${dept.name}">
+                                                IT
+                                            </label>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <input type="date" name="date" class="form-control me-2" style="width: auto;"
+                                th:value="${startOfWeek}">
                             <button type="submit" class="btn btn-primary">View Week</button>
+
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function () {
+                                    function setupMultiSelect(dropdownId, selectAllId, checkboxClass, defaultText, singularItem, pluralItem) {
+                                        const dropdownButton = document.getElementById(dropdownId);
+                                        const selectAllCheckbox = document.getElementById(selectAllId);
+                                        const checkboxes = document.querySelectorAll('.' + checkboxClass);
+
+                                        function updateButtonText() {
+                                            const selectedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+                                            if (selectedCount === 0) {
+                                                dropdownButton.textContent = defaultText;
+                                            } else if (selectedCount === checkboxes.length) {
+                                                dropdownButton.textContent = 'All ' + pluralItem;
+                                            } else {
+                                                dropdownButton.textContent = selectedCount + ' ' + (selectedCount === 1 ? singularItem : pluralItem);
+                                            }
+                                        }
+
+                                        function updateSelectAllState() {
+                                            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                                            const someChecked = Array.from(checkboxes).some(cb => cb.checked);
+                                            selectAllCheckbox.checked = allChecked;
+                                            selectAllCheckbox.indeterminate = someChecked && !allChecked;
+                                            updateButtonText();
+                                        }
+
+                                        selectAllCheckbox.addEventListener('change', function () {
+                                            checkboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
+                                            updateButtonText();
+                                        });
+
+                                        checkboxes.forEach(cb => {
+                                            cb.addEventListener('change', updateSelectAllState);
+                                        });
+
+                                        // Initial check
+                                        updateSelectAllState();
+                                    }
+
+                                    setupMultiSelect('deptDropdown', 'selectAllDepts', 'dept-checkbox', 'Select Departments', 'Department', 'Departments');
+                                });
+                            </script>
                             <!-- Multi-Format Export -->
                             <div class="dropdown d-inline-block ms-2">
                                 <button class="btn btn-dark dropdown-toggle" type="button" id="exportDropdown"

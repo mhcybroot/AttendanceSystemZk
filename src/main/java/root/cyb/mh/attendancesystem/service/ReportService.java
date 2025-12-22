@@ -41,7 +41,7 @@ public class ReportService {
     @Autowired
     private ShiftService shiftService;
 
-    public Page<DailyAttendanceDto> getDailyReport(LocalDate date, Long departmentId, String statusFilter,
+    public Page<DailyAttendanceDto> getDailyReport(LocalDate date, List<Long> departmentIds, String statusFilter,
             Pageable pageable) {
 
         List<DailyAttendanceDto> report = new ArrayList<>();
@@ -51,10 +51,10 @@ public class ReportService {
 
         // Get Employees (Filter by Dept if provided)
         List<Employee> allFilteredEmployees;
-        if (departmentId != null) {
+        if (departmentIds != null && !departmentIds.isEmpty()) {
             allFilteredEmployees = employeeRepository.findAll().stream()
                     .filter(e -> !e.isGuest()) // Exclude Guests
-                    .filter(e -> e.getDepartment() != null && e.getDepartment().getId().equals(departmentId))
+                    .filter(e -> e.getDepartment() != null && departmentIds.contains(e.getDepartment().getId()))
                     .collect(Collectors.toList());
         } else {
             allFilteredEmployees = employeeRepository.findAll().stream()
@@ -63,9 +63,6 @@ public class ReportService {
         }
 
         // Calculate Status for ALL employees first (to allow filtering)
-        // Note: This might be performance heavy if we have 1000s of employees.
-        // But for <500 it's fine. Optimizing to filter at DB level is hard for
-        // "Present" (logic is complex).
         List<DailyAttendanceDto> fullReport = new ArrayList<>();
 
         // Get All Logs for the Date
@@ -176,8 +173,6 @@ public class ReportService {
                     return dto.getStatus().contains("ABSENT");
                 }
                 if ("LEAVE".equalsIgnoreCase(statusFilter)) {
-                    // Match "LEAVE" but exclude "EARLY LEAVE" or "LATE & EARLY LEAVE" which are
-                    // presence statuses
                     return dto.getStatus().contains("LEAVE") && !dto.getStatus().contains("EARLY");
                 }
                 if ("LATE".equalsIgnoreCase(statusFilter)) {
@@ -198,16 +193,8 @@ public class ReportService {
         return new PageImpl<>(pagedContent, pageable, fullReport.size());
     }
 
-    // Deprecated/Unused helper or split logic below... cleaning up old method body
-    // that was replaced
-    public void _removed_old_logic_placeholder() {
-
-    }
-
     public Page<root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto> getWeeklyReport(LocalDate startOfWeek,
-            Long departmentId, Pageable pageable) {
-        List<root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto> report = new ArrayList<>();
-
+            List<Long> departmentIds, Pageable pageable) {
         // Ensure start date works
         if (startOfWeek == null)
             startOfWeek = LocalDate.now()
@@ -221,9 +208,9 @@ public class ReportService {
         List<root.cyb.mh.attendancesystem.model.PublicHoliday> holidays = publicHolidayRepository.findAll();
 
         List<Employee> allFilteredEmployees;
-        if (departmentId != null) {
+        if (departmentIds != null && !departmentIds.isEmpty()) {
             allFilteredEmployees = employeeRepository.findAll().stream()
-                    .filter(e -> e.getDepartment() != null && e.getDepartment().getId().equals(departmentId))
+                    .filter(e -> e.getDepartment() != null && departmentIds.contains(e.getDepartment().getId()))
                     .collect(Collectors.toList());
         } else {
             allFilteredEmployees = employeeRepository.findAll();
@@ -242,6 +229,8 @@ public class ReportService {
         // Get Approved Leaves overlapping the week
         List<root.cyb.mh.attendancesystem.model.LeaveRequest> allLeaves = leaveRequestRepository
                 .findByStatusOrderByCreatedAtDesc(root.cyb.mh.attendancesystem.model.LeaveRequest.Status.APPROVED);
+
+        List<root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto> report = new ArrayList<>();
 
         for (Employee emp : employees) {
             root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto dto = new root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto();
@@ -792,35 +781,62 @@ public class ReportService {
         return dto;
     }
 
-    private int countYearlyLeavesBeforeMonth(String employeeId, int year, int month,
+    public int countYearlyLeavesBeforeMonth(String employeeId, int year, int month,
             List<root.cyb.mh.attendancesystem.model.LeaveRequest> allLeaves) {
         LocalDate startOfYear = LocalDate.of(year, 1, 1);
         LocalDate startOfMonth = LocalDate.of(year, month, 1);
 
         return (int) allLeaves.stream()
                 .filter(l -> l.getEmployee().getId().equals(employeeId))
-                // Filter leaves that end after start of year and start before start of month
-                .filter(l -> !l.getEndDate().isBefore(startOfYear) && l.getStartDate().isBefore(startOfMonth))
-                .mapToLong(l -> {
-                    // Calculate intersection with [StartOfYear, StartOfMonth)
-                    LocalDate s = l.getStartDate().isBefore(startOfYear) ? startOfYear : l.getStartDate();
-                    LocalDate e = l.getEndDate().isAfter(startOfMonth.minusDays(1)) ? startOfMonth.minusDays(1)
-                            : l.getEndDate();
-
-                    if (s.isAfter(e))
-                        return 0;
-
-                    return java.time.temporal.ChronoUnit.DAYS.between(s, e) + 1;
-                })
+                .filter(l -> !l.getStartDate().isBefore(startOfYear) && l.getStartDate().isBefore(startOfMonth))
+                .mapToLong(l -> java.time.temporal.ChronoUnit.DAYS.between(l.getStartDate(), l.getEndDate()) + 1)
                 .sum();
     }
 
-    private boolean isEmployeeOnLeave(String employeeId, LocalDate date,
-            List<root.cyb.mh.attendancesystem.model.LeaveRequest> leaves) {
-        return leaves.stream()
-                .anyMatch(l -> l.getEmployee().getId().equals(employeeId)
-                        && !date.isBefore(l.getStartDate())
-                        && !date.isAfter(l.getEndDate()));
+    // Helper to calculate Working Days (Total - Weekends - Holidays)
+    public int calculateWorkingDays(LocalDate start, LocalDate end) {
+        // 1. Get Global Schedule (Weekend Config)
+        root.cyb.mh.attendancesystem.model.WorkSchedule schedule = workScheduleRepository.findAll().stream().findFirst()
+                .orElse(null);
+        List<String> weekendDays = new ArrayList<>();
+        if (schedule != null && schedule.getWeekendDays() != null && !schedule.getWeekendDays().isEmpty()) {
+            String[] days = schedule.getWeekendDays().split(",");
+            for (String d : days) {
+                weekendDays.add(d.trim());
+            }
+        } else {
+            weekendDays.add("6"); // Default Sat
+            weekendDays.add("7"); // Default Sun
+        }
+
+        // 2. Get Holidays in Range
+        List<root.cyb.mh.attendancesystem.model.PublicHoliday> holidays = publicHolidayRepository.findAll();
+
+        int workingDays = 0;
+        LocalDate current = start;
+        while (!current.isAfter(end)) {
+            // Check Weekend
+            String dayOfWeek = String.valueOf(current.getDayOfWeek().getValue()); // 1=Mon, 7=Sun
+            boolean isWeekend = weekendDays.contains(dayOfWeek);
+
+            // Check Holiday (Single Date Check)
+            LocalDate finalCurrent = current;
+            boolean isHoliday = holidays.stream()
+                    .anyMatch(h -> h.getDate() != null && h.getDate().equals(finalCurrent));
+
+            if (!isWeekend && !isHoliday) {
+                workingDays++;
+            }
+            current = current.plusDays(1);
+        }
+        return workingDays;
+    }
+
+    public boolean isEmployeeOnLeave(String employeeId, LocalDate date,
+            List<root.cyb.mh.attendancesystem.model.LeaveRequest> allLeaves) {
+        return allLeaves.stream()
+                .anyMatch(l -> l.getEmployee().getId().equals(employeeId) &&
+                        !date.isBefore(l.getStartDate()) && !date.isAfter(l.getEndDate()));
     }
 
     public root.cyb.mh.attendancesystem.dto.EmployeeRangeReportDto getEmployeeRangeReport(
