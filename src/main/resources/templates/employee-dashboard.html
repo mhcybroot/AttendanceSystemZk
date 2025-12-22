@@ -43,6 +43,113 @@
                 </div>
             </div>
 
+            <!-- Workday Countdown Widget -->
+            <div class="row mb-4" th:if="${workSchedule != null}">
+                <div class="col-12">
+                    <div class="card bg-white shadow-sm border-0 position-relative overflow-hidden">
+                        <div class="card-body text-center p-4">
+                            <div class="d-flex justify-content-center align-items-center mb-2">
+                                <i class="fas fa-hourglass-half text-primary fa-2x me-3"></i>
+                                <h5 class="text-muted text-uppercase fw-bold mb-0">Shift Countdown</h5>
+                            </div>
+
+                            <!-- Timer Display -->
+                            <!-- Timer Display -->
+                            <div id="countdown-display" class="display-3 fw-bold text-dark my-2"
+                                th:data-end-time="${#temporals.format(workSchedule.endTime, 'HH:mm')}"
+                                th:data-start-time="${#temporals.format(workSchedule.startTime, 'HH:mm')}">
+                                --:--:--
+                            </div>
+
+                            <!-- Dynamic Subtext -->
+                            <p id="countdown-subtext" class="text-muted mb-0 fst-italic">Calculating time remaining...
+                            </p>
+
+                            <!-- Progress Bar -->
+                            <div class="progress mt-3" style="height: 6px;">
+                                <div id="countdown-progress"
+                                    class="progress-bar bg-primary progress-bar-striped progress-bar-animated"
+                                    role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- JavaScript for Countdown -->
+            <script th:inline="javascript">
+                document.addEventListener('DOMContentLoaded', function () {
+                    const display = document.getElementById('countdown-display');
+                    if (!display) return;
+
+                    const endTimeStr = display.getAttribute('data-end-time'); // HH:mm
+                    const startTimeStr = display.getAttribute('data-start-time'); // HH:mm
+
+                    if (!endTimeStr || !startTimeStr) return;
+
+                    function updateTimer() {
+                        const now = new Date();
+                        const endTime = new Date();
+                        const [endH, endM] = endTimeStr.split(':');
+                        endTime.setHours(parseInt(endH), parseInt(endM), 0, 0);
+
+                        const startTime = new Date();
+                        const [startH, startM] = startTimeStr.split(':');
+                        startTime.setHours(parseInt(startH), parseInt(startM), 0, 0);
+
+                        // Calculate diff
+                        let diff = endTime - now;
+                        let totalShiftDuration = endTime - startTime;
+
+                        // If shift hasn't started yet
+                        if (now < startTime) {
+                            display.textContent = "Shift Starts Soon";
+                            document.getElementById('countdown-subtext').textContent = "Get ready to conquer the day!";
+                            document.getElementById('countdown-progress').style.width = '0%';
+                            return;
+                        }
+
+                        if (diff > 0) {
+                            // Counting Down
+                            const hours = Math.floor(diff / (1000 * 60 * 60));
+                            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                            display.textContent =
+                                (hours < 10 ? "0" + hours : hours) + ":" +
+                                (minutes < 10 ? "0" + minutes : minutes) + ":" +
+                                (seconds < 10 ? "0" + seconds : seconds);
+
+                            document.getElementById('countdown-subtext').textContent = "Time remaining until home time!";
+                            display.classList.remove('text-danger', 'text-success');
+                            display.classList.add('text-dark');
+
+                            // Progress Bar Calculation
+                            let elapsed = now - startTime;
+                            let percent = Math.min(100, Math.max(0, (elapsed / totalShiftDuration) * 100));
+                            document.getElementById('countdown-progress').style.width = percent + '%';
+                            document.getElementById('countdown-progress').classList.remove('bg-danger');
+                            document.getElementById('countdown-progress').classList.add('bg-primary');
+
+                        } else {
+                            // Overtime or Done
+                            display.textContent = "Shift Ended";
+                            document.getElementById('countdown-subtext').textContent = "Great work today! Go enjoy your evening.";
+                            display.classList.remove('text-dark');
+                            display.classList.add('text-success');
+
+                            document.getElementById('countdown-progress').style.width = '100%';
+                            document.getElementById('countdown-progress').classList.remove('bg-primary');
+                            document.getElementById('countdown-progress').classList.add('bg-success');
+                        }
+                    }
+
+                    // Run immediately and then interval
+                    updateTimer();
+                    setInterval(updateTimer, 1000);
+                });
+            </script>
+
             <!-- Styles for Inspiration Widgets -->
             <style>
                 .card-header-custom {
