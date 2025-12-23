@@ -21,8 +21,12 @@ public class SettingsController {
     @Autowired
     private root.cyb.mh.attendancesystem.repository.PublicHolidayRepository publicHolidayRepository;
 
+    @org.springframework.beans.factory.annotation.Value("${app.demo:false}")
+    private boolean isDemoMode;
+
     @GetMapping("/settings")
     public String settings(Model model) {
+        model.addAttribute("isDemoMode", isDemoMode);
         // We assume only one global schedule for now. Get the first one or create it.
         WorkSchedule schedule = workScheduleRepository.findAll().stream().findFirst().orElse(new WorkSchedule());
         if (schedule.getId() == null) {
@@ -138,5 +142,20 @@ public class SettingsController {
             log.setDeviceId(deviceId);
             attendanceLogRepository.save(log);
         }
+    }
+
+    @Autowired
+    private root.cyb.mh.attendancesystem.service.DemoDataService demoDataService;
+
+    @PostMapping("/settings/demo/seed")
+    public String seedDemoData() {
+        demoDataService.seedDemoData();
+        return "redirect:/settings?demoSeedingSuccess";
+    }
+
+    @PostMapping("/settings/demo/clear")
+    public String clearDemoData() {
+        demoDataService.clearDemoData();
+        return "redirect:/settings?demoClearSuccess";
     }
 }
