@@ -223,4 +223,108 @@ public class DashboardController {
 
                 return "dashboard";
         }
+
+        @GetMapping("/api/dashboard/live-status")
+        @org.springframework.web.bind.annotation.ResponseBody
+        public List<LiveStatusDto> getLiveStatus() {
+                LocalDate today = LocalDate.now();
+                List<root.cyb.mh.attendancesystem.model.Employee> employees = employeeRepository.findAll();
+
+                // Fetch report for status
+                List<DailyAttendanceDto> dailyReport = reportService
+                                .getDailyReport(today, null, null,
+                                                org.springframework.data.domain.PageRequest.of(0, 5000))
+                                .getContent();
+
+                Map<String, DailyAttendanceDto> reportMap = dailyReport.stream()
+                                .collect(Collectors.toMap(DailyAttendanceDto::getEmployeeId, d -> d));
+
+                return employees.stream()
+                                .filter(e -> !e.isGuest())
+                                .sorted(Comparator.comparing(root.cyb.mh.attendancesystem.model.Employee::getName))
+                                .map(emp -> {
+                                        LiveStatusDto dto = new LiveStatusDto();
+                                        dto.setId(emp.getId());
+                                        dto.setName(emp.getName());
+                                        dto.setDepartment(emp.getDepartment() != null ? emp.getDepartment().getName()
+                                                        : "-");
+                                        String photo = emp.getAvatarPath();
+                                        if (photo == null && emp.getPhotoBase64() != null
+                                                        && !emp.getPhotoBase64().isEmpty()) {
+                                                photo = "data:image/jpeg;base64," + emp.getPhotoBase64();
+                                        }
+                                        dto.setPhotoUrl(photo);
+
+                                        DailyAttendanceDto stat = reportMap.get(emp.getId());
+                                        if (stat != null) {
+                                                dto.setStatus(stat.getStatus());
+                                                dto.setTime(stat.getInTime() != null ? stat.getInTime().toString()
+                                                                : "-");
+                                        } else {
+                                                dto.setStatus("ABSENT");
+                                                dto.setTime("-");
+                                        }
+                                        return dto;
+                                })
+                                .collect(Collectors.toList());
+        }
+
+        // Inner DTO
+        public static class LiveStatusDto {
+                private String id;
+                private String name;
+                private String department;
+                private String status;
+                private String time;
+                private String photoUrl;
+
+                // Getters and Setters
+                public String getId() {
+                        return id;
+                }
+
+                public void setId(String id) {
+                        this.id = id;
+                }
+
+                public String getName() {
+                        return name;
+                }
+
+                public void setName(String name) {
+                        this.name = name;
+                }
+
+                public String getDepartment() {
+                        return department;
+                }
+
+                public void setDepartment(String department) {
+                        this.department = department;
+                }
+
+                public String getStatus() {
+                        return status;
+                }
+
+                public void setStatus(String status) {
+                        this.status = status;
+                }
+
+                public String getTime() {
+                        return time;
+                }
+
+                public void setTime(String time) {
+                        this.time = time;
+                }
+
+                public String getPhotoUrl() {
+                        return photoUrl;
+                }
+
+                public void setPhotoUrl(String photoUrl) {
+                        this.photoUrl = photoUrl;
+                }
+        }
 }

@@ -121,6 +121,32 @@
                 </div>
             </div>
 
+            <!-- Live Status Board -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header-custom d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-satellite-dish text-success me-2"></i> Live Floor Status (Who's
+                                In?)</span>
+                            <div>
+                                <input type="text" id="liveSearch"
+                                    class="form-control form-control-sm d-inline-block w-auto me-2"
+                                    placeholder="Filter..." onkeyup="filterLiveGrid()">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="fetchLiveStatus()">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body bg-light">
+                            <div id="liveStatusGrid" class="row g-2" style="max-height: 300px; overflow-y: auto;">
+                                <div class="col-12 text-center text-muted py-3"><i class="fas fa-spinner fa-spin"></i>
+                                    Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Row 2: Attendance Stats -->
             <div class="row">
                 <div class="col-md-4">
@@ -412,8 +438,86 @@
             });
 
 
+
             var deptLabels = /*[[${deptLabels}]]*/['HR', 'IT', 'Sales'];
 
+            // Live Status Board Logic
+            function fetchLiveStatus() {
+                const grid = document.getElementById('liveStatusGrid');
+                // grid.innerHTML = '<div class="col-12 text-center text-muted py-3"><i class="fas fa-spinner fa-spin"></i> Updating...</div>';
+
+                fetch('/api/dashboard/live-status')
+                    .then(response => response.json())
+                    .then(data => {
+                        renderLiveGrid(data);
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        grid.innerHTML = '<div class="col-12 text-center text-danger">Failed to load live status.</div>';
+                    });
+            }
+
+            let allLiveEmployees = [];
+
+            function renderLiveGrid(employees) {
+                allLiveEmployees = employees;
+                const grid = document.getElementById('liveStatusGrid');
+                grid.innerHTML = '';
+
+                if (employees.length === 0) {
+                    grid.innerHTML = '<div class="col-12 text-center text-muted">No employees found.</div>';
+                    return;
+                }
+
+                employees.forEach(emp => {
+                    const col = document.createElement('div');
+                    col.className = 'col-6 col-md-4 col-lg-2 live-card-wrapper';
+                    col.dataset.name = emp.name.toLowerCase();
+
+                    let statusColor = 'secondary';
+                    let icon = 'question';
+
+                    if (emp.status.includes('PRESENT')) { statusColor = 'success'; icon = 'check'; }
+                    else if (emp.status.includes('LATE')) { statusColor = 'warning'; icon = 'exclamation'; }
+                    else if (emp.status.includes('ABSENT')) { statusColor = 'danger'; icon = 'times'; }
+                    else if (emp.status.includes('LEAVE')) { statusColor = 'info'; icon = 'plane'; }
+
+                    col.innerHTML = `
+                        <div class="card border-${statusColor} h-100 shadow-sm">
+                            <div class="card-body p-2 d-flex align-items-center">
+                                <div class="avatar bg-${statusColor} text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; font-size: 0.8rem;">
+                                    ${emp.photoUrl ? `<img src="${emp.photoUrl}" class="rounded-circle w-100 h-100">` : emp.name.charAt(0)}
+                                </div>
+                                <div style="line-height: 1.1; overflow: hidden;">
+                                    <div class="fw-bold text-truncate" style="font-size: 0.85rem;" title="${emp.name}">${emp.name}</div>
+                                    <div class="d-flex justify-content-between small">
+                                        <span class="text-${statusColor}" style="font-size: 0.7rem;">${emp.status}</span>
+                                        <span class="text-muted ms-2" style="font-size: 0.7rem;">${emp.time}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(col);
+                });
+            }
+
+            function filterLiveGrid() {
+                const query = document.getElementById('liveSearch').value.toLowerCase();
+                const wrappers = document.querySelectorAll('.live-card-wrapper');
+                wrappers.forEach(w => {
+                    if (w.dataset.name.includes(query)) {
+                        w.style.display = 'block';
+                    } else {
+                        w.style.display = 'none';
+                    }
+                });
+            }
+
+            // Init Load
+            document.addEventListener('DOMContentLoaded', fetchLiveStatus);
+            // Auto refresh every 30 seconds
+            setInterval(fetchLiveStatus, 30000);
 
         </script>
     </div>

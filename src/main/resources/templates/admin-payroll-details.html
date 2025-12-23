@@ -99,6 +99,8 @@
                         <noscript><button type="submit" class="btn btn-outline-primary">Filter</button></noscript>
                     </form>
 
+
+
                     <a th:href="@{/payroll/export/bank-advice(month=${month})}"
                         class="btn btn-outline-success btn-sm me-2">
                         <i class="fas fa-file-excel me-1"></i> Bank Advice
@@ -183,6 +185,7 @@
                                                 th:onclick="showPayslipModal([[${slip.employee.name}]], [[${month}]], [[${slip.basicSalary}]], [[${slip.deductionAmount}]], [[${slip.netSalary}]], [[${slip.totalWorkingDays}]], [[${slip.presentDays}]], [[${slip.absentDays}]], [[${slip.lateDays}]], [[${slip.latePenaltyAmount}]], [[${slip.allowanceAmount}]], [[${slip.bonusAmount}]])">
                                                 <i class="fas fa-file-invoice"></i>
                                             </button>
+
                                             <button class="btn btn-sm btn-outline-success border me-1"
                                                 th:onclick="setBonus([[${slip.id}]], [[${slip.bonusAmount}]])"
                                                 title="Add Bonus">

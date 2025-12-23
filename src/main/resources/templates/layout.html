@@ -88,6 +88,9 @@
         });
     </script>
 
+    <!-- Global UX Scripts -->
+    <script sec:authorize="hasRole('ADMIN')" src="/js/command-palette.js"></script>
+
     <!-- Page Specific Scripts -->
     <div th:replace="${scripts}"></div>
 

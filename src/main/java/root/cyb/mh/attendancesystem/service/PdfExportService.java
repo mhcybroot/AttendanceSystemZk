@@ -306,7 +306,129 @@ public class PdfExportService {
         document.add(table);
     }
 
-    // --- Helper Methods ---
+    public byte[] exportPayslipPdf(root.cyb.mh.attendancesystem.model.Payslip payslip)
+            throws DocumentException, IOException {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Document document = new Document(PageSize.A4);
+            PdfWriter.getInstance(document, out);
+            document.open();
+
+            // 1. Header
+            Paragraph compName = new Paragraph(companyName, TITLE_FONT);
+            compName.setAlignment(Element.ALIGN_CENTER);
+            document.add(compName);
+
+            Paragraph title = new Paragraph("OFFICIAL PAYSLIP", HEADER_FONT);
+            title.setAlignment(Element.ALIGN_CENTER);
+            title.setSpacingAfter(20);
+            document.add(title);
+
+            // 2. Employee Info Table
+            PdfPTable infoTable = new PdfPTable(2);
+            infoTable.setWidthPercentage(100);
+            infoTable.setWidths(new float[] { 1, 1 });
+
+            PdfPCell leftCell = new PdfPCell();
+            leftCell.setBorder(Rectangle.NO_BORDER);
+            leftCell.addElement(new Phrase("Employee: " + payslip.getEmployee().getName(), HEADER_FONT));
+            leftCell.addElement(new Phrase("ID: " + payslip.getEmployee().getId(), DATA_FONT));
+            leftCell.addElement(new Phrase("Department: "
+                    + (payslip.getEmployee().getDepartment() != null ? payslip.getEmployee().getDepartment().getName()
+                            : "-"),
+                    DATA_FONT));
+            infoTable.addCell(leftCell);
+
+            PdfPCell rightCell = new PdfPCell();
+            rightCell.setBorder(Rectangle.NO_BORDER);
+            rightCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            rightCell.addElement(new Paragraph("Pay Period: " + payslip.getMonth(), HEADER_FONT)); // YYYY-MM
+            rightCell.addElement(new Paragraph("Generated: " + payslip.getGeneratedAt().toLocalDate(), DATA_FONT));
+            infoTable.addCell(rightCell);
+
+            document.add(infoTable);
+            document.add(new Paragraph("\n"));
+
+            // 3. Attendance Summary
+            PdfPTable attTable = new PdfPTable(4);
+            attTable.setWidthPercentage(100);
+            addTableHeader(attTable, "Working Days", "Present", "Absent", "Late/Leaves");
+
+            addCell(attTable, String.valueOf(payslip.getTotalWorkingDays()));
+            addCell(attTable, String.valueOf(payslip.getPresentDays()));
+            addCell(attTable, String.valueOf(payslip.getAbsentDays()));
+            addCell(attTable, "L: " + payslip.getLateDays() + ", LV: " + payslip.getPaidLeaveDays());
+
+            document.add(attTable);
+            document.add(new Paragraph("\n"));
+
+            // 4. Financials
+            PdfPTable finTable = new PdfPTable(2);
+            finTable.setWidthPercentage(100);
+            finTable.setWidths(new float[] { 3, 1 }); // Desc, Amount
+
+            // Header
+            PdfPCell h1 = new PdfPCell(new Phrase("Description", HEADER_FONT));
+            h1.setBackgroundColor(Color.LIGHT_GRAY);
+            finTable.addCell(h1);
+            PdfPCell h2 = new PdfPCell(new Phrase("Amount (BDT)", HEADER_FONT));
+            h2.setBackgroundColor(Color.LIGHT_GRAY);
+            h2.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            finTable.addCell(h2);
+
+            // Rows
+            addFinRow(finTable, "Basic Salary", payslip.getBasicSalary());
+
+            if (payslip.getAllowanceAmount() != null && payslip.getAllowanceAmount() > 0) {
+                addFinRow(finTable, "Fixed Allowance", payslip.getAllowanceAmount());
+            }
+
+            if (payslip.getBonusAmount() != null && payslip.getBonusAmount() > 0) {
+                addFinRow(finTable, "Bonus / Overtime", payslip.getBonusAmount());
+            }
+
+            if (payslip.getDeductionAmount() != null && payslip.getDeductionAmount() > 0) {
+                // Show as negative
+                addFinRow(finTable, "Deductions (Absence/Penalties)", -payslip.getDeductionAmount());
+            }
+
+            if (payslip.getLatePenaltyAmount() != null && payslip.getLatePenaltyAmount() > 0) {
+                addFinRow(finTable, "Late Penalty", -payslip.getLatePenaltyAmount());
+            }
+
+            // Net Pay
+            PdfPCell netLabel = new PdfPCell(new Phrase("NET PAYABLE", HEADER_FONT));
+            netLabel.setPadding(5);
+            finTable.addCell(netLabel);
+
+            PdfPCell netVal = new PdfPCell(new Phrase(String.format("%.2f", payslip.getNetSalary()), HEADER_FONT));
+            netVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            netVal.setPadding(5);
+            finTable.addCell(netVal);
+
+            document.add(finTable);
+
+            // 5. Footer
+            Paragraph footer = new Paragraph(
+                    "\n\n\n__________________________                  __________________________\nEmployee Signature                                     Authorized Signature",
+                    SMALL_FONT);
+            footer.setAlignment(Element.ALIGN_CENTER);
+            document.add(footer);
+
+            document.close();
+            return out.toByteArray();
+        }
+    }
+
+    private void addFinRow(PdfPTable table, String desc, Double amount) {
+        PdfPCell c1 = new PdfPCell(new Phrase(desc, DATA_FONT));
+        c1.setPadding(5);
+        table.addCell(c1);
+
+        PdfPCell c2 = new PdfPCell(new Phrase(String.format("%.2f", amount != null ? amount : 0.0), DATA_FONT));
+        c2.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        c2.setPadding(5);
+        table.addCell(c2);
+    }
 
     private void addHeader(Document document, String reportTitle, String subTitle, String department)
             throws DocumentException {
