@@ -162,7 +162,7 @@
                                         </td>
                                         <td>
                                             <span class="text-danger"
-                                                th:text="${'-' + #numbers.formatCurrency(slip.deductionAmount)}">-$100</span>
+                                                th:text="${'-BDT ' + #numbers.formatDecimal(slip.deductionAmount, 1, 'COMMA', 2, 'POINT')}">-$100</span>
                                             <div class="small text-muted" th:if="${slip.absentDays > 0}"
                                                 th:text="${slip.absentDays + ' Absent'}">2 Abs</div>
                                             <div class="small text-danger"
@@ -171,7 +171,8 @@
                                             </div>
                                         </td>
                                         <td class="fw-bold text-primary"
-                                            th:text="${#numbers.formatCurrency(slip.netSalary)}">$2000</td>
+                                            th:text="${'BDT ' + #numbers.formatDecimal(slip.netSalary, 1, 'COMMA', 2, 'POINT')}">
+                                            $2000</td>
                                         <td>
                                             <button class="btn btn-sm btn-outline-info me-1"
                                                 th:onclick="showPayslipModal([[${slip.employee.name}]], [[${month}]], [[${slip.basicSalary}]], [[${slip.deductionAmount}]], [[${slip.netSalary}]], [[${slip.totalWorkingDays}]], [[${slip.presentDays}]], [[${slip.absentDays}]], [[${slip.lateDays}]], [[${slip.latePenaltyAmount}]], [[${slip.allowanceAmount}]], [[${slip.bonusAmount}]])">
@@ -304,19 +305,19 @@
                                         <tbody>
                                             <tr>
                                                 <td>Basic Salary</td>
-                                                <td class="text-end" id="psBasic">$3000.00</td>
+                                                <td class="text-end" id="psBasic">BDT 3000.00</td>
                                                 <td class="text-danger">Total Deductions</td>
-                                                <td class="text-end text-danger" id="psDeductions">-$200.00</td>
+                                                <td class="text-end text-danger" id="psDeductions">-BDT 200.00</td>
                                             </tr>
                                             <tr id="allowanceRow" style="display:none;">
                                                 <td>Fixed Allowance</td>
-                                                <td class="text-end" id="psAllowance">$0.00</td>
+                                                <td class="text-end" id="psAllowance">BDT 0.00</td>
                                                 <td></td>
                                                 <td></td>
                                             </tr>
                                             <tr id="bonusRow" style="display:none;">
                                                 <td>Bonus / OT</td>
-                                                <td class="text-end" id="psBonus">$0.00</td>
+                                                <td class="text-end" id="psBonus">BDT 0.00</td>
                                                 <td></td>
                                                 <td></td>
                                             </tr>
@@ -326,13 +327,13 @@
                                                 <td></td>
                                                 <td class="text-warning">Late Penalty <span id="psLateCount"></span>
                                                 </td>
-                                                <td class="text-end text-warning" id="psLateAmt">-$0.00</td>
+                                                <td class="text-end text-warning" id="psLateAmt">-BDT 0.00</td>
                                             </tr>
                                         </tbody>
                                         <tfoot class="table-light">
                                             <tr>
                                                 <td colspan="3" class="text-end fw-bold text-uppercase">Net Payable</td>
-                                                <td class="text-end fw-bold fs-5 text-dark" id="psNet">$2800.00</td>
+                                                <td class="text-end fw-bold fs-5 text-dark" id="psNet">BDT 2800.00</td>
                                             </tr>
                                         </tfoot>
                                     </table>
@@ -417,7 +418,7 @@
                 document.getElementById('psName').innerText = name;
                 document.getElementById('psMonth').innerText = 'Month: ' + month;
                 // Simple formatting
-                const fmt = (num) => '$' + parseFloat(num).toFixed(2);
+                const fmt = (num) => 'BDT ' + parseFloat(num).toFixed(2);
                 document.getElementById('psBasic').innerText = fmt(basic);
                 document.getElementById('psDeductions').innerText = '-' + fmt(ded);
                 document.getElementById('psNet').innerText = fmt(net);

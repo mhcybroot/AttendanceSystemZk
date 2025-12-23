@@ -55,8 +55,8 @@
                         <div class="card-body">
                             <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i>Last Month Cost</h5>
                             <h2 class="display-6 fw-bold"
-                                th:text="${!summaries.isEmpty() ? #numbers.formatCurrency(summaries.get(0).totalNetSalary) : '$0.00'}">
-                                $0.00</h2>
+                                th:text="${!summaries.isEmpty() ? 'BDT ' + #numbers.formatDecimal(summaries.get(0).totalNetSalary, 1, 'COMMA', 2, 'POINT') : 'BDT 0.00'}">
+                                BDT 0.00</h2>
                             <p class="card-text opacity-75"
                                 th:text="${!summaries.isEmpty() ? 'For ' + summaries.get(0).month : 'No Data'}">Dec 2023
                             </p>
@@ -80,10 +80,10 @@
                             <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>Avg Salary</h5>
                             <h2 class="display-6 fw-bold"
                                 th:if="${!summaries.isEmpty() && summaries.get(0).totalEmployees > 0}"
-                                th:text="${#numbers.formatCurrency(summaries.get(0).totalNetSalary / summaries.get(0).totalEmployees)}">
-                                $0</h2>
+                                th:text="${'BDT ' + #numbers.formatDecimal(summaries.get(0).totalNetSalary / summaries.get(0).totalEmployees, 1, 'COMMA', 2, 'POINT')}">
+                                BDT 0</h2>
                             <h2 class="display-6 fw-bold"
-                                th:if="${summaries.isEmpty() || summaries.get(0).totalEmployees == 0}">$0</h2>
+                                th:if="${summaries.isEmpty() || summaries.get(0).totalEmployees == 0}">BDT 0</h2>
                             <p class="card-text opacity-75">Per Employee (Net)</p>
                         </div>
                     </div>
@@ -127,7 +127,8 @@
                                                     th:text="${sum.paidCount + ' Paid'}"></span>
                                             </td>
                                             <td class="fw-bold"
-                                                th:text="${#numbers.formatCurrency(sum.totalNetSalary)}">$50,000</td>
+                                                th:text="${'BDT ' + #numbers.formatDecimal(sum.totalNetSalary, 1, 'COMMA', 2, 'POINT')}">
+                                                BDT 50,000</td>
                                             <td>
                                                 <a th:href="@{'/payroll/details/' + ${sum.month}}"
                                                     class="btn btn-outline-primary btn-sm rounded-pill px-3">
