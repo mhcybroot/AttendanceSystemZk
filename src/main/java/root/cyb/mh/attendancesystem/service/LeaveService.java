@@ -29,6 +29,12 @@ public class LeaveService {
         return leaveRequestRepository.findAllByOrderByCreatedAtDesc();
     }
 
+    public List<LeaveRequest> getRequestsForApprover(String approverId) {
+        // Return requests where user is Primary OR Assistant
+        return leaveRequestRepository.findByEmployee_ReportsTo_IdOrEmployee_ReportsToAssistant_Id(approverId,
+                approverId);
+    }
+
     public Optional<LeaveRequest> findById(Long id) {
         return leaveRequestRepository.findById(id);
     }

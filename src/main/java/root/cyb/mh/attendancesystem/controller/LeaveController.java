@@ -57,11 +57,33 @@ public class LeaveController {
     // --- Admin / HR Endpoints ---
 
     @GetMapping("/manage")
-    public String manageLeavePage(Model model) {
-        // Fetch all requests (could filter by pending in UI or via param)
-        List<LeaveRequest> allRequests = leaveService.getAllRequests();
-        model.addAttribute("requests", allRequests);
-        model.addAttribute("requests", allRequests);
+    public String manageLeavePage(Model model, Authentication authentication) {
+        // Fetch User Roles
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(r -> r.getAuthority().equals("ROLE_ADMIN"));
+
+        String currentUserId = authentication.getName();
+        List<LeaveRequest> requests;
+
+        if (isAdmin) {
+            // Admin sees ALL
+            requests = leaveService.getAllRequests();
+            model.addAttribute("pageTitle", "All Leave Requests");
+        } else {
+            // Manager sees only THEIR TEAM
+            // Strict Security Check: Must be a supervisor
+            boolean isSupervisor = employeeRepository.existsByReportsTo_IdOrReportsToAssistant_Id(currentUserId,
+                    currentUserId);
+            if (!isSupervisor) {
+                throw new org.springframework.security.access.AccessDeniedException(
+                        "Access Denied: You are not a supervisor.");
+            }
+
+            requests = leaveService.getRequestsForApprover(currentUserId);
+            model.addAttribute("pageTitle", "My Team's Requests");
+        }
+
+        model.addAttribute("requests", requests);
         model.addAttribute("activeLink", "leave-manage");
         model.addAttribute("isTestingMode", isTestingMode);
         return "admin-leave-requests";
@@ -78,13 +100,23 @@ public class LeaveController {
                 .filter(r -> r.startsWith("ROLE_"))
                 .findFirst().orElse("ROLE_USER");
 
+        // Strict Security Check for POST
+        boolean isAdmin = role.equals("ROLE_ADMIN") || role.equals("ROLE_HR");
+        if (!isAdmin) {
+            String currentUserId = authentication.getName();
+            boolean isSupervisor = employeeRepository.existsByReportsTo_IdOrReportsToAssistant_Id(currentUserId,
+                    currentUserId);
+            if (!isSupervisor) {
+                return "redirect:/leave/manage?error=AccessDenied";
+            }
+        }
+
         String reviewerEmail = authentication.getName();
 
         try {
             leaveService.updateStatus(id, LeaveRequest.Status.valueOf(status), comment, role, reviewerEmail);
         } catch (IllegalStateException e) {
-            // Flash error message if HR tries to edit non-pending (TODO: Add flash
-            // attributes)
+            // Flash error message
             return "redirect:/leave/manage?error=" + e.getMessage();
         }
 

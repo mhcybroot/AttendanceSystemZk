@@ -9,20 +9,25 @@ import java.util.List;
 @Repository
 public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long> {
 
-    // For Employee: View their own history
-    List<LeaveRequest> findByEmployeeIdOrderByCreatedAtDesc(String employeeId);
+        // For Employee: View their own history
+        List<LeaveRequest> findByEmployeeIdOrderByCreatedAtDesc(String employeeId);
 
-    // For HR/Admin: View all (could filter by Pending later)
-    List<LeaveRequest> findAllByOrderByCreatedAtDesc();
+        // For HR/Admin: View all (could filter by Pending later)
+        List<LeaveRequest> findAllByOrderByCreatedAtDesc();
 
-    // Find pending requests
-    List<LeaveRequest> findByStatusOrderByCreatedAtDesc(LeaveRequest.Status status);
+        // Find pending requests
+        List<LeaveRequest> findByStatusOrderByCreatedAtDesc(LeaveRequest.Status status);
 
-    // Count approved leaves for a specific date
-    long countByStartDateLessThanEqualAndEndDateGreaterThanEqualAndStatus(java.time.LocalDate date1,
-            java.time.LocalDate date2, LeaveRequest.Status status);
+        // Find requests where the applicant reports to the given approver ID (Primary
+        // OR Assistant)
+        List<LeaveRequest> findByEmployee_ReportsTo_IdOrEmployee_ReportsToAssistant_Id(String approverId,
+                        String assistantId);
 
-    // Find approved leaves for a specific date (for Dashboard filtering)
-    List<LeaveRequest> findByStartDateLessThanEqualAndEndDateGreaterThanEqualAndStatus(java.time.LocalDate date1,
-            java.time.LocalDate date2, LeaveRequest.Status status);
+        // Count approved leaves for a specific date
+        long countByStartDateLessThanEqualAndEndDateGreaterThanEqualAndStatus(java.time.LocalDate date1,
+                        java.time.LocalDate date2, LeaveRequest.Status status);
+
+        // Find approved leaves for a specific date (for Dashboard filtering)
+        List<LeaveRequest> findByStartDateLessThanEqualAndEndDateGreaterThanEqualAndStatus(java.time.LocalDate date1,
+                        java.time.LocalDate date2, LeaveRequest.Status status);
 }

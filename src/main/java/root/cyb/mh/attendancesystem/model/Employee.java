@@ -22,6 +22,14 @@ public class Employee {
     @jakarta.persistence.ManyToOne
     private Department department;
 
+    @jakarta.persistence.ManyToOne
+    private Employee reportsTo; // The supervisor this employee reports to
+
+    @jakarta.persistence.ManyToOne
+    private Employee reportsToAssistant; // The backup/assistant supervisor
+
+    private String designation; // e.g. Manager, MD, Senior Developer
+
     private String email;
 
     // This field acts as the "Password" for Employee Login

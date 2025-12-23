@@ -69,6 +69,15 @@
                 </a>
             </div>
 
+            <!-- Smart Manager Section (Visible if user manages ANYONE) -->
+            <div th:if="${isSupervisor}">
+                <div class="sidebar-heading border-bottom bg-dark text-muted small py-2">MANAGE YOUR WORKS</div>
+                <a href="/supervisor/dashboard" class="list-group-item list-group-item-action"
+                    th:classappend="${activeLink == 'supervisor-dashboard'} ? 'active'">
+                    <i class="fas fa-chart-line me-2"></i> Team Dashboard
+                </a>
+            </div>
+
 
 
             <!-- Management Section (Admin & HR) -->

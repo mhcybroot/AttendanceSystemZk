@@ -101,7 +101,16 @@
                                         <td th:text="${emp.department != null ? emp.department.name : 'Unassigned'}">
                                             Engineering
                                         </td>
-                                        <td th:text="${emp.role}">Developer</td>
+                                        <td>
+                                            <div th:text="${emp.role}">Developer</div>
+                                            <small class="text-muted" th:if="${emp.designation != null}"
+                                                th:text="${emp.designation}">Senior</small>
+                                            <div style="font-size: 0.75rem" class="text-info"
+                                                th:if="${emp.reportsTo != null}">
+                                                <i class="fas fa-level-up-alt"></i> <span
+                                                    th:text="${emp.reportsTo.name}">Manager</span>
+                                            </div>
+                                        </td>
                                         <td th:text="${emp.email}">john@example.com</td>
                                         <td>
                                             <span th:if="${emp.annualLeaveQuota != null}"
@@ -117,6 +126,9 @@
                                                 th:data-quota="${emp.annualLeaveQuota}"
                                                 th:data-salary="${emp.monthlySalary}" th:data-is-guest="${emp.isGuest}"
                                                 th:data-allowance="${emp.fixedAllowance}"
+                                                th:data-designation="${emp.designation}"
+                                                th:data-reports-to-id="${emp.reportsTo != null ? emp.reportsTo.id : ''}"
+                                                th:data-reports-to-assistant-id="${emp.reportsToAssistant != null ? emp.reportsToAssistant.id : ''}"
                                                 th:data-joining-date="${emp.joiningDate}" onclick="editEmployee(this)">
                                                 Edit
                                             </button>
@@ -185,6 +197,30 @@
                                     <div class="mb-3">
                                         <input type="text" class="form-control" id="empUsername" name="username"
                                             placeholder="Set password for employee login">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Key Role / Designation</label>
+                                        <input type="text" class="form-control" id="empDesignation" name="designation"
+                                            placeholder="e.g. Senior Manager">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Reports To (Supervisor)</label>
+                                        <select name="reportsToId" id="empReportsTo" class="form-select">
+                                            <option value="">No Supervisor (Top Level)</option>
+                                            <option th:each="sup : ${allEmployees}" th:value="${sup.id}"
+                                                th:text="${sup.name + ' (' + (sup.designation != null ? sup.designation : sup.role) + ')'}">
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Assistant / Backup Supervisor</label>
+                                        <select name="reportsToAssistantId" id="empReportsToAssistant"
+                                            class="form-select">
+                                            <option value="">No Backup Supervisor</option>
+                                            <option th:each="sup : ${allEmployees}" th:value="${sup.id}"
+                                                th:text="${sup.name + ' (' + (sup.designation != null ? sup.designation : sup.role) + ')'}">
+                                            </option>
+                                        </select>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Annual Leave Quota (Days)</label>
@@ -275,6 +311,9 @@
                 var username = btn.getAttribute('data-username'); // If available
                 var isGuest = btn.getAttribute('data-is-guest') === 'true';
                 var joiningDate = btn.getAttribute('data-joining-date');
+                var designation = btn.getAttribute('data-designation');
+                var reportsToId = btn.getAttribute('data-reports-to-id');
+                var reportsToAssistantId = btn.getAttribute('data-reports-to-assistant-id');
 
                 document.getElementById('empId').value = id;
                 document.getElementById('empId').readOnly = true; // Cannot change ID
@@ -289,6 +328,9 @@
                 document.getElementById('accountNumber').value = accNum;
                 document.getElementById('empIsGuest').checked = isGuest;
                 document.getElementById('empJoiningDate').value = joiningDate;
+                document.getElementById('empDesignation').value = designation;
+                document.getElementById('empReportsTo').value = reportsToId;
+                document.getElementById('empReportsToAssistant').value = reportsToAssistantId;
                 document.getElementById('empModalTitle').innerText = 'Edit Employee';
                 new bootstrap.Modal(document.getElementById('addEmployeeModal')).show();
             }

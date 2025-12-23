@@ -40,6 +40,7 @@ public class EmployeeController {
         Page<Employee> employeePage = employeeRepository.findAll(pageable);
 
         model.addAttribute("employees", employeePage.getContent());
+        model.addAttribute("allEmployees", employeeRepository.findAll()); // For Dropdown
         model.addAttribute("page", employeePage);
         model.addAttribute("newEmployee", new Employee());
         model.addAttribute("departments", departmentRepository.findAll());
@@ -52,7 +53,10 @@ public class EmployeeController {
     }
 
     @PostMapping
-    public String saveEmployee(@ModelAttribute Employee employee, @RequestParam(required = false) Long departmentId) {
+    public String saveEmployee(@ModelAttribute Employee employee,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) String reportsToId,
+            @RequestParam(required = false) String reportsToAssistantId) {
         Employee employeeToSave = employee;
 
         // Check if updating existing employee
@@ -71,7 +75,10 @@ public class EmployeeController {
                 existing.setMonthlySalary(employee.getMonthlySalary()); // Update Monthly Salary
                 existing.setFixedAllowance(employee.getFixedAllowance()); // Update Fixed Allowance
                 existing.setBankName(employee.getBankName()); // Update Bank Name
+                existing.setBankName(employee.getBankName()); // Update Bank Name
                 existing.setAccountNumber(employee.getAccountNumber()); // Update Account Number
+                existing.setDesignation(employee.getDesignation());
+                // Reports To handled below (needs Repo fetch if not null)
 
                 // Update Password only if provided
                 if (employee.getUsername() != null && !employee.getUsername().isEmpty()) {
@@ -96,6 +103,24 @@ public class EmployeeController {
 
         if (departmentId != null) {
             departmentRepository.findById(departmentId).ifPresent(employeeToSave::setDepartment);
+        }
+
+        if (reportsToId != null && !reportsToId.isEmpty()) {
+            employeeRepository.findById(reportsToId).ifPresent(employeeToSave::setReportsTo);
+        } else {
+            employeeToSave.setReportsTo(null); // Clear if deselected
+        }
+
+        if (reportsToAssistantId != null && !reportsToAssistantId.isEmpty()) {
+            employeeRepository.findById(reportsToAssistantId).ifPresent(employeeToSave::setReportsToAssistant);
+        } else {
+            employeeToSave.setReportsToAssistant(null); // Clear if deselected
+        }
+
+        if (reportsToAssistantId != null && !reportsToAssistantId.isEmpty()) {
+            employeeRepository.findById(reportsToAssistantId).ifPresent(employeeToSave::setReportsToAssistant);
+        } else {
+            employeeToSave.setReportsToAssistant(null); // Clear if deselected
         }
 
         employeeRepository.save(employeeToSave);
