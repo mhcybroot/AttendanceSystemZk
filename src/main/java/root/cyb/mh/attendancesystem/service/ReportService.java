@@ -62,105 +62,8 @@ public class ReportService {
                     .collect(Collectors.toList());
         }
 
-        // Calculate Status for ALL employees first (to allow filtering)
-        List<DailyAttendanceDto> fullReport = new ArrayList<>();
-
-        // Get All Logs for the Date
-        List<AttendanceLog> logs = attendanceLogRepository.findAll().stream()
-                .filter(log -> log.getTimestamp().toLocalDate().equals(date))
-                .collect(Collectors.toList());
-
-        List<root.cyb.mh.attendancesystem.model.PublicHoliday> holidays = publicHolidayRepository.findAll();
-
-        // Get Approved Leaves for the Date
-        List<root.cyb.mh.attendancesystem.model.LeaveRequest> approvedLeaves = leaveRequestRepository
-                .findByStatusOrderByCreatedAtDesc(root.cyb.mh.attendancesystem.model.LeaveRequest.Status.APPROVED)
-                .stream()
-                .filter(l -> !date.isBefore(l.getStartDate()) && !date.isAfter(l.getEndDate()))
-                .collect(Collectors.toList());
-
-        for (Employee emp : allFilteredEmployees) {
-            DailyAttendanceDto dto = new DailyAttendanceDto();
-            dto.setEmployeeId(emp.getId());
-            dto.setEmployeeName(emp.getName());
-            dto.setDepartmentName(emp.getDepartment() != null ? emp.getDepartment().getName() : "Unassigned");
-
-            WorkSchedule schedule = resolveSchedule(emp.getId(), date, globalSchedule);
-
-            // Filter logs for this employee
-            List<AttendanceLog> empLogs = logs.stream()
-                    .filter(log -> log.getEmployeeId().equals(emp.getId()))
-                    .sorted(Comparator.comparing(AttendanceLog::getTimestamp))
-                    .collect(Collectors.toList());
-
-            boolean isWeekend = schedule.getWeekendDays() != null
-                    && schedule.getWeekendDays().contains(String.valueOf(date.getDayOfWeek().getValue()));
-            boolean isPublicHoliday = holidays.stream().anyMatch(h -> h.getDate().equals(date));
-
-            // Check Joining Date
-            if (emp.getJoiningDate() != null && date.isBefore(emp.getJoiningDate())) {
-                dto.setStatus("NOT JOINED");
-                dto.setStatusColor("secondary");
-                fullReport.add(dto);
-                continue;
-            }
-
-            if (isWeekend || isPublicHoliday) {
-                dto.setStatus("WEEKEND/HOLIDAY");
-                dto.setStatusColor("secondary"); // Gray
-                if (!empLogs.isEmpty()) {
-                    dto.setStatus("PRESENT (HOLIDAY)");
-                    dto.setStatusColor("success");
-                    LocalTime inTime = empLogs.get(0).getTimestamp().toLocalTime();
-                    LocalTime outTime = empLogs.get(empLogs.size() - 1).getTimestamp().toLocalTime();
-                    dto.setInTime(inTime);
-                    dto.setOutTime(outTime);
-                }
-            } else if (empLogs.isEmpty()) {
-                // Check for Leave
-                boolean onLeave = approvedLeaves.stream().anyMatch(l -> l.getEmployee().getId().equals(emp.getId()));
-                if (onLeave) {
-                    root.cyb.mh.attendancesystem.model.LeaveRequest leave = approvedLeaves.stream()
-                            .filter(l -> l.getEmployee().getId().equals(emp.getId()))
-                            .findFirst().orElse(null);
-                    String type = leave != null && leave.getLeaveType() != null ? leave.getLeaveType().toUpperCase()
-                            : "";
-                    dto.setStatus(!type.isEmpty() ? type + " LEAVE" : "ON LEAVE");
-                    dto.setStatusColor("info"); // Blue
-                } else {
-                    dto.setStatus("ABSENT");
-                    dto.setStatusColor("danger");
-                }
-            } else {
-                LocalTime inTime = empLogs.get(0).getTimestamp().toLocalTime();
-                LocalTime outTime = empLogs.get(empLogs.size() - 1).getTimestamp().toLocalTime();
-
-                dto.setInTime(inTime);
-                dto.setOutTime(outTime);
-
-                // Check Status
-                LocalTime lateThreshold = schedule.getStartTime().plusMinutes(schedule.getLateToleranceMinutes());
-                LocalTime earlyThreshold = schedule.getEndTime().minusMinutes(schedule.getEarlyLeaveToleranceMinutes());
-
-                boolean isLate = inTime.isAfter(lateThreshold);
-                boolean isEarly = outTime.isBefore(earlyThreshold);
-
-                if (isLate && isEarly) {
-                    dto.setStatus("LATE & EARLY LEAVE");
-                    dto.setStatusColor("warning");
-                } else if (isLate) {
-                    dto.setStatus("LATE ENTRY");
-                    dto.setStatusColor("warning");
-                } else if (isEarly) {
-                    dto.setStatus("EARLY LEAVE");
-                    dto.setStatusColor("info");
-                } else {
-                    dto.setStatus("PRESENT");
-                    dto.setStatusColor("success");
-                }
-            }
-            fullReport.add(dto);
-        }
+        // Generate Report Data
+        List<DailyAttendanceDto> fullReport = generateDailyReportData(allFilteredEmployees, date, globalSchedule);
 
         // Apply Status Filter
         if (statusFilter != null && !statusFilter.isEmpty()) {
@@ -191,6 +94,110 @@ public class ReportService {
         }
 
         return new PageImpl<>(pagedContent, pageable, fullReport.size());
+    }
+
+    public List<DailyAttendanceDto> getTeamDailyStatus(List<Employee> teamMembers) {
+        WorkSchedule globalSchedule = workScheduleRepository.findAll().stream().findFirst().orElse(new WorkSchedule());
+        // Use today's date
+        return generateDailyReportData(teamMembers, LocalDate.now(), globalSchedule);
+    }
+
+    private List<DailyAttendanceDto> generateDailyReportData(List<Employee> employees, LocalDate date,
+            WorkSchedule globalSchedule) {
+        List<DailyAttendanceDto> report = new ArrayList<>();
+        List<AttendanceLog> logs = attendanceLogRepository.findAll().stream()
+                .filter(log -> log.getTimestamp().toLocalDate().equals(date))
+                .collect(Collectors.toList());
+
+        List<root.cyb.mh.attendancesystem.model.PublicHoliday> holidays = publicHolidayRepository.findAll();
+
+        List<root.cyb.mh.attendancesystem.model.LeaveRequest> approvedLeaves = leaveRequestRepository
+                .findByStatusOrderByCreatedAtDesc(root.cyb.mh.attendancesystem.model.LeaveRequest.Status.APPROVED)
+                .stream()
+                .filter(l -> !date.isBefore(l.getStartDate()) && !date.isAfter(l.getEndDate()))
+                .collect(Collectors.toList());
+
+        for (Employee emp : employees) {
+            DailyAttendanceDto dto = new DailyAttendanceDto();
+            dto.setEmployeeId(emp.getId());
+            dto.setEmployeeName(emp.getName());
+            dto.setDepartmentName(emp.getDepartment() != null ? emp.getDepartment().getName() : "Unassigned");
+
+            // Helpful for UI
+            dto.setDesignation(emp.getDesignation());
+            dto.setAvatarPath(emp.getAvatarPath());
+
+            WorkSchedule schedule = resolveSchedule(emp.getId(), date, globalSchedule);
+
+            List<AttendanceLog> empLogs = logs.stream()
+                    .filter(log -> log.getEmployeeId().equals(emp.getId()))
+                    .sorted(Comparator.comparing(AttendanceLog::getTimestamp))
+                    .collect(Collectors.toList());
+
+            boolean isWeekend = schedule.getWeekendDays() != null
+                    && schedule.getWeekendDays().contains(String.valueOf(date.getDayOfWeek().getValue()));
+            boolean isPublicHoliday = holidays.stream().anyMatch(h -> h.getDate().equals(date));
+
+            if (emp.getJoiningDate() != null && date.isBefore(emp.getJoiningDate())) {
+                dto.setStatus("NOT JOINED");
+                dto.setStatusColor("secondary");
+                report.add(dto);
+                continue;
+            }
+
+            if (isWeekend || isPublicHoliday) {
+                dto.setStatus("WEEKEND/HOLIDAY");
+                dto.setStatusColor("secondary");
+                if (!empLogs.isEmpty()) {
+                    dto.setStatus("PRESENT (HOLIDAY)");
+                    dto.setStatusColor("success");
+                    dto.setInTime(empLogs.get(0).getTimestamp().toLocalTime());
+                    dto.setOutTime(empLogs.get(empLogs.size() - 1).getTimestamp().toLocalTime());
+                }
+            } else if (empLogs.isEmpty()) {
+                boolean onLeave = approvedLeaves.stream().anyMatch(l -> l.getEmployee().getId().equals(emp.getId()));
+                if (onLeave) {
+                    root.cyb.mh.attendancesystem.model.LeaveRequest leave = approvedLeaves.stream()
+                            .filter(l -> l.getEmployee().getId().equals(emp.getId()))
+                            .findFirst().orElse(null);
+                    String type = leave != null && leave.getLeaveType() != null ? leave.getLeaveType().toUpperCase()
+                            : "";
+                    dto.setStatus(!type.isEmpty() ? type + " LEAVE" : "ON LEAVE");
+                    dto.setStatusColor("info");
+                } else {
+                    dto.setStatus("ABSENT");
+                    dto.setStatusColor("danger");
+                }
+            } else {
+                LocalTime inTime = empLogs.get(0).getTimestamp().toLocalTime();
+                LocalTime outTime = empLogs.get(empLogs.size() - 1).getTimestamp().toLocalTime();
+                dto.setInTime(inTime);
+                dto.setOutTime(outTime);
+
+                LocalTime lateThreshold = schedule.getStartTime().plusMinutes(schedule.getLateToleranceMinutes());
+                LocalTime earlyThreshold = schedule.getEndTime().minusMinutes(schedule.getEarlyLeaveToleranceMinutes());
+
+                boolean isLate = inTime.isAfter(lateThreshold);
+                boolean isEarly = outTime.isBefore(earlyThreshold);
+
+                if (isLate && isEarly) {
+                    dto.setStatus("LATE & EARLY LEAVE");
+                    dto.setStatusColor("warning");
+                } else if (isLate) {
+                    dto.setStatus("LATE ENTRY");
+                    dto.setStatusColor("warning");
+                } else if (isEarly) {
+                    dto.setStatus("EARLY LEAVE");
+                    dto.setStatusColor("info");
+                } else {
+                    dto.setStatus("PRESENT");
+                    dto.setStatusColor("success");
+                }
+            }
+            report.add(dto);
+        }
+        return report;
+
     }
 
     public Page<root.cyb.mh.attendancesystem.dto.WeeklyAttendanceDto> getWeeklyReport(LocalDate startOfWeek,

@@ -148,7 +148,9 @@
                                     <tr>
                                         <th>Employee</th>
                                         <th>Attendance</th>
-                                        <th>Deductions</th>
+                                        <th>Late Penalty</th>
+                                        <th>Advance Salary</th>
+                                        <th>Total Deductions</th>
                                         <th>Net Salary</th>
                                         <th>Actions</th>
                                     </tr>
@@ -166,18 +168,41 @@
                                                 <i class="fas fa-clock me-1"></i>
                                                 <span th:text="${slip.totalWorkingDays}">20</span> days
                                             </span>
-                                        </td>
-                                        <td>
-                                            <span class="text-danger"
-                                                th:text="${'-BDT ' + #numbers.formatDecimal(slip.deductionAmount, 1, 'COMMA', 2, 'POINT')}">-$100</span>
-                                            <div class="small text-muted" th:if="${slip.absentDays > 0}"
-                                                th:text="${slip.absentDays + ' Absent'}">2 Abs</div>
-                                            <div class="small text-danger"
-                                                th:if="${slip.latePenaltyAmount != null and slip.latePenaltyAmount > 0}">
-                                                <i class="fas fa-exclamation-triangle me-1"></i>Late Penalty
+                                            <div class="small text-danger mt-1" th:if="${slip.absentDays > 0}">
+                                                <i class="fas fa-times-circle me-1"></i><span
+                                                    th:text="${slip.absentDays + ' Absent'}">2 Abs</span>
                                             </div>
                                         </td>
-                                        <td class="fw-bold text-primary"
+                                        <!-- Late Penalty -->
+                                        <td>
+                                            <div class="text-warning fw-bold"
+                                                th:if="${slip.latePenaltyAmount != null and slip.latePenaltyAmount > 0}">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                <span
+                                                    th:text="${'BDT ' + #numbers.formatDecimal(slip.latePenaltyAmount, 1, 'COMMA', 2, 'POINT')}">500</span>
+                                            </div>
+                                            <div class="small text-muted" th:if="${slip.lateDays > 0}"
+                                                th:text="${'(' + slip.lateDays + ' Late)'}"></div>
+                                            <span class="text-muted small"
+                                                th:if="${slip.latePenaltyAmount == null or slip.latePenaltyAmount == 0}">-</span>
+                                        </td>
+                                        <!-- Advance Salary -->
+                                        <td>
+                                            <div class="text-info fw-bold"
+                                                th:if="${slip.advanceSalaryAmount != null and slip.advanceSalaryAmount > 0}">
+                                                <i class="fas fa-money-bill-wave me-1"></i>
+                                                <span
+                                                    th:text="${'BDT ' + #numbers.formatDecimal(slip.advanceSalaryAmount, 1, 'COMMA', 2, 'POINT')}">1000</span>
+                                            </div>
+                                            <span class="text-muted small"
+                                                th:if="${slip.advanceSalaryAmount == null or slip.advanceSalaryAmount == 0}">-</span>
+                                        </td>
+                                        <!-- Total Deductions -->
+                                        <td>
+                                            <span class="text-danger fw-bold"
+                                                th:text="${'-BDT ' + #numbers.formatDecimal(slip.deductionAmount, 1, 'COMMA', 2, 'POINT')}">-$100</span>
+                                        </td>
+                                        <td class="fw-bold text-success"
                                             th:text="${'BDT ' + #numbers.formatDecimal(slip.netSalary, 1, 'COMMA', 2, 'POINT')}">
                                             $2000</td>
                                         <td>

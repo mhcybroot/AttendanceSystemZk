@@ -81,8 +81,12 @@ public class PayrollController {
     public String updateStatus(@RequestParam Long payslipId, @RequestParam String status) {
         Payslip slip = payslipRepository.findById(payslipId).orElse(null);
         if (slip != null) {
-            slip.setStatus(Payslip.Status.valueOf(status));
-            payslipRepository.save(slip);
+            if ("PAID".equals(status)) {
+                payrollService.finalizePayslip(payslipId);
+            } else {
+                slip.setStatus(Payslip.Status.valueOf(status));
+                payslipRepository.save(slip);
+            }
         }
         // Redirect back to details page
         return "redirect:/payroll/details/" + (slip != null ? slip.getMonth() : "");
@@ -94,8 +98,7 @@ public class PayrollController {
         List<Payslip> slips = payslipRepository.findByMonth(month);
         for (Payslip slip : slips) {
             if (slip.getStatus() == Payslip.Status.DRAFT) {
-                slip.setStatus(Payslip.Status.PAID);
-                payslipRepository.save(slip);
+                payrollService.finalizePayslip(slip.getId());
             }
         }
         return "redirect:/payroll/details/" + month;

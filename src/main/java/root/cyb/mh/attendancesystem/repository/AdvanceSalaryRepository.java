@@ -20,4 +20,8 @@ public interface AdvanceSalaryRepository extends JpaRepository<AdvanceSalaryRequ
     // Find approved and not yet deducted requests for a specific employee
     @Query("SELECT r FROM AdvanceSalaryRequest r WHERE r.employee.id = :empId AND r.status = 'APPROVED' AND r.isDeducted = false")
     List<AdvanceSalaryRequest> findPendingDeductions(@Param("empId") String employeeId);
+
+    // Find requests for a supervisor (Primary OR Assistant)
+    List<AdvanceSalaryRequest> findByEmployee_ReportsTo_IdOrEmployee_ReportsToAssistant_Id(String primaryId,
+            String assistantId);
 }

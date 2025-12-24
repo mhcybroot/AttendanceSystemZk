@@ -12,4 +12,6 @@ public class DailyAttendanceDto {
     private LocalTime outTime;
     private String status; // PRESENT, LATE, EARLY_LEAVE, ABSENT
     private String statusColor; // success, warning, danger, etc.
+    private String designation;
+    private String avatarPath;
 }

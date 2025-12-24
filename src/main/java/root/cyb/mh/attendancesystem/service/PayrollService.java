@@ -257,14 +257,12 @@ public class PayrollService {
         double latePenaltyAmount = penaltyDays * dailyRate;
 
         // Advance Salary Logic
+        // Advance Salary Logic (Preview Only)
         double advanceDeduction = 0.0;
         List<AdvanceSalaryRequest> pendingAdvances = advanceSalaryRepository.findPendingDeductions(emp.getId());
         for (AdvanceSalaryRequest req : pendingAdvances) {
             advanceDeduction += req.getAmount();
-            // Mark as deducted to prevent double counting
-            req.setDeducted(true);
-            req.setStatus(AdvanceSalaryRequest.Status.PAID); // Mark as Paid back
-            advanceSalaryRepository.save(req);
+            // DO NOT Mark as deducted in Draft phase
         }
 
         double totalDeductions = absentDeduction + latePenaltyAmount + advanceDeduction;
@@ -289,5 +287,31 @@ public class PayrollService {
         payslip.setAdvanceSalaryAmount(advanceDeduction);
 
         payslipRepository.save(payslip);
+    }
+
+    public void finalizePayslip(Long payslipId) {
+        Payslip slip = payslipRepository.findById(payslipId).orElse(null);
+        if (slip != null && slip.getStatus() != Payslip.Status.PAID) {
+            // Mark Payslip as Paid
+            slip.setStatus(Payslip.Status.PAID);
+            payslipRepository.save(slip);
+
+            // Mark Advance Salary Requests as Paid/Deducted
+            if (slip.getAdvanceSalaryAmount() != null && slip.getAdvanceSalaryAmount() > 0) {
+                List<AdvanceSalaryRequest> pendingAdvances = advanceSalaryRepository
+                        .findPendingDeductions(slip.getEmployee().getId());
+
+                // We have to be careful: calculatePayslip aggregates ALL pending.
+                // We assume the amount matches ALL pending at the time of calculation.
+                // A safer robust way is to link specific requests to a payslip, but for now:
+                // We'll mark all currently APPROVED (pending deduction) requests as PAID.
+
+                for (AdvanceSalaryRequest req : pendingAdvances) {
+                    req.setDeducted(true);
+                    req.setStatus(AdvanceSalaryRequest.Status.PAID);
+                    advanceSalaryRepository.save(req);
+                }
+            }
+        }
     }
 }

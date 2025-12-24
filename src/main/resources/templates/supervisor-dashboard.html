@@ -8,121 +8,488 @@
 <body>
     <div th:replace="~{layout :: layout(~{::section}, ~{::script}, 'supervisor-dashboard')}">
         <section>
-            <div
-                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Manage Your Team</h1>
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <a href="/leave/manage" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-search me-1"></i> View All Requests
-                    </a>
+            <!-- Header -->
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-3 mb-3">
+                <div>
+                    <h1 class="h2 fw-bold">Team Command Center</h1>
+                    <p class="text-muted mb-0">Overview of your team's performance and requests</p>
+                </div>
+                <!-- Global Actions (Future) -->
+                <div>
+                    <span class="badge bg-soft-primary text-primary px-3 py-2 rounded-pill">
+                        <i class="fas fa-users me-2"></i>
+                        <span th:text="${teamSize} + ' Members'">12 Members</span>
+                    </span>
                 </div>
             </div>
 
-            <!-- Stats Cards -->
-            <div class="row mb-4">
-                <div class="col-md-6 col-xl-3 mb-3">
-                    <div class="card bg-warning text-dark h-100 shadow-sm border-0">
-                        <div class="card-body">
-                            <h6 class="text-uppercase small fw-bold">Pending Approvals</h6>
-                            <h2 class="display-4 fw-bold mb-0" th:text="${pendingCount}">3</h2>
+            <!-- Stats Overview -->
+            <div class="row mb-4 g-3">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100 overflow-hidden card-hover">
+                        <div class="card-body position-relative">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="icon-square bg-soft-success text-success rounded-3 me-3">
+                                    <i class="fas fa-user-check fa-lg"></i>
+                                </div>
+                                <h6 class="card-subtitle text-muted text-uppercase fw-bold small">Present Today</h6>
+                            </div>
+                            <h2 class="display-5 fw-bold mb-0" th:text="${presentCount}">8</h2>
+                            <small class="text-success fw-bold" th:if="${teamSize > 0}"
+                                th:text="${#numbers.formatPercent(presentCount * 1.0 / teamSize, 1, 0)} + ' of team'">
+                                80% of team
+                            </small>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6 col-xl-3 mb-3">
-                    <div class="card bg-info text-white h-100 shadow-sm border-0">
-                        <div class="card-body">
-                            <h6 class="text-uppercase small fw-bold">My Team Size</h6>
-                            <h2 class="display-4 fw-bold mb-0" th:text="${teamSize}">12</h2>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100 overflow-hidden card-hover">
+                        <div class="card-body position-relative">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="icon-square bg-soft-warning text-warning rounded-3 me-3">
+                                    <i class="fas fa-clock fa-lg"></i>
+                                </div>
+                                <h6 class="card-subtitle text-muted text-uppercase fw-bold small">Pending Actions</h6>
+                            </div>
+                            <h2 class="display-5 fw-bold mb-0"
+                                th:text="${pendingCount + pendingAdvanceRequests.size()}">3</h2>
+                            <small class="text-muted">Requires your attention</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100 overflow-hidden card-hover bg-primary text-white"
+                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div class="card-body position-relative">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="icon-square bg-white text-primary bg-opacity-25 rounded-3 me-3">
+                                    <i class="fas fa-chart-line fa-lg text-white"></i>
+                                </div>
+                                <h6 class="card-subtitle text-white text-opacity-75 text-uppercase fw-bold small">
+                                    On-Time Rate</h6>
+                            </div>
+                            <!-- Placeholder for Analytics (Next Step) -->
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h2 class="display-5 fw-bold mb-0" th:text="${onTimeRate} + '%'">85%</h2>
+                                    <small class="text-white text-opacity-75">On-Time Rate</small>
+                                </div>
+                                <div style="width: 80px; height: 80px;">
+                                    <canvas id="onTimeChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script th:inline="javascript">
+                document.addEventListener('DOMContentLoaded', function () {
+                    const ctx = document.getElementById('onTimeChart').getContext('2d');
+                    const rate = [[${ onTimeRate }]];
+                    const lateRate = 100 - rate;
+
+                    new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['On Time', 'Late/Absent'],
+                            datasets: [{
+                                data: [rate, lateRate],
+                                backgroundColor: ['#ffffff', 'rgba(255, 255, 255, 0.2)'],
+                                borderWidth: 0,
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: {
+                            cutout: '70%',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                        }
+                    });
+                });
+            </script>
+
+            <!-- Team Pulse Widget -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 pt-4 pb-2 px-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title fw-bold mb-0"><i class="fas fa-heartbeat text-danger me-2"></i>Team Pulse
+                        </h5>
+                        <span class="badge bg-light text-dark border">Live Status</span>
+                    </div>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    <div class="d-flex overflow-auto pb-2 hide-scrollbar">
+                        <div th:each="member : ${teamPulse}"
+                            class="text-center me-4 position-relative group-hover-scale"
+                            style="min-width: 90px; cursor: pointer;" th:title="${member.employeeName}">
+                            <div class="position-relative d-inline-block mb-2">
+                                <div class="rounded-circle border border-3 p-1 transition-all"
+                                    th:classappend="${'border-' + (member.statusColor == 'secondary' ? 'secondary' : member.statusColor)}">
+                                    <img th:if="${member.avatarPath != null}" th:src="${member.avatarPath}"
+                                        class="rounded-circle shadow-sm" width="64" height="64"
+                                        style="object-fit:cover;">
+                                    <div th:if="${member.avatarPath == null}"
+                                        class="rounded-circle bg-light d-flex align-items-center justify-content-center shadow-sm"
+                                        style="width: 64px; height: 64px;">
+                                        <span class="h5 fw-bold text-muted mb-0"
+                                            th:text="${#strings.substring(member.employeeName,0,1)}">A</span>
+                                    </div>
+                                </div>
+                                <!-- Status Indicator Dot -->
+                                <span
+                                    class="position-absolute bottom-0 end-0 p-2 border border-2 border-white rounded-circle shadow-sm"
+                                    th:classappend="${'bg-' + member.statusColor}" style="width: 18px; height: 18px;">
+                                </span>
+                            </div>
+                            <div class="fw-bold text-dark text-truncate px-1" style="font-size: 0.9rem;"
+                                th:text="${#strings.arraySplit(member.employeeName, ' ')[0]}">Name</div>
+                            <span class="badge rounded-pill bg-light text-dark border mt-1" style="font-size: 0.65rem;"
+                                th:text="${member.status}">Status</span>
+                        </div>
+
+                        <div th:if="${#lists.isEmpty(teamPulse)}" class="w-100 text-center py-4 text-muted">
+                            <i class="fas fa-users-slash fa-2x mb-3 opacity-25"></i><br>
+                            No team members assigned specifically to you yet.
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="row">
-                <!-- Recent Request Widget -->
-                <div class="col-lg-7 mb-4">
-                    <div class="card shadow-sm h-100">
-                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Needs Attention</h5>
-                            <a href="/leave/manage" class="btn btn-sm btn-primary">Process Requests</a>
+                <!-- Action Center (Unified Inbox) -->
+                <div class="col-xl-8 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white border-bottom pt-3 pb-0 px-4">
+                            <ul class="nav nav-tabs card-header-tabs" id="actionTabs" role="tablist">
+                                <li class="nav-item">
+                                    <button class="nav-link active fw-bold py-3 border-0 border-bottom-primary"
+                                        id="leave-tab" data-bs-toggle="tab" data-bs-target="#leave-content">
+                                        Leave Requests
+                                        <span class="badge bg-danger rounded-pill ms-2" th:if="${pendingCount > 0}"
+                                            th:text="${pendingCount}">3</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link fw-bold py-3 border-0" id="advance-tab" data-bs-toggle="tab"
+                                        data-bs-target="#advance-content">
+                                        Advance Salary
+                                        <span class="badge bg-warning text-dark rounded-pill ms-2"
+                                            th:if="${!pendingAdvanceRequests.isEmpty()}"
+                                            th:text="${pendingAdvanceRequests.size()}">1</span>
+                                    </button>
+                                </li>
+                            </ul>
                         </div>
                         <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0 align-middle">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Employee</th>
-                                            <th>Type</th>
-                                            <th>Dates</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr th:each="req : ${pendingRequests}">
-                                            <td>
-                                                <div class="fw-bold" th:text="${req.employee.name}">John</div>
-                                                <small class="text-muted"
-                                                    th:text="${req.employee.designation}">Dev</small>
-                                            </td>
-                                            <td><span class="badge bg-secondary" th:text="${req.leaveType}">Sick</span>
-                                            </td>
-                                            <td th:text="${req.startDate}">Jan 1</td>
-                                            <td>
-                                                <a th:href="@{/leave/manage}"
-                                                    class="btn btn-sm btn-outline-primary">Review</a>
-                                            </td>
-                                        </tr>
-                                        <tr th:if="${#lists.isEmpty(pendingRequests)}">
-                                            <td colspan="4" class="text-center text-muted py-4">
-                                                <i class="fas fa-check-circle fa-2x mb-2 text-success"></i><br>
-                                                You're all caught up! No pending requests.
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Team List Widget -->
-                <div class="col-lg-5 mb-4">
-                    <div class="card shadow-sm h-100">
-                        <div class="card-header bg-white py-3">
-                            <h5 class="mb-0">My Team Members</h5>
-                        </div>
-                        <div class="list-group list-group-flush">
-                            <div class="list-group-item d-flex justify-content-between align-items-center"
-                                th:each="member : ${teamMembers}">
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
-                                        style="width: 40px; height: 40px;">
-                                        <span th:if="${member.photoBase64 == null}" class="text-muted small">IMG</span>
-                                        <img th:if="${member.photoBase64 != null}"
-                                            th:src="'data:image/jpeg;base64,' + ${member.photoBase64}"
-                                            class="rounded-circle" width="40" height="40" style="object-fit:cover;">
+                            <div class="tab-content" id="actionTabsContent">
+                                <!-- Leave Requests Tab -->
+                                <div class="tab-pane fade show active" id="leave-content">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="bg-light text-uppercase small text-muted">
+                                                <tr>
+                                                    <th class="ps-4">Employee</th>
+                                                    <th>Type</th>
+                                                    <th>Duration</th>
+                                                    <th class="text-end pe-4">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr th:each="req : ${pendingRequests}">
+                                                    <td class="ps-4">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="avatar-sm rounded-circle bg-soft-primary text-primary me-3 d-flex align-items-center justify-content-center"
+                                                                style="width: 32px; height: 32px; min-width: 32px;">
+                                                                <span class="small fw-bold"
+                                                                    th:text="${#strings.substring(req.employee.name,0,1)}">A</span>
+                                                            </div>
+                                                            <div>
+                                                                <div class="fw-bold text-dark"
+                                                                    th:text="${req.employee.name}">John Doe</div>
+                                                                <small class="text-muted"
+                                                                    th:text="${req.employee.designation}">Developer</small>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-soft-info text-info rounded-pill px-3"
+                                                            th:text="${req.leaveType}">Sick</span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="fw-bold text-dark" th:text="${req.startDate}">Jan 1
+                                                        </div>
+                                                        <small class="text-muted"
+                                                            th:if="${!req.startDate.equals(req.endDate)}"
+                                                            th:text="'to ' + ${req.endDate}">to Jan 3</small>
+                                                    </td>
+                                                    <td class="text-end pe-4">
+                                                        <a href="/leave/manage"
+                                                            class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                                            Review
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                <tr th:if="${#lists.isEmpty(pendingRequests)}">
+                                                    <td colspan="4" class="text-center py-5">
+                                                        <div class="text-muted opacity-50 mb-2">
+                                                            <i class="fas fa-check-circle fa-3x"></i>
+                                                        </div>
+                                                        <p class="mb-0 text-muted">All caught up! No pending leave
+                                                            requests.</p>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
                                     </div>
-                                    <div>
-                                        <h6 class="mb-0" th:text="${member.name}">Jane Doe</h6>
-                                        <small class="text-muted"
-                                            th:text="${member.designation != null ? member.designation : member.role}">Dev</small>
+                                    <div class="card-footer bg-white text-center border-0 py-3">
+                                        <a href="/leave/manage" class="btn btn-link text-decoration-none fw-bold small">
+                                            View All Leave History <i class="fas fa-arrow-right ms-1"></i>
+                                        </a>
                                     </div>
                                 </div>
-                                <span class="badge bg-success rounded-pill">Active</span>
-                            </div>
-                            <div class="list-group-item text-center text-muted" th:if="${#lists.isEmpty(teamMembers)}">
-                                No direct reports assigned.
+
+                                <!-- Advance Salary Tab -->
+                                <div class="tab-pane fade" id="advance-content">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="bg-light text-uppercase small text-muted">
+                                                <tr>
+                                                    <th class="ps-4">Employee</th>
+                                                    <th>Amount</th>
+                                                    <th>Reason</th>
+                                                    <th class="text-end pe-4">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr th:each="req : ${pendingAdvanceRequests}">
+                                                    <td class="ps-4">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="avatar-sm rounded-circle bg-soft-success text-success me-3 d-flex align-items-center justify-content-center"
+                                                                style="width: 32px; height: 32px; min-width: 32px;">
+                                                                <span class="small fw-bold"
+                                                                    th:text="${#strings.substring(req.employee.name,0,1)}">A</span>
+                                                            </div>
+                                                            <div>
+                                                                <div class="fw-bold text-dark"
+                                                                    th:text="${req.employee.name}">John Doe</div>
+                                                                <small class="text-muted">Requested on <span
+                                                                        th:text="${#temporals.format(req.createdAt, 'MMM d')}">Jan
+                                                                        1</span></small>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span class="fw-bold text-success"
+                                                            th:text="${'BDT ' + req.amount}">BDT 5000</span>
+                                                    </td>
+                                                    <td class="text-truncate" style="max-width: 200px;">
+                                                        <span class="text-muted" th:text="${req.reason}"
+                                                            title="${req.reason}">Medical needs...</span>
+                                                    </td>
+                                                    <td class="text-end pe-4">
+                                                        <form action="/supervisor/advance/approve" method="post"
+                                                            class="d-inline">
+                                                            <input type="hidden" name="id" th:value="${req.id}">
+                                                            <button type="submit"
+                                                                class="btn btn-sm btn-success rounded-pill px-3 me-1"
+                                                                title="Approve">
+                                                                <i class="fas fa-check me-1"></i> Approve
+                                                            </button>
+                                                        </form>
+                                                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                                            data-bs-toggle="modal" data-bs-target="#rejectAdvanceModal"
+                                                            th:data-id="${req.id}">
+                                                            Reject
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <tr th:if="${pendingAdvanceRequests.isEmpty()}">
+                                                    <td colspan="4" class="text-center py-5">
+                                                        <div class="text-muted opacity-50 mb-2">
+                                                            <i class="fas fa-wallet fa-3x"></i>
+                                                        </div>
+                                                        <p class="mb-0 text-muted">No pending advance requests.</p>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="card-footer bg-white text-center border-0 py-3">
+                                        <a href="/supervisor/advance/history"
+                                            class="btn btn-link text-decoration-none fw-bold small">
+                                            View Advance History <i class="fas fa-arrow-right ms-1"></i>
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Right Column: My Team & Quick Links -->
+                <div class="col-xl-4 mb-4">
+                    <!-- Team List -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div
+                            class="card-header bg-white border-bottom pt-3 pb-3 px-4 d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold">My Team</h6>
+                            <a href="#" class="text-decoration-none small">Directory</a>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+                                <div class="list-group-item px-4 py-3 d-flex align-items-center border-0 border-bottom-dashed"
+                                    th:each="member : ${teamMembers}">
+                                    <div class="me-3 position-relative">
+                                        <img th:if="${member.avatarPath != null}" th:src="${member.avatarPath}"
+                                            class="rounded-circle" width="40" height="40" style="object-fit:cover;">
+                                        <div th:if="${member.avatarPath == null}"
+                                            class="rounded-circle bg-light d-flex align-items-center justify-content-center"
+                                            style="width: 40px; height: 40px;">
+                                            <span class="small fw-bold text-muted"
+                                                th:text="${#strings.substring(member.name,0,1)}">A</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0 text-dark" style="font-size: 0.95rem;" th:text="${member.name}">
+                                            Jane Doe</h6>
+                                        <small class="text-muted"
+                                            th:text="${member.designation != null ? member.designation : member.role}">Developer</small>
+                                    </div>
+                                    <a href="#" class="btn btn-icon btn-sm btn-ghost-secondary rounded-circle">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </a>
+                                </div>
+                                <div class="list-group-item text-center text-muted py-4"
+                                    th:if="${#lists.isEmpty(teamMembers)}">
+                                    No direct reports.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
             </div>
-        </section>
+
         </section>
 
+        <!-- Reject Advance Modal -->
+        <div class="modal fade" id="rejectAdvanceModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <form action="/supervisor/advance/reject" method="post">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title fw-bold">Reject Request</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="id" id="rejectAdvanceId">
+                            <p class="text-muted mb-3">Please provide a reason for rejecting this advance request.</p>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-uppercase text-muted">Reason</label>
+                                <textarea name="comment" class="form-control bg-light border-0" rows="3" required
+                                    placeholder="e.g. Budget constraints..."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0 pt-0">
+                            <button type="button" class="btn btn-link text-secondary text-decoration-none"
+                                data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger px-4 rounded-pill">Reject Request</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <script>
-            // Supervisor Dashboard Scripts
+            // Reject Modal Logic
+            const rejectAdvanceModal = document.getElementById('rejectAdvanceModal')
+            if (rejectAdvanceModal) {
+                rejectAdvanceModal.addEventListener('show.bs.modal', event => {
+                    const button = event.relatedTarget
+                    const id = button.getAttribute('data-id')
+                    document.getElementById('rejectAdvanceId').value = id
+                })
+            }
         </script>
+
+        <style>
+            .hide-scrollbar::-webkit-scrollbar {
+                display: none;
+            }
+
+            .hide-scrollbar {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+
+            .card-hover:hover {
+                transform: translateY(-2px);
+                transition: transform 0.2s ease;
+            }
+
+            .group-hover-scale:hover .rounded-circle {
+                transform: scale(1.05);
+            }
+
+            .nav-link.active {
+                color: var(--bs-primary) !important;
+                border-bottom: 2px solid var(--bs-primary) !important;
+                background: transparent !important;
+            }
+
+            .nav-link {
+                color: #6c757d;
+            }
+
+            .nav-link:hover {
+                color: var(--bs-primary);
+                border-color: transparent;
+            }
+
+            .btn-icon {
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .border-bottom-dashed {
+                border-bottom: 1px dashed #dee2e6 !important;
+            }
+
+            .icon-square {
+                width: 48px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .bg-soft-primary {
+                background-color: rgba(13, 110, 253, 0.1);
+            }
+
+            .bg-soft-success {
+                background-color: rgba(25, 135, 84, 0.1);
+            }
+
+            .bg-soft-warning {
+                background-color: rgba(255, 193, 7, 0.1);
+            }
+
+            .bg-soft-info {
+                background-color: rgba(13, 202, 240, 0.1);
+            }
+
+            .bg-soft-danger {
+                background-color: rgba(220, 53, 69, 0.1);
+            }
+        </style>
     </div>
 </body>
 

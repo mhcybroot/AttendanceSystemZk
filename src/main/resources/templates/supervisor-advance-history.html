@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Advance Salary History</title>
+</head>
+
+<body>
+    <div th:replace="~{layout :: layout(~{::section}, ~{::script}, 'supervisor-dashboard')}">
+        <section>
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Advance Salary History</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="/supervisor/dashboard" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Employee</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Comment</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="req : ${historyAdvanceRequests}">
+                                    <td class="ps-3">
+                                        <div class="fw-bold" th:text="${req.employee.name}">John</div>
+                                        <small class="text-muted" th:text="${req.employee.designation}">Dev</small>
+                                    </td>
+                                    <td th:text="${#temporals.format(req.createdAt, 'MMM d, yyyy h:mm a')}">Jan 1, 2024
+                                    </td>
+                                    <td class="fw-bold" th:text="${'BDT ' + req.amount}">BDT 500</td>
+                                    <td>
+                                        <span th:if="${req.status.name() == 'APPROVED'}"
+                                            class="badge bg-success">Approved</span>
+                                        <span th:if="${req.status.name() == 'REJECTED'}"
+                                            class="badge bg-danger">Rejected</span>
+                                    </td>
+                                    <td class="small text-muted" th:text="${req.adminComment}">-</td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(historyAdvanceRequests)}">
+                                    <td colspan="5" class="text-center text-muted py-5">
+                                        <i class="fas fa-history fa-2x mb-3 text-secondary opacity-50"></i><br>
+                                        No historical records found.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <script>
+            // Page specific scripts intentionally left blank
+        </script>
+    </div>
+</body>
+
+</html>
