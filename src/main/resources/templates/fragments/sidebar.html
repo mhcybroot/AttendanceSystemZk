@@ -67,6 +67,10 @@
                     th:classappend="${activeLink == 'payroll'} ? 'active'">
                     <i class="fas fa-file-invoice-dollar me-2"></i> My Payslips
                 </a>
+                <a href="/employee/change-password" class="list-group-item list-group-item-action"
+                    th:classappend="${activeLink == 'change-password'} ? 'active'">
+                    <i class="fas fa-key me-2"></i> Change Password
+                </a>
             </div>
 
             <!-- Smart Manager Section (Visible if user manages ANYONE) -->

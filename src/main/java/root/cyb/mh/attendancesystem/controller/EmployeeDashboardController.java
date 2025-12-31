@@ -61,6 +61,9 @@ public class EmployeeDashboardController {
     @Autowired
     private root.cyb.mh.attendancesystem.repository.AdvanceSalaryRepository advanceSalaryRepository;
 
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @GetMapping("/employee/dashboard")
     public String dashboard(Model model, Principal principal) {
         String employeeId = principal.getName();
@@ -357,6 +360,50 @@ public class EmployeeDashboardController {
                 e.printStackTrace(); // Handle error gracefully in real app
             }
         }
+        return "redirect:/employee/dashboard";
+    }
+
+    @GetMapping("/employee/change-password")
+    public String changePasswordForm(Model model, Principal principal) {
+        String employeeId = principal.getName();
+        Employee employee = employeeRepository.findById(employeeId).orElse(new Employee());
+        model.addAttribute("employee", employee);
+        return "employee-change-password";
+    }
+
+    @PostMapping("/employee/change-password")
+    public String changePasswordSubmit(
+            @RequestParam("oldPassword") String oldPassword,
+            @RequestParam("newPassword") String newPassword,
+            @RequestParam("confirmPassword") String confirmPassword,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
+            Principal principal) {
+
+        String employeeId = principal.getName();
+        Employee employee = employeeRepository.findById(employeeId).orElse(null);
+
+        if (employee == null) {
+            return "redirect:/login";
+        }
+
+        // 1. Verify Old Password
+        // Note: In Employee model, 'username' field stores the BCrypt hashed password
+        if (!passwordEncoder.matches(oldPassword, employee.getUsername())) {
+            redirectAttributes.addFlashAttribute("error", "Incorrect old password.");
+            return "redirect:/employee/change-password";
+        }
+
+        // 2. new vs confirm
+        if (!newPassword.equals(confirmPassword)) {
+            redirectAttributes.addFlashAttribute("error", "New passwords do not match.");
+            return "redirect:/employee/change-password";
+        }
+
+        // 3. Update
+        employee.setUsername(passwordEncoder.encode(newPassword));
+        employeeRepository.save(employee);
+
+        redirectAttributes.addFlashAttribute("success", "Password changed successfully.");
         return "redirect:/employee/dashboard";
     }
 }
