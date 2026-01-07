@@ -35,19 +35,10 @@ import java.util.UUID;
 public class EmployeeDashboardController {
 
     @Autowired
+    private root.cyb.mh.attendancesystem.service.DashboardService dashboardService;
+
+    @Autowired
     private EmployeeRepository employeeRepository;
-
-    @Autowired
-    private AttendanceLogRepository attendanceLogRepository;
-
-    @Autowired
-    private WorkScheduleRepository workScheduleRepository;
-
-    @Autowired
-    private root.cyb.mh.attendancesystem.repository.LeaveRequestRepository leaveRequestRepository;
-
-    @Autowired
-    private root.cyb.mh.attendancesystem.repository.PublicHolidayRepository publicHolidayRepository;
 
     @Autowired
     private ReportService reportService;
@@ -56,178 +47,15 @@ public class EmployeeDashboardController {
     private PdfExportService pdfExportService;
 
     @Autowired
-    private root.cyb.mh.attendancesystem.service.BadgeService badgeService;
-
-    @Autowired
-    private root.cyb.mh.attendancesystem.repository.AdvanceSalaryRepository advanceSalaryRepository;
-
-    @Autowired
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @GetMapping("/employee/dashboard")
     public String dashboard(Model model, Principal principal) {
         String employeeId = principal.getName();
-        Employee employee = employeeRepository.findById(employeeId).orElse(new Employee());
 
-        // 1. Basic Employee Info
-        model.addAttribute("employee", employee);
-
-        // 2. Shift / Schedule Info (Today's Effective Schedule)
-        WorkSchedule globalSchedule = workScheduleRepository.findAll().stream().findFirst().orElse(new WorkSchedule());
-        WorkSchedule todaySchedule = reportService.resolveSchedule(employeeId, LocalDate.now(), globalSchedule);
-        model.addAttribute("workSchedule", todaySchedule);
-
-        // 3. Recent Logs (Last 10)
-        List<AttendanceLog> allLogs = attendanceLogRepository.findByEmployeeId(employeeId);
-        List<AttendanceLog> recentLogs = allLogs.stream()
-                .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()))
-                .limit(10)
-                .collect(Collectors.toList());
-        model.addAttribute("recentLogs", recentLogs);
-
-        // 4. Monthly Stats (Using ReportService for Dynamic Logic)
-        LocalDate now = LocalDate.now();
-        root.cyb.mh.attendancesystem.dto.EmployeeMonthlyDetailDto monthlyReport = reportService
-                .getEmployeeMonthlyReport(
-                        employeeId, now.getYear(), now.getMonthValue());
-
-        if (monthlyReport != null) {
-            model.addAttribute("daysPresent", monthlyReport.getTotalPresent());
-            model.addAttribute("lateCount", monthlyReport.getTotalLates());
-            model.addAttribute("earlyCount", monthlyReport.getTotalEarlyLeaves());
-            model.addAttribute("leaveCount", monthlyReport.getTotalLeaves());
-
-            // Calculate Badges
-            List<String> badges = badgeService.calculateBadges(monthlyReport, null);
-            model.addAttribute("badges", badges);
-        } else {
-            model.addAttribute("daysPresent", 0);
-            model.addAttribute("lateCount", 0);
-            model.addAttribute("earlyCount", 0);
-            model.addAttribute("leaveCount", 0);
-            model.addAttribute("badges", new java.util.ArrayList<>());
-        }
-
-        // 5. Annual Quota Stats (Using Range Report for Year)
-        int defaultQuota = globalSchedule.getDefaultAnnualLeaveQuota() != null
-                ? globalSchedule.getDefaultAnnualLeaveQuota()
-                : 12;
-        int quota = employee.getEffectiveQuota(defaultQuota);
-
-        LocalDate startOfYear = LocalDate.of(now.getYear(), 1, 1);
-        LocalDate endOfYear = LocalDate.of(now.getYear(), 12, 31);
-
-        root.cyb.mh.attendancesystem.dto.EmployeeRangeReportDto annualReport = reportService.getEmployeeRangeReport(
-                employeeId, startOfYear, endOfYear);
-
-        int totalTaken = annualReport != null ? annualReport.getTotalLeaves() : 0;
-        // Logic for paid/unpaid split is in RangeReport? Yes, totalPaidLeaves
-        int paidTaken = annualReport != null ? annualReport.getTotalPaidLeaves() : 0;
-        int unpaidTaken = annualReport != null ? annualReport.getTotalUnpaidLeaves() : 0;
-
-        model.addAttribute("annualQuota", quota);
-        model.addAttribute("yearlyLeavesTaken", totalTaken);
-        model.addAttribute("paidLeavesTaken", paidTaken);
-        model.addAttribute("unpaidLeavesTaken", unpaidTaken);
-
-        // 6. Next Holiday Countdown
-        java.time.LocalDate today = java.time.LocalDate.now();
-        java.util.Optional<root.cyb.mh.attendancesystem.model.PublicHoliday> nextHoliday = publicHolidayRepository
-                .findAll().stream()
-                .filter(h -> h.getDate().isAfter(today))
-                .sorted(java.util.Comparator.comparing(root.cyb.mh.attendancesystem.model.PublicHoliday::getDate))
-                .findFirst();
-
-        if (nextHoliday.isPresent()) {
-            long daysUntil = java.time.temporal.ChronoUnit.DAYS.between(today, nextHoliday.get().getDate());
-            model.addAttribute("nextHoliday", nextHoliday.get());
-            model.addAttribute("daysUntilHoliday", daysUntil);
-        } else {
-            model.addAttribute("nextHoliday", null);
-        }
-
-        // 7. Advance Salary Requests (Sorted Recent First)
-        List<AdvanceSalaryRequest> myRequests = advanceSalaryRepository.findByEmployeeId(employeeId);
-        // Sort descending
-        myRequests.sort((a, b) -> b.getRequestDate().compareTo(a.getRequestDate()));
-        model.addAttribute("advanceRequests", myRequests);
-
-        // --- INSPIRATION METRICS (Global) ---
-        // Fetch Global Data for Leaderboards
-        List<Employee> allEmployees = employeeRepository.findAll();
-        List<String> guestIds = allEmployees.stream().filter(Employee::isGuest).map(Employee::getId)
-                .collect(Collectors.toList());
-
-        // Daily Report for Global Stats
-        List<DailyAttendanceDto> dailyReport = reportService
-                .getDailyReport(now, null, null, org.springframework.data.domain.PageRequest.of(0, 5000)).getContent();
-
-        // 1. Early Birds
-        List<DailyAttendanceDto> earlyBirds = dailyReport.stream()
-                .filter(d -> !guestIds.contains(d.getEmployeeId()))
-                .filter(d -> d.getInTime() != null)
-                .sorted(Comparator.comparing(DailyAttendanceDto::getInTime))
-                .limit(5)
-                .collect(Collectors.toList());
-        model.addAttribute("earlyBirds", earlyBirds);
-
-        // 2. Department Champion
-        Map<String, List<DailyAttendanceDto>> byDept = dailyReport.stream()
-                .filter(d -> d.getDepartmentName() != null && !d.getDepartmentName().equals("Unassigned"))
-                .collect(Collectors.groupingBy(DailyAttendanceDto::getDepartmentName));
-
-        String championDept = "N/A";
-        double maxPercent = -1.0;
-        for (Map.Entry<String, List<DailyAttendanceDto>> entry : byDept.entrySet()) {
-            if (entry.getKey().equalsIgnoreCase("Guest"))
-                continue;
-            long deptTotal = entry.getValue().size();
-            if (deptTotal == 0)
-                continue;
-            long deptPresent = entry.getValue().stream()
-                    .filter(d -> d.getStatus().contains("PRESENT") || d.getStatus().contains("LATE")
-                            || d.getStatus().contains("EARLY"))
-                    .count();
-            double percent = (double) deptPresent / deptTotal;
-            if (percent > maxPercent) {
-                maxPercent = percent;
-                championDept = entry.getKey();
-            }
-        }
-        if (maxPercent <= 0) {
-            championDept = "No Data";
-            maxPercent = 0;
-        }
-        model.addAttribute("championDept", championDept);
-        model.addAttribute("championPercent", Math.round(maxPercent * 100));
-
-        // 3. Health Score
-        long onTimeCount = dailyReport.stream()
-                .filter(d -> d.getStatus().contains("PRESENT") || d.getStatus().equals("EARLY LEAVE"))
-                .filter(d -> !d.getStatus().contains("LATE"))
-                .count();
-        long totalPresentCalculated = dailyReport.stream()
-                .filter(d -> d.getStatus().contains("PRESENT") || d.getStatus().contains("LATE")
-                        || d.getStatus().contains("EARLY"))
-                .count();
-        int healthScore = totalPresentCalculated > 0 ? (int) ((onTimeCount * 100) / totalPresentCalculated) : 0;
-        model.addAttribute("healthScore", healthScore);
-
-        // 4. Punctuality Stars & Streak
-        List<Integer> monthList = java.util.Collections.singletonList(now.getMonthValue());
-        List<MonthlySummaryDto> monthlyStats = reportService.getMonthlyReport(now.getYear(), monthList, null,
-                org.springframework.data.domain.PageRequest.of(0, 1000)).getContent();
-
-        List<MonthlySummaryDto> punctualityStars = monthlyStats.stream()
-                .filter(d -> !guestIds.contains(d.getEmployeeId()))
-                .sorted(Comparator.comparingInt(MonthlySummaryDto::getPresentCount).reversed()
-                        .thenComparingInt(MonthlySummaryDto::getLateCount))
-                .limit(5)
-                .collect(Collectors.toList());
-        model.addAttribute("punctualityStars", punctualityStars);
-
-        MonthlySummaryDto streakTop = punctualityStars.isEmpty() ? null : punctualityStars.get(0);
-        model.addAttribute("streakEmployee", streakTop);
+        // Use the shared service to fetch all dashboard data
+        Map<String, Object> data = dashboardService.getDashboardData(employeeId);
+        model.addAllAttributes(data);
 
         return "employee-dashboard";
     }

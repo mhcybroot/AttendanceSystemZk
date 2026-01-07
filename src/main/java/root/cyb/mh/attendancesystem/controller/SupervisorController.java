@@ -29,6 +29,50 @@ public class SupervisorController {
         @Autowired
         private ReportService reportService;
 
+        @Autowired
+        private root.cyb.mh.attendancesystem.service.DashboardService dashboardService;
+
+        @GetMapping("/employee/{id}")
+        public String viewEmployeeDashboard(@org.springframework.web.bind.annotation.PathVariable String id,
+                        @org.springframework.web.bind.annotation.RequestParam(required = false) Integer year,
+                        @org.springframework.web.bind.annotation.RequestParam(required = false) Integer month,
+                        Model model, Authentication authentication) {
+                String currentUserId = authentication.getName();
+
+                // 1. Security Check: Ensure Supervisor manages this employee
+                Employee employee = employeeRepository.findById(id)
+                                .orElseThrow(() -> new IllegalArgumentException("Invalid Employee ID"));
+
+                boolean isSupervisor = (employee.getReportsTo() != null
+                                && employee.getReportsTo().getId().equals(currentUserId));
+                boolean isAssistant = (employee.getReportsToAssistant() != null
+                                && employee.getReportsToAssistant().getId().equals(currentUserId));
+                boolean isAdmin = authentication.getAuthorities().stream()
+                                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")
+                                                || a.getAuthority().equals("ROLE_HR"));
+
+                if (!isSupervisor && !isAssistant && !isAdmin) {
+                        throw new AccessDeniedException("Access Denied: You cannot view this employee's dashboard.");
+                }
+
+                // Defaults
+                if (year == null)
+                        year = java.time.LocalDate.now().getYear();
+                if (month == null)
+                        month = java.time.LocalDate.now().getMonthValue();
+
+                // 2. Fetch Dashboard Data
+                java.util.Map<String, Object> data = dashboardService.getDashboardData(id, year, month);
+                model.addAllAttributes(data);
+
+                // 3. Set Context for View
+                model.addAttribute("activeLink", "team-dashboard");
+                model.addAttribute("selectedYear", year);
+                model.addAttribute("selectedMonth", month);
+
+                return "supervisor-employee-details";
+        }
+
         @GetMapping("/dashboard")
         public String dashboard(Model model, Authentication authentication) {
                 String currentUserId = authentication.getName();

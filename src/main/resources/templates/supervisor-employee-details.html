@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Employee Details - Supervisor View</title>
+</head>
+
+<body>
+    <div th:replace="~{layout :: layout(~{::section}, ~{::script}, 'team-dashboard')}">
+        <section>
+            <!-- 1. Header & Profile -->
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-3 mb-3 border-bottom">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <img th:if="${employee.avatarPath != null}" th:src="${employee.avatarPath}"
+                            class="rounded-circle shadow-sm" width="64" height="64" style="object-fit:cover;">
+                        <div th:if="${employee.avatarPath == null}"
+                            class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center shadow-sm"
+                            style="width: 64px; height: 64px;">
+                            <span class="h3 fw-bold mb-0" th:text="${#strings.substring(employee.name,0,1)}">U</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="h3 fw-bold mb-0" th:text="${employee.name}">Employee Name</h1>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-id-badge me-1"></i> <span th:text="${employee.id}">ID</span> &bull;
+                            <span th:text="${employee.designation}">Designation</span>
+                        </p>
+                    </div>
+                </div>
+                <div>
+                    <a href="/supervisor/dashboard" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Team
+                    </a>
+                </div>
+            </div>
+
+            <!-- 2. Stats Overview -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="bg-success bg-opacity-10 p-3 rounded-circle me-3 text-success">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted text-uppercase small mb-1">Present (Month)</h6>
+                                <h3 class="mb-0 fw-bold" th:text="${daysPresent}">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="bg-warning bg-opacity-10 p-3 rounded-circle me-3 text-warning">
+                                <i class="fas fa-clock fa-2x"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted text-uppercase small mb-1">Late (Month)</h6>
+                                <h3 class="mb-0 fw-bold" th:text="${lateCount}">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="bg-info bg-opacity-10 p-3 rounded-circle me-3 text-info">
+                                <i class="fas fa-calendar-minus fa-2x"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted text-uppercase small mb-1">Leaves (Year)</h6>
+                                <h3 class="mb-0 fw-bold" th:text="${yearlyLeavesTaken}">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="p-3 rounded-circle me-3"
+                                th:classappend="${workSchedule != null ? 'bg-primary bg-opacity-10 text-primary' : 'bg-secondary bg-opacity-10 text-secondary'}">
+                                <i class="fas fa-business-time fa-2x"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted text-uppercase small mb-1">Today's Shift</h6>
+                                <h5 class="mb-0 fw-bold" th:if="${workSchedule != null}"
+                                    th:text="${workSchedule.startTime + ' - ' + workSchedule.endTime}">09:00 - 18:00
+                                </h5>
+                                <h5 class="mb-0 fw-bold text-muted" th:if="${workSchedule == null}">Off Day</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Recent Activity (Last 10 Logs) -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-history text-primary me-2"></i> Recent Activity Logs</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light text-muted small text-uppercase">
+                                <tr>
+                                    <th class="ps-4">Date</th>
+                                    <th>Time</th>
+                                    <th>Device ID</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="border-top-0">
+                                <tr th:each="log : ${recentLogs}">
+                                    <td class="ps-4 fw-bold text-dark"
+                                        th:text="${#temporals.format(log.timestamp, 'dd MMM yyyy')}">01 Jan</td>
+                                    <td class="font-monospace text-primary"
+                                        th:text="${#temporals.format(log.timestamp, 'HH:mm:ss')}">09:00:00</td>
+                                    <td><span class="badge bg-light text-dark border" th:text="${log.deviceId}">1</span>
+                                    </td>
+                                    <td><span class="badge bg-success bg-opacity-75 rounded-pill px-3">Recorded</span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${recentLogs.isEmpty()}">
+                                    <td colspan="4" class="text-center text-muted py-5">
+                                        No recent activity recorded.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Monthly Activity (Daily Breakdown) -->
+            <div class="card shadow-sm mb-4" th:if="${monthlyReport != null}">
+                <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-calendar-alt text-info me-2"></i> Monthly Activity
+                        Breakdown</h5>
+
+                    <!-- History Selector -->
+                    <form class="d-flex align-items-center" method="get"
+                        th:action="@{'/supervisor/employee/' + ${employee.id}}" id="historyForm">
+                        <select name="month" class="form-select form-select-sm me-2" style="width: auto;"
+                            onchange="this.form.submit()">
+                            <option th:each="m : ${#numbers.sequence(1, 12)}" th:value="${m}"
+                                th:text="${T(java.time.Month).of(m).name()}" th:selected="${m == selectedMonth}">JANUARY
+                            </option>
+                        </select>
+                        <select name="year" class="form-select form-select-sm" style="width: auto;"
+                            onchange="this.form.submit()">
+                            <option
+                                th:each="y : ${#numbers.sequence(T(java.time.LocalDate).now().getYear() - 2, T(java.time.LocalDate).now().getYear())}"
+                                th:value="${y}" th:text="${y}" th:selected="${y == selectedYear}">2024</option>
+                        </select>
+                    </form>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light text-muted small text-uppercase">
+                                <tr>
+                                    <th class="ps-4">Date</th>
+                                    <th>In Time</th>
+                                    <th>Out Time</th>
+                                    <th>Status</th>
+                                    <th>Late Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="day : ${monthlyReport.dailyDetails}">
+                                    <td class="ps-4">
+                                        <span class="fw-bold text-dark"
+                                            th:text="${#temporals.format(day.date, 'dd MMM')}">01 Jan</span>
+                                        <small class="text-muted d-block"
+                                            th:text="${#temporals.format(day.date, 'EEEE')}">Monday</small>
+                                    </td>
+                                    <td>
+                                        <span th:if="${day.inTime != null}" class="font-monospace"
+                                            th:text="${day.inTime}">09:00</span>
+                                        <span th:if="${day.inTime == null}" class="text-muted">-</span>
+                                    </td>
+                                    <td>
+                                        <span th:if="${day.outTime != null}" class="font-monospace"
+                                            th:text="${day.outTime}">18:00</span>
+                                        <span th:if="${day.outTime == null}" class="text-muted">-</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge rounded-pill"
+                                            th:classappend="${day.status == 'PRESENT' ? 'bg-success' : 
+                                                            (day.status == 'ABSENT' ? 'bg-danger' : 
+                                                            (day.status == 'LATE' ? 'bg-warning text-dark' : 
+                                                            (day.status == 'LEAVE' ? 'bg-info text-dark' : 'bg-secondary')))}"
+                                            th:text="${day.status}">PRESENT</span>
+                                    </td>
+                                    <td>
+                                        <span th:if="${day.lateDurationMinutes > 0}" class="text-danger fw-bold"
+                                            th:text="${day.lateDurationMinutes + 'm'}">15m</span>
+                                        <span th:if="${day.lateDurationMinutes <= 0}" class="text-muted">-</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+        <script>
+            // Any specific scripts
+        </script>
+    </div>
+</body>
+
+</html>
