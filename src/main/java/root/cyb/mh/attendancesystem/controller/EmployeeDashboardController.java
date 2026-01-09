@@ -49,6 +49,9 @@ public class EmployeeDashboardController {
     @Autowired
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private root.cyb.mh.attendancesystem.repository.AttendanceRemarkRepository attendanceRemarkRepository;
+
     @GetMapping("/employee/dashboard")
     public String dashboard(Model model, Principal principal) {
         String employeeId = principal.getName();
@@ -233,5 +236,37 @@ public class EmployeeDashboardController {
 
         redirectAttributes.addFlashAttribute("success", "Password changed successfully.");
         return "redirect:/employee/dashboard";
+    }
+
+    @PostMapping("/employee/attendance/note")
+    public String addAttendanceNote(
+            @RequestParam("date") String dateStr,
+            @RequestParam("note") String note,
+            @RequestParam(name = "year", required = false) Integer year,
+            @RequestParam(name = "month", required = false) Integer month,
+            Principal principal,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+
+        String employeeId = principal.getName();
+        LocalDate date = LocalDate.parse(dateStr);
+
+        root.cyb.mh.attendancesystem.model.AttendanceRemark remark = attendanceRemarkRepository
+                .findByEmployeeIdAndDate(employeeId, date)
+                .orElse(new root.cyb.mh.attendancesystem.model.AttendanceRemark());
+
+        if (remark.getId() == null) {
+            remark.setEmployeeId(employeeId);
+            remark.setDate(date);
+        }
+        remark.setNote(note);
+        attendanceRemarkRepository.save(remark);
+
+        redirectAttributes.addFlashAttribute("success", "Note added successfully.");
+
+        String redirectUrl = "redirect:/employee/attendance/history";
+        if (year != null && month != null) {
+            redirectUrl += "?year=" + year + "&month=" + month;
+        }
+        return redirectUrl;
     }
 }

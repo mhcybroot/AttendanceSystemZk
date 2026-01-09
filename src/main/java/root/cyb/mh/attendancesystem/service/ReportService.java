@@ -41,6 +41,9 @@ public class ReportService {
     @Autowired
     private ShiftService shiftService;
 
+    @Autowired
+    private root.cyb.mh.attendancesystem.repository.AttendanceRemarkRepository attendanceRemarkRepository;
+
     public Page<DailyAttendanceDto> getDailyReport(LocalDate date, List<Long> departmentIds, String statusFilter,
             Pageable pageable) {
 
@@ -668,6 +671,10 @@ public class ReportService {
         List<root.cyb.mh.attendancesystem.model.LeaveRequest> allLeaves = leaveRequestRepository
                 .findByStatusOrderByCreatedAtDesc(root.cyb.mh.attendancesystem.model.LeaveRequest.Status.APPROVED);
 
+        // Fetch all remarks for this employee in this month
+        List<root.cyb.mh.attendancesystem.model.AttendanceRemark> allRemarks = attendanceRemarkRepository
+                .findByEmployeeIdAndDateBetween(employeeId, startOfMonth, endOfMonth);
+
         List<root.cyb.mh.attendancesystem.dto.EmployeeWeeklyDetailDto.DailyDetail> details = new ArrayList<>();
         int present = 0, absent = 0, late = 0, early = 0, leaves = 0;
         int paidLeaves = 0, unpaidLeaves = 0;
@@ -683,6 +690,14 @@ public class ReportService {
             root.cyb.mh.attendancesystem.dto.EmployeeWeeklyDetailDto.DailyDetail daily = new root.cyb.mh.attendancesystem.dto.EmployeeWeeklyDetailDto.DailyDetail();
             daily.setDate(date);
             daily.setDayOfWeek(date.getDayOfWeek().name());
+
+            // Populate Remark if exists
+            root.cyb.mh.attendancesystem.model.AttendanceRemark remark = allRemarks.stream()
+                    .filter(r -> r.getDate().equals(date))
+                    .findFirst().orElse(null);
+            if (remark != null) {
+                daily.setLateNote(remark.getNote());
+            }
 
             if (emp.getJoiningDate() != null && date.isBefore(emp.getJoiningDate())) {
                 daily.setStatus("NOT JOINED");

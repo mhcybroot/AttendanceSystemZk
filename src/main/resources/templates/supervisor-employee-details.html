@@ -167,6 +167,7 @@
                                     <th>Out Time</th>
                                     <th>Status</th>
                                     <th>Late Duration</th>
+                                    <th>Note</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -199,6 +200,11 @@
                                         <span th:if="${day.lateDurationMinutes > 0}" class="text-danger fw-bold"
                                             th:text="${day.lateDurationMinutes + 'm'}">15m</span>
                                         <span th:if="${day.lateDurationMinutes <= 0}" class="text-muted">-</span>
+                                    </td>
+                                    <td>
+                                        <span th:if="${day.lateNote != null}" class="text-muted small"
+                                            th:text="${day.lateNote}"></span>
+                                        <span th:if="${day.lateNote == null}" class="text-muted">-</span>
                                     </td>
                                 </tr>
                             </tbody>

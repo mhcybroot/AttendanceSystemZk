@@ -141,6 +141,7 @@
                                         <th>Out Time</th>
                                         <th>Late By</th>
                                         <th>Early By</th>
+                                        <th>Note</th>
                                         <th class="text-center">Status</th>
                                     </tr>
                                 </thead>
@@ -177,6 +178,24 @@
                                                 class="text-muted small">-</span>
                                         </td>
 
+                                        <!-- Late Note -->
+                                        <td>
+                                            <div th:if="${day.lateNote != null}">
+                                                <small class="text-muted d-block" th:text="${day.lateNote}"
+                                                    style="max-width: 150px; white-space: normal; line-height: 1.2;">
+                                                </small>
+                                            </div>
+                                            <!-- Show Add Button if Late and No Note -->
+                                            <div th:if="${day.lateNote == null and day.lateDurationMinutes > 0}">
+                                                <button
+                                                    class="btn btn-sm btn-link text-decoration-none p-0 text-primary"
+                                                    th:data-date="${day.date}"
+                                                    onclick="openNoteModal(this.getAttribute('data-date'))">
+                                                    <i class="fas fa-edit"></i> Add Note
+                                                </button>
+                                            </div>
+                                        </td>
+
                                         <!-- Status Badge -->
                                         <td class="text-center">
                                             <span class="badge rounded-pill" th:classappend="'bg-' + ${day.statusColor}"
@@ -194,10 +213,38 @@
                     </div>
                 </div>
             </div>
+            <!-- Add Note Modal -->
+            <div class="modal fade" id="noteModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <form action="/employee/attendance/note" method="post" class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Add Late Note</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="date" id="modalDate">
+                            <input type="hidden" name="year" th:value="${selectedYear}">
+                            <input type="hidden" name="month" th:value="${selectedMonth}">
+                            <div class="mb-3">
+                                <label class="form-label">Why were you late?</label>
+                                <textarea name="note" class="form-control" rows="3" required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Save Note</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </section>
 
         <script>
-            // Any specific JS for this page
+            function openNoteModal(date) {
+                document.getElementById('modalDate').value = date;
+                var myModal = new bootstrap.Modal(document.getElementById('noteModal'));
+                myModal.show();
+            }
         </script>
     </div>
 </body>

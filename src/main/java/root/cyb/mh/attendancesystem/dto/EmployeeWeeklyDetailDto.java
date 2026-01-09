@@ -179,5 +179,15 @@ public class EmployeeWeeklyDetailDto {
         public void setEarlyLeaveDurationMinutes(long earlyLeaveDurationMinutes) {
             this.earlyLeaveDurationMinutes = earlyLeaveDurationMinutes;
         }
+
+        private String lateNote;
+
+        public String getLateNote() {
+            return lateNote;
+        }
+
+        public void setLateNote(String lateNote) {
+            this.lateNote = lateNote;
+        }
     }
 }
