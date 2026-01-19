@@ -6,6 +6,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import root.cyb.mh.attendancesystem.model.Employee;
 import root.cyb.mh.attendancesystem.model.LeaveRequest;
 import root.cyb.mh.attendancesystem.repository.EmployeeRepository;
@@ -44,12 +45,14 @@ public class LeaveController {
     }
 
     @PostMapping("/employee/apply")
-    public String applyForLeave(@ModelAttribute LeaveRequest leaveRequest, Principal principal) {
+    public String applyForLeave(@ModelAttribute LeaveRequest leaveRequest,
+            @RequestParam(name = "proof", required = false) MultipartFile proof,
+            Principal principal) {
         String employeeId = principal.getName();
         Employee employee = employeeRepository.findById(employeeId).orElse(null);
 
         if (employee != null) {
-            leaveService.createRequest(employee, leaveRequest);
+            leaveService.createRequest(employee, leaveRequest, proof);
         }
         return "redirect:/leave/employee";
     }
@@ -60,7 +63,7 @@ public class LeaveController {
     public String manageLeavePage(Model model, Authentication authentication) {
         // Fetch User Roles
         boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(r -> r.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(r -> r.getAuthority().equals("ROLE_ADMIN") || r.getAuthority().equals("ROLE_HR"));
 
         String currentUserId = authentication.getName();
         List<LeaveRequest> requests;

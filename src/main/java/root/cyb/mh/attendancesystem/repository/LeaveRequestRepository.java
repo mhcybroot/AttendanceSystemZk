@@ -19,8 +19,9 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
         List<LeaveRequest> findByStatusOrderByCreatedAtDesc(LeaveRequest.Status status);
 
         // Find requests where the applicant reports to the given approver ID (Primary
-        // OR Assistant)
-        List<LeaveRequest> findByEmployee_ReportsTo_IdOrEmployee_ReportsToAssistant_Id(String approverId,
+        // OR Assistant) - Sorted by Newest First
+        List<LeaveRequest> findByEmployee_ReportsTo_IdOrEmployee_ReportsToAssistant_IdOrderByCreatedAtDesc(
+                        String approverId,
                         String assistantId);
 
         // Count approved leaves for a specific date

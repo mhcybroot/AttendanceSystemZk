@@ -8,6 +8,13 @@ import root.cyb.mh.attendancesystem.repository.LeaveRequestRepository;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 
 @Service
 public class LeaveService {
@@ -15,9 +22,28 @@ public class LeaveService {
     @Autowired
     private LeaveRequestRepository leaveRequestRepository;
 
-    public LeaveRequest createRequest(Employee employee, LeaveRequest request) {
+    public LeaveRequest createRequest(Employee employee, LeaveRequest request, MultipartFile file) {
         request.setEmployee(employee);
         request.setStatus(LeaveRequest.Status.PENDING);
+
+        if (file != null && !file.isEmpty()) {
+            try {
+                String uploadDir = "uploads/leave_proofs/";
+                java.io.File directory = new java.io.File(uploadDir);
+                if (!directory.exists()) {
+                    directory.mkdirs();
+                }
+
+                String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+                Path path = Paths.get(uploadDir + fileName);
+                Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
+                request.setProofPath("/uploads/leave_proofs/" + fileName);
+            } catch (IOException e) {
+                e.printStackTrace(); // Handle error
+            }
+        }
+
         return leaveRequestRepository.save(request);
     }
 
@@ -31,7 +57,8 @@ public class LeaveService {
 
     public List<LeaveRequest> getRequestsForApprover(String approverId) {
         // Return requests where user is Primary OR Assistant
-        return leaveRequestRepository.findByEmployee_ReportsTo_IdOrEmployee_ReportsToAssistant_Id(approverId,
+        return leaveRequestRepository.findByEmployee_ReportsTo_IdOrEmployee_ReportsToAssistant_IdOrderByCreatedAtDesc(
+                approverId,
                 approverId);
     }
 

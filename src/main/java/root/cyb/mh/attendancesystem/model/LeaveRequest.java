@@ -45,6 +45,9 @@ public class LeaveRequest {
     // Who approved/rejected it? (Optional audit)
     private String reviewedBy;
 
+    // Proof file path (optional)
+    private String proofPath;
+
     public enum Status {
         PENDING,
         APPROVED,

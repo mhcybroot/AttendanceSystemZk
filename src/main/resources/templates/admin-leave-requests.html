@@ -24,6 +24,7 @@
                                     <th>Dates</th>
                                     <th>Reason</th>
                                     <th>Status</th>
+                                    <th>Proof</th>
                                     <th>Reviewer</th>
                                     <th class="text-end">Actions</th>
                                 </tr>
@@ -50,6 +51,13 @@
                                             th:text="${req.status}">PENDING</span>
                                     </td>
                                     <td>
+                                        <a th:if="${req.proofPath != null}" th:href="@{${req.proofPath}}"
+                                            target="_blank" class="btn btn-sm btn-outline-info" title="View Proof">
+                                            <i class="fas fa-paperclip"></i>
+                                        </a>
+                                        <span th:if="${req.proofPath == null}" class="text-muted">-</span>
+                                    </td>
+                                    <td>
                                         <small th:if="${req.adminComment != null}">
                                             <div th:text="${req.reviewedBy}">Admin</div>
                                             <i class="text-muted" th:text="${req.adminComment}"></i>
@@ -57,7 +65,7 @@
                                     </td>
                                     <td class="text-end">
                                         <button class="btn btn-sm btn-outline-secondary me-1"
-                                            th:onclick="viewRequest([[${req.employee.name}]], [[${req.employee.department != null ? req.employee.department.name : 'No Dept'}]], [[${req.leaveType}]], [[${req.startDate} + ' to ' + ${req.endDate}]], [[${req.reason}]], [[${req.status}]])"
+                                            th:onclick="viewRequest([[${req.employee.name}]], [[${req.employee.department != null ? req.employee.department.name : 'No Dept'}]], [[${req.leaveType}]], [[${req.startDate} + ' to ' + ${req.endDate}]], [[${req.reason}]], [[${req.status}]], [[${req.proofPath}]])"
                                             title="View Details">
                                             <i class="fas fa-eye"></i>
                                         </button>
@@ -154,6 +162,11 @@
                                 <dd class="col-sm-12 mt-1 p-3 bg-light rounded" id="viewReason">
                                     Full reason text...
                                 </dd>
+
+                                <dt class="col-sm-4 mt-2">Proof:</dt>
+                                <dd class="col-sm-8 mt-2" id="viewProofContainer">
+                                    <!-- Link will be injected here -->
+                                </dd>
                             </dl>
                         </div>
                         <div class="modal-footer">
@@ -181,13 +194,26 @@
                 modalMessage.textContent = `Are you sure you want to mark this request as ${action}?`
             })
 
-            function viewRequest(name, dept, type, dates, reason, status) {
+            function viewRequest(name, dept, type, dates, reason, status, proofPath) {
                 document.getElementById('viewName').textContent = name;
                 document.getElementById('viewDept').textContent = dept;
                 document.getElementById('viewType').textContent = type;
                 document.getElementById('viewDates').textContent = dates;
                 document.getElementById('viewReason').textContent = reason;
                 document.getElementById('viewStatus').textContent = status;
+
+                const proofContainer = document.getElementById('viewProofContainer');
+                proofContainer.innerHTML = '';
+                if (proofPath) {
+                    const link = document.createElement('a');
+                    link.href = proofPath;
+                    link.target = '_blank';
+                    link.textContent = 'View Attached Document';
+                    link.className = 'btn btn-sm btn-primary';
+                    proofContainer.appendChild(link);
+                } else {
+                    proofContainer.textContent = 'No attachment';
+                }
 
                 new bootstrap.Modal(document.getElementById('viewModal')).show();
             }
