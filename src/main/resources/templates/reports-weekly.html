@@ -176,10 +176,10 @@
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-bordered table-sm">
-                                <thead class="table-dark text-center">
+                                <thead class="table-light text-center">
                                     <tr>
                                         <th style="min-width: 150px;">
-                                            <a class="text-white text-decoration-none"
+                                            <a class="text-dark fw-bold text-decoration-none"
                                                 th:href="@{/reports/weekly(date=${startOfWeek}, departmentId=${selectedDept}, sortField='name', sortDir=${sortField == 'name' ? reverseSortDir : sortDir})}">
                                                 Employee <span th:if="${sortField == 'name'}"
                                                     th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
@@ -190,11 +190,11 @@
                                             Summary
                                             <div class="d-flex justify-content-center gap-1 mt-1"
                                                 style="font-size: 0.8rem;">
-                                                <a class="text-white text-decoration-none" title="Sort by Present"
+                                                <a class="text-dark text-decoration-none" title="Sort by Present"
                                                     th:href="@{/reports/weekly(date=${startOfWeek}, departmentId=${selectedDept}, sortField='present', sortDir=${sortField == 'present' ? reverseSortDir : sortDir})}">P</a>
-                                                <a class="text-white text-decoration-none" title="Sort by Absent"
+                                                <a class="text-dark text-decoration-none" title="Sort by Absent"
                                                     th:href="@{/reports/weekly(date=${startOfWeek}, departmentId=${selectedDept}, sortField='absent', sortDir=${sortField == 'absent' ? reverseSortDir : sortDir})}">A</a>
-                                                <a class="text-white text-decoration-none" title="Sort by Late"
+                                                <a class="text-dark text-decoration-none" title="Sort by Late"
                                                     th:href="@{/reports/weekly(date=${startOfWeek}, departmentId=${selectedDept}, sortField='late', sortDir=${sortField == 'late' ? reverseSortDir : sortDir})}">L</a>
                                             </div>
                                         </th>
