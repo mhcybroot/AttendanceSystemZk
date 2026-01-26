@@ -104,6 +104,13 @@ public class AssetService {
         assignmentRepository.save(assignment);
     }
 
+    @org.springframework.transaction.annotation.Transactional
+    public void bulkAssignAssets(List<Long> assetIds, String employeeId, String condition) {
+        for (Long assetId : assetIds) {
+            assignAsset(assetId, employeeId, condition);
+        }
+    }
+
     public void returnAsset(Long assetId, String condition) {
         Asset asset = assetRepository.findById(assetId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Asset ID"));

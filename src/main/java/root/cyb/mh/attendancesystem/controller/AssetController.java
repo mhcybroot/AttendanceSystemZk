@@ -187,6 +187,24 @@ public class AssetController {
         return "redirect:/admin/assets";
     }
 
+    @PostMapping("/bulk-assign")
+    public String bulkAssignAssets(@RequestParam("assetIds") List<Long> assetIds,
+            @RequestParam String employeeId,
+            @RequestParam(defaultValue = "Good") String condition,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        try {
+            if (assetIds == null || assetIds.isEmpty()) {
+                throw new IllegalArgumentException("No assets selected for assignment.");
+            }
+            assetService.bulkAssignAssets(assetIds, employeeId, condition);
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Successfully assigned " + assetIds.size() + " assets.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Bulk assignment failed: " + e.getMessage());
+        }
+        return "redirect:/admin/assets";
+    }
+
     @PostMapping("/return")
     public String returnAsset(@RequestParam(name = "assetId") String assetIdStr,
             @RequestParam String condition,

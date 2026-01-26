@@ -17,6 +17,9 @@
                 <button class="btn btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#bulkAssetModal">
                     <i class="fas fa-layer-group"></i> Bulk Add
                 </button>
+                <button id="btnBulkAssign" class="btn btn-primary ms-2 d-none" onclick="prepareBulkAssign()">
+                    <i class="fas fa-users-cog"></i> Assign Selected (<span id="selectedCount">0</span>)
+                </button>
             </div>
 
             <!-- Alerts -->
@@ -138,7 +141,10 @@
                             style="border-collapse: separate; border-spacing: 0;">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="ps-4 py-3">Asset Tag</th>
+                                    <th class="ps-4 py-3" style="width: 40px;">
+                                        <input type="checkbox" class="form-check-input" id="selectAllAssets">
+                                    </th>
+                                    <th>Asset Tag</th>
                                     <th>Name</th>
                                     <th>Category</th>
                                     <th>Serial / Status</th>
@@ -148,7 +154,12 @@
                             </thead>
                             <tbody>
                                 <tr th:each="asset : ${assets}" class="border-bottom">
-                                    <td class="ps-4 fw-semibold text-primary" th:text="${asset.assetTag}">TAG-001</td>
+                                    <td class="ps-4">
+                                        <input type="checkbox" class="form-check-input asset-checkbox"
+                                            th:value="${asset.id}" th:if="${asset.status.name() == 'AVAILABLE'}"
+                                            onchange="updateBulkButton()">
+                                    </td>
+                                    <td class="fw-semibold text-primary" th:text="${asset.assetTag}">TAG-001</td>
                                     <td class="fw-medium text-dark" th:text="${asset.name}">Dell Latitude</td>
                                     <td>
                                         <span
@@ -443,9 +454,103 @@
         </div>
     </div>
 
+    <!-- Bulk Assign Modal -->
+    <div class="modal fade" id="bulkAssignModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form action="/admin/assets/bulk-assign" method="post">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Bulk Assign Assets</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Hidden container for selected IDs -->
+                        <div id="bulkAssignIdsContainer"></div>
+
+                        <div class="alert alert-info">
+                            Assinging <strong id="bulkCountDisplay">0</strong> assets.
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Select Employee</label>
+                            <select class="form-select" name="employeeId" required>
+                                <option value="" disabled selected>Choose...</option>
+                                <option th:each="emp : ${employees}" th:value="${emp.id}"
+                                    th:text="${emp.name} + ' (' + (${emp.department != null ? emp.department.name : 'No Dept'}) + ')'">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Condition</label>
+                            <input type="text" class="form-control" name="condition" value="Good">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Confirm Assignment</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     </section>
 
     <script>
+        // Bulk Selection Logic
+        const selectAll = document.getElementById('selectAllAssets');
+        const checkboxes = document.querySelectorAll('.asset-checkbox');
+        const bulkBtn = document.getElementById('btnBulkAssign');
+        const countSpan = document.getElementById('selectedCount');
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function () {
+                checkboxes.forEach(cb => cb.checked = this.checked);
+                updateBulkButton();
+            });
+        }
+
+        function updateBulkButton() {
+            const checkedBoxes = document.querySelectorAll('.asset-checkbox:checked');
+            const count = checkedBoxes.length;
+
+            if (count > 0) {
+                bulkBtn.classList.remove('d-none');
+                countSpan.textContent = count;
+            } else {
+                bulkBtn.classList.add('d-none');
+            }
+        }
+
+        function prepareBulkAssign() {
+            const checkedBoxes = document.querySelectorAll('.asset-checkbox:checked');
+            const container = document.getElementById('bulkAssignIdsContainer');
+            const countDisplay = document.getElementById('bulkCountDisplay');
+
+            // Clear previous inputs
+            container.innerHTML = '';
+
+            if (checkedBoxes.length === 0) {
+                alert("No assets selected!");
+                return;
+            }
+
+            // Create hidden inputs for each ID
+            checkedBoxes.forEach(cb => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'assetIds'; // Binds to List<Long>
+                input.value = cb.value;
+                container.appendChild(input);
+            });
+
+            countDisplay.textContent = checkedBoxes.length;
+
+            const modalEl = document.getElementById('bulkAssignModal');
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+
         // Edit Logic
         function editAsset(button) {
             document.getElementById('assetModalTitle').textContent = 'Edit Asset';
