@@ -255,4 +255,20 @@ public class SupervisorController {
 
         @Autowired
         private root.cyb.mh.attendancesystem.repository.AdvanceSalaryRepository advanceSalaryRepository;
+        @Autowired
+        private root.cyb.mh.attendancesystem.service.AssetService assetService;
+
+        @GetMapping("/assets")
+        public String supervisorAssets(
+                        @org.springframework.web.bind.annotation.RequestParam(required = false) String status,
+                        Model model) {
+                if (status != null && !status.isEmpty()) {
+                        model.addAttribute("assets", assetService.getAssetsByStatus(status));
+                } else {
+                        model.addAttribute("assets", assetService.getAllAssets());
+                }
+                model.addAttribute("stats", assetService.getInventoryStats());
+                model.addAttribute("activeLink", "supervisor-assets");
+                return "supervisor-assets";
+        }
 }
