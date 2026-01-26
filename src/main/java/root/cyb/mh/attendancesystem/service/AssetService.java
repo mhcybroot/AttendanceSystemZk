@@ -37,6 +37,29 @@ public class AssetService {
         return assetRepository.search(keyword);
     }
 
+    public List<Asset> filterAssets(String keyword, String categoryStr, String statusStr) {
+        Asset.Category category = null;
+        if (categoryStr != null && !categoryStr.isEmpty()) {
+            try {
+                category = Asset.Category.valueOf(categoryStr);
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+
+        Asset.Status status = null;
+        if (statusStr != null && !statusStr.isEmpty()) {
+            try {
+                status = Asset.Status.valueOf(statusStr);
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+
+        org.springframework.data.jpa.domain.Specification<Asset> spec = root.cyb.mh.attendancesystem.specification.AssetSpecification
+                .filterBy(keyword, category, status);
+
+        return assetRepository.findAll(spec);
+    }
+
     public List<Asset> getAssetsByStatus(String statusStr) {
         if (statusStr == null || statusStr.isEmpty()) {
             return getAllAssets();
@@ -145,12 +168,26 @@ public class AssetService {
         stats.put("available", assetRepository.countByStatus(Asset.Status.AVAILABLE));
         stats.put("assigned", assetRepository.countByStatus(Asset.Status.ASSIGNED));
 
-        long unavailable = assetRepository.countByStatus(Asset.Status.BROKEN) +
-                assetRepository.countByStatus(Asset.Status.LOST) +
-                assetRepository.countByStatus(Asset.Status.RETIRED) +
-                assetRepository.countByStatus(Asset.Status.REPAIR);
+        // Count broken/unavailable
+        long total = assetRepository.count();
+        long avail = assetRepository.countByStatus(Asset.Status.AVAILABLE);
+        long assigned = assetRepository.countByStatus(Asset.Status.ASSIGNED);
+        stats.put("broken", total - (avail + assigned));
 
-        stats.put("broken", unavailable); // Using 'broken' key to match frontend template
+        return stats;
+    }
+
+    public Map<String, Long> getFilteredStats(List<Asset> assets) {
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("total", (long) assets.size());
+
+        long available = assets.stream().filter(a -> a.getStatus() == Asset.Status.AVAILABLE).count();
+        long assigned = assets.stream().filter(a -> a.getStatus() == Asset.Status.ASSIGNED).count();
+
+        stats.put("available", available);
+        stats.put("assigned", assigned);
+        stats.put("broken", (long) assets.size() - (available + assigned));
+
         return stats;
     }
 

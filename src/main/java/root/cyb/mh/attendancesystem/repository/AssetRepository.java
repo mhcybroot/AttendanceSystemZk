@@ -6,8 +6,10 @@ import root.cyb.mh.attendancesystem.model.Asset;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
 @Repository
-public interface AssetRepository extends JpaRepository<Asset, Long> {
+public interface AssetRepository extends JpaRepository<Asset, Long>, JpaSpecificationExecutor<Asset> {
     List<Asset> findByStatus(Asset.Status status);
 
     boolean existsByAssetTag(String assetTag);

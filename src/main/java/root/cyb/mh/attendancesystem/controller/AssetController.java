@@ -32,15 +32,17 @@ public class AssetController {
     @GetMapping
     public String listAssets(@RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String category,
             Model model) {
-        List<Asset> assets;
-        if (search != null && !search.trim().isEmpty()) {
-            assets = assetService.searchAssets(search);
-        } else if (status != null && !status.trim().isEmpty()) {
-            assets = assetService.getAssetsByStatus(status);
-        } else {
-            assets = assetService.getAllAssets();
-        }
+
+        List<Asset> assets = assetService.filterAssets(search, category, status);
+
+        // Populate stats for the cards (global stats)
+        model.addAttribute("stats", assetService.getInventoryStats());
+
+        // Populate stats for the current filter result
+        model.addAttribute("filteredStats", assetService.getFilteredStats(assets));
+
         List<Employee> employees = employeeRepository.findAll();
 
         model.addAttribute("assets", assets);

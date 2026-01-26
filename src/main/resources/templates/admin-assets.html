@@ -114,19 +114,79 @@
             <!-- Search & Filter -->
             <div class="card mb-4 border-0">
                 <div class="card-body py-4">
-                    <form action="/admin/assets" method="get" class="row g-3 align-items-center justify-content-center">
-                        <div class="col-md-8">
+                    <form action="/admin/assets" method="get" class="row g-2 align-items-center justify-content-center">
+                        <div class="col-md-10">
                             <div class="input-group input-group-lg shadow-sm">
                                 <span class="input-group-text bg-white border-end-0 text-muted"><i
                                         class="fas fa-search"></i></span>
+
+                                <!-- Keyword Input -->
                                 <input type="text" name="search" class="form-control border-start-0 ps-0"
-                                    placeholder="Search assets, tags, or employees..." th:value="${search}">
-                                <button type="submit" class="btn btn-primary px-4">Search</button>
-                                <a th:if="${search != null && !search.isEmpty()}" href="/admin/assets"
-                                    class="btn btn-outline-secondary px-3">Clear</a>
+                                    placeholder="Search..." th:value="${search}">
+
+                                <!-- Category Dropdown -->
+                                <select class="form-select" name="category"
+                                    style="max-width: 200px; border-left: 1px solid #ced4da;">
+                                    <option value="">All Categories</option>
+                                    <option
+                                        th:each="cat : ${T(root.cyb.mh.attendancesystem.model.Asset.Category).values()}"
+                                        th:value="${cat}" th:text="${cat}"
+                                        th:selected="${param.category != null && param.category[0] == cat.name()}">
+                                    </option>
+                                </select>
+
+                                <!-- Status Dropdown -->
+                                <select class="form-select" name="status"
+                                    style="max-width: 200px; border-left: 1px solid #ced4da;">
+                                    <option value="">All Statuses</option>
+                                    <option
+                                        th:each="stat : ${T(root.cyb.mh.attendancesystem.model.Asset.Status).values()}"
+                                        th:value="${stat}" th:text="${stat}"
+                                        th:selected="${param.status != null && param.status[0] == stat.name()}">
+                                    </option>
+                                </select>
+
+                                <button type="submit" class="btn btn-primary px-4">Filter</button>
+                                <a href="/admin/assets" class="btn btn-outline-secondary px-3" title="Clear Filters">
+                                    <i class="fas fa-times"></i>
+                                </a>
                             </div>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <!-- Filter Result Report -->
+            <div class="card mb-4 border-0 bg-light"
+                th:if="${param.search != null or param.category != null or param.status != null}">
+                <div class="card-body d-flex align-items-center justify-content-between py-3">
+                    <div>
+                        <h5 class="mb-0 text-primary fw-bold">
+                            <i class="fas fa-filter me-2"></i>Filter Results
+                        </h5>
+                        <small class="text-muted">Based on your current selection</small>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <div class="px-3 py-2 bg-white rounded shadow-sm text-center">
+                            <div class="small text-muted fw-bold">FOUND</div>
+                            <div class="h4 mb-0 text-dark" th:text="${filteredStats.total}">0</div>
+                        </div>
+                        <div
+                            class="px-3 py-2 bg-white rounded shadow-sm text-center border-start border-4 border-success">
+                            <div class="small text-muted fw-bold">AVAILABLE</div>
+                            <div class="h4 mb-0 text-success" th:text="${filteredStats.available}">0</div>
+                        </div>
+                        <div
+                            class="px-3 py-2 bg-white rounded shadow-sm text-center border-start border-4 border-warning">
+                            <div class="small text-muted fw-bold">ASSIGNED</div>
+                            <div class="h4 mb-0 text-warning" th:text="${filteredStats.assigned}">0</div>
+                        </div>
+                        <div
+                            class="px-3 py-2 bg-white rounded shadow-sm text-center border-start border-4 border-danger">
+                            <div class="small text-muted fw-bold">OTHER</div>
+                            <div class="h4 mb-0 text-danger" th:text="${filteredStats.broken}">0</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
