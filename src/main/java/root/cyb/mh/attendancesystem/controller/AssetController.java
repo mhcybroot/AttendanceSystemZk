@@ -168,15 +168,41 @@ public class AssetController {
     }
 
     @PostMapping("/assign")
-    public String assignAsset(@RequestParam Long assetId, @RequestParam String employeeId,
-            @RequestParam String condition) {
-        assetService.assignAsset(assetId, employeeId, condition);
+    public String assignAsset(@RequestParam(name = "assetId") String assetIdStr,
+            @RequestParam String employeeId,
+            @RequestParam String condition,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        try {
+            if (assetIdStr == null || assetIdStr.trim().isEmpty()) {
+                throw new IllegalArgumentException("Asset ID is missing. Please ensure you selected a valid asset.");
+            }
+            Long assetId = Long.parseLong(assetIdStr);
+            assetService.assignAsset(assetId, employeeId, condition);
+            redirectAttributes.addFlashAttribute("successMessage", "Asset assigned successfully.");
+        } catch (NumberFormatException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Invalid Asset ID format: " + assetIdStr);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Assignment failed: " + e.getMessage());
+        }
         return "redirect:/admin/assets";
     }
 
     @PostMapping("/return")
-    public String returnAsset(@RequestParam Long assetId, @RequestParam String condition) {
-        assetService.returnAsset(assetId, condition);
+    public String returnAsset(@RequestParam(name = "assetId") String assetIdStr,
+            @RequestParam String condition,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        try {
+            if (assetIdStr == null || assetIdStr.trim().isEmpty()) {
+                throw new IllegalArgumentException("Asset ID is missing. Please ensure you selected a valid asset.");
+            }
+            Long assetId = Long.parseLong(assetIdStr);
+            assetService.returnAsset(assetId, condition);
+            redirectAttributes.addFlashAttribute("successMessage", "Asset returned successfully.");
+        } catch (NumberFormatException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Invalid Asset ID format: " + assetIdStr);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Return failed: " + e.getMessage());
+        }
         return "redirect:/admin/assets";
     }
 

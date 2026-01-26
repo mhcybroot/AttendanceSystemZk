@@ -42,11 +42,20 @@ public class Asset {
     public enum Category {
         LAPTOP,
         MONITOR,
+        PC,
         KEYBOARD,
+        HEADPHONE,
         MOUSE,
-        HEADSET,
+        UPS,
+        SWITCH,
+        ROUTER,
+        FRIDGE,
+        AP,
         PRINTER,
-        PHONE,
+        AC_SPLIT,
+        AC_CENTRAL,
+        CCTV,
+        NVR,
         OTHER
     }
 

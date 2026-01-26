@@ -184,16 +184,16 @@
                                             <!-- Assign Button -->
                                             <button th:if="${asset.status.name() == 'AVAILABLE'}"
                                                 class="btn btn-sm btn-white border-0 text-primary"
-                                                data-bs-toggle="modal" data-bs-target="#assignModal"
-                                                th:data-id="${asset.id}" th:data-name="${asset.name}" title="Assign">
+                                                th:data-id="${asset.id}" th:data-name="${asset.name}"
+                                                onclick="prepareAssign(this)" title="Assign">
                                                 <i class="fas fa-hand-holding"></i>
                                             </button>
 
                                             <!-- Return Button -->
                                             <button th:if="${asset.status.name() == 'ASSIGNED'}"
                                                 class="btn btn-sm btn-white border-0 text-warning"
-                                                data-bs-toggle="modal" data-bs-target="#returnModal"
-                                                th:data-id="${asset.id}" th:data-name="${asset.name}" title="Return">
+                                                th:data-id="${asset.id}" th:data-name="${asset.name}"
+                                                onclick="prepareReturn(this)" title="Return">
                                                 <i class="fas fa-undo"></i>
                                             </button>
 
@@ -255,11 +255,19 @@
                                             id="assetCategory">
                                             <option value="LAPTOP">Laptop</option>
                                             <option value="MONITOR">Monitor</option>
+                                            <option value="PC">PC</option>
                                             <option value="KEYBOARD">Keyboard</option>
                                             <option value="MOUSE">Mouse</option>
-                                            <option value="HEADSET">Headset</option>
+                                            <option value="UPS">UPS</option>
+                                            <option value="SWITCH">Switch</option>
+                                            <option value="ROUTER">Router</option>
+                                            <option value="FRIDGE">Fridge</option>
+                                            <option value="AP">Access Point (AP)</option>
                                             <option value="PRINTER">Printer</option>
-                                            <option value="PHONE">Phone</option>
+                                            <option value="AC_SPLIT">AC (Split Type)</option>
+                                            <option value="AC_CENTRAL">AC (Central Type)</option>
+                                            <option value="CCTV">CCTV</option>
+                                            <option value="NVR">NVR</option>
                                             <option value="OTHER">Other</option>
                                         </select>
                                     </div>
@@ -327,11 +335,19 @@
                                         <select class="form-select" name="category">
                                             <option value="LAPTOP">Laptop</option>
                                             <option value="MONITOR">Monitor</option>
+                                            <option value="PC">PC</option>
                                             <option value="KEYBOARD">Keyboard</option>
                                             <option value="MOUSE">Mouse</option>
-                                            <option value="HEADSET">Headset</option>
+                                            <option value="UPS">UPS</option>
+                                            <option value="SWITCH">Switch</option>
+                                            <option value="ROUTER">Router</option>
+                                            <option value="FRIDGE">Fridge</option>
+                                            <option value="AP">Access Point (AP)</option>
                                             <option value="PRINTER">Printer</option>
-                                            <option value="PHONE">Phone</option>
+                                            <option value="AC_SPLIT">AC (Split Type)</option>
+                                            <option value="AC_CENTRAL">AC (Central Type)</option>
+                                            <option value="CCTV">CCTV</option>
+                                            <option value="NVR">NVR</option>
                                             <option value="OTHER">Other</option>
                                         </select>
                                     </div>
@@ -450,23 +466,47 @@
             document.getElementById('assetModalTitle').textContent = 'Add New Asset';
         });
 
-        const assignModal = document.getElementById('assignModal');
-        assignModal.addEventListener('show.bs.modal', event => {
-            const button = event.relatedTarget;
+        // Manual Assign Logic (More Robust)
+        function prepareAssign(button) {
             const id = button.getAttribute('data-id');
             const name = button.getAttribute('data-name');
+
+            console.log("Preparing Assign for ID:", id);
+
+            if (!id) {
+                alert("Critical Error: Asset ID is missing from the button. Please refresh the page.");
+                return;
+            }
+
+            // Set values
             document.getElementById('assignAssetId').value = id;
             document.getElementById('assignAssetName').textContent = name;
-        });
 
-        const returnModal = document.getElementById('returnModal');
-        returnModal.addEventListener('show.bs.modal', event => {
-            const button = event.relatedTarget;
+            // Show Modal manually
+            const modalEl = document.getElementById('assignModal');
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+
+        // Manual Return Logic
+        function prepareReturn(button) {
             const id = button.getAttribute('data-id');
             const name = button.getAttribute('data-name');
+
+            console.log("Preparing Return for ID:", id);
+
+            if (!id) {
+                alert("Critical Error: Asset ID is missing. Please refresh the page.");
+                return;
+            }
+
             document.getElementById('returnAssetId').value = id;
             document.getElementById('returnAssetName').textContent = name;
-        });
+
+            const modalEl = document.getElementById('returnModal');
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
     </script>
     </div>
 </body>
