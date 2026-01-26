@@ -10,6 +10,8 @@ import java.util.List;
 public interface AssetRepository extends JpaRepository<Asset, Long> {
     List<Asset> findByStatus(Asset.Status status);
 
+    boolean existsByAssetTag(String assetTag);
+
     List<Asset> findByCategory(Asset.Category category);
 
     long countByCategoryAndStatus(Asset.Category category, Asset.Status status);

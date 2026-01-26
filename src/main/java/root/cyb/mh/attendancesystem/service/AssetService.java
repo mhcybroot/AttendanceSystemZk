@@ -154,4 +154,50 @@ public class AssetService {
         statusLogRepository.deleteByAssetId(assetId);
         assetRepository.deleteById(assetId);
     }
+
+    public void bulkCreateAssets(String name, Asset.Category category, String startTag, int quantity,
+            String description) {
+        String prefix = startTag.replaceAll("[0-9]", "");
+        String numberPart = startTag.replaceAll("[^0-9]", "");
+
+        int startNumber = 0;
+        int numberLength = 0;
+
+        if (!numberPart.isEmpty()) {
+            startNumber = Integer.parseInt(numberPart);
+            numberLength = numberPart.length();
+        }
+
+        for (int i = 0; i < quantity; i++) {
+            Asset asset = new Asset();
+            asset.setName(name);
+            asset.setCategory(category);
+            asset.setDescription(description);
+            asset.setStatus(Asset.Status.AVAILABLE);
+
+            if (!numberPart.isEmpty()) {
+                int currentNumber = startNumber + i;
+                String format = "%0" + numberLength + "d";
+                String newTag = prefix + String.format(format, currentNumber);
+
+                // Check for duplicate
+                if (assetRepository.existsByAssetTag(newTag)) {
+                    throw new IllegalArgumentException(
+                            "Asset Tag '" + newTag + "' already exists. Bulk operation aborted.");
+                }
+
+                asset.setAssetTag(newTag);
+            } else {
+                // Fallback if no specific number pattern (append index)
+                String fallbackTag = startTag + "-" + (i + 1);
+                if (assetRepository.existsByAssetTag(fallbackTag)) {
+                    throw new IllegalArgumentException(
+                            "Asset Tag '" + fallbackTag + "' already exists. Bulk operation aborted.");
+                }
+                asset.setAssetTag(fallbackTag);
+            }
+
+            saveAsset(asset);
+        }
+    }
 }

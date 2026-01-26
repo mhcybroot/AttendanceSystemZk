@@ -3,7 +3,7 @@
 
 <body th:fragment="sidebar(activeLink)">
     <div class="border-end" id="sidebar-wrapper">
-        <div class="sidebar-heading border-bottom bg-dark text-white">[[${companyName}]]</div>
+        <div class="sidebar-heading border-bottom">[[${companyName}]]</div>
         <div class="list-group list-group-flush">
             <!-- Admin Only: Assets -->
             <a sec:authorize="hasRole('ADMIN')" href="/admin/assets"
@@ -31,7 +31,7 @@
                     <i class="fas fa-building me-2"></i> Departments
                 </a>
 
-                <div class="sidebar-heading border-bottom bg-dark text-muted small py-2">REPORTS</div>
+                <div class="sidebar-heading border-bottom py-2">REPORTS</div>
                 <a href="/reports" class="list-group-item list-group-item-action"
                     th:classappend="${activeLink == 'reports'} ? 'active'">
                     <i class="fas fa-calendar-day me-2"></i> Daily Report
@@ -49,7 +49,7 @@
                     <i class="fas fa-calendar-check me-2"></i> Leave Calendar
                 </a>
 
-                <div class="sidebar-heading border-bottom bg-dark text-muted small py-2">FINANCE</div>
+                <div class="sidebar-heading border-bottom py-2">FINANCE</div>
                 <a href="/payroll" class="list-group-item list-group-item-action"
                     th:classappend="${activeLink == 'payroll'} ? 'active'">
                     <i class="fas fa-money-bill-wave me-2"></i> Payroll
@@ -86,7 +86,7 @@
 
             <!-- Smart Manager Section (Visible if user manages ANYONE) -->
             <div th:if="${isSupervisor}">
-                <div class="sidebar-heading border-bottom bg-dark text-muted small py-2">MANAGE YOUR WORKS</div>
+                <div class="sidebar-heading border-bottom py-2">MANAGE YOUR WORKS</div>
                 <a href="/supervisor/dashboard" class="list-group-item list-group-item-action"
                     th:classappend="${activeLink == 'supervisor-dashboard'} ? 'active'">
                     <i class="fas fa-chart-line me-2"></i> Team Dashboard
@@ -101,7 +101,7 @@
 
             <!-- Management Section (Admin & HR) -->
             <div sec:authorize="hasAnyRole('ADMIN', 'HR')">
-                <div class="sidebar-heading border-bottom bg-dark text-muted small py-2">MANAGEMENT</div>
+                <div class="sidebar-heading border-bottom py-2">MANAGEMENT</div>
                 <a href="/leave/manage" class="list-group-item list-group-item-action"
                     th:classappend="${activeLink == 'leave-manage'} ? 'active'">
                     <i class="fas fa-envelope-open-text me-2"></i> Leave Requests
@@ -109,7 +109,7 @@
             </div>
 
             <div sec:authorize="hasRole('ADMIN')">
-                <div class="sidebar-heading border-bottom bg-dark text-muted small py-2">SYSTEM</div>
+                <div class="sidebar-heading border-bottom py-2">SYSTEM</div>
                 <a href="/devices" class="list-group-item list-group-item-action"
                     th:classappend="${activeLink == 'devices'} ? 'active'">
                     <i class="fas fa-server me-2"></i> Devices

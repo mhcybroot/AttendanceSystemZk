@@ -1,227 +1,195 @@
-/* Global Modern Theme Variables */
 :root {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --secondary-gradient: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
-    --glass-bg: rgba(255, 255, 255, 0.82);
-    --glass-border: rgba(255, 255, 255, 0.5);
-    --shadow-soft: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-    --shadow-hover: 0 12px 40px 0 rgba(31, 38, 135, 0.15);
-    --font-main: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
-    --border-radius-card: 16px;
-    --border-radius-btn: 50px;
+    --bs-font-sans-serif: 'Inter', system-ui, -apple-system, sans-serif;
+    --primary-bg: #f8fafc;
+    /* Slate 50 */
+    --primary-color: #3b82f6;
+    /* Blue 500 */
+    --primary-hover: #2563eb;
+    /* Blue 600 */
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --card-border-radius: 0.75rem;
 }
 
-/* Base Body Styles */
 body {
-    background: #f0f2f5;
-    background-image:
-        radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 0) 0, hsla(253, 16%, 7%, 0) 50%),
-        radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 0) 0, hsla(225, 39%, 30%, 0) 50%),
-        radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 0) 0, hsla(339, 49%, 30%, 0) 50%);
-    background-attachment: fixed;
-    font-family: var(--font-main);
-    color: #2d3748;
+    background-color: var(--primary-bg);
+    color: #334155;
+    /* Slate 700 */
+    font-family: var(--bs-font-sans-serif);
 }
 
-/* Glassmorphism Cards */
-.card {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--border-radius-card);
-    box-shadow: var(--shadow-soft);
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
-    overflow: hidden;
-    /* For inner highlights */
-}
-
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-hover);
-}
-
-.card-header {
-    background: transparent;
-    /* Remove default bg */
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: #0f172a;
+    /* Slate 900 */
     font-weight: 600;
-    color: #4a5568;
 }
 
-/* Sidebar Modernization */
-#sidebar-wrapper {
-    background: #2d3748 !important;
-    /* Fallback */
-    background: linear-gradient(180deg, #2d3436 0%, #000000 100%) !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-#sidebar-wrapper .sidebar-heading {
-    background: transparent !important;
-    font-size: 1.5rem;
-    letter-spacing: 1px;
-    background: -webkit-linear-gradient(#fff, #aaa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-#sidebar-wrapper .list-group-item {
-    background: transparent !important;
-    color: rgba(255, 255, 255, 0.7) !important;
+/* Card Styling */
+.card {
     border: none;
-    margin: 4px 12px;
-    border-radius: 10px;
-    transition: all 0.2s ease;
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--card-shadow);
+    background-color: white;
+    margin-bottom: 1.5rem;
 }
 
-#sidebar-wrapper .list-group-item:hover,
-#sidebar-wrapper .list-group-item.active {
-    background: rgba(255, 255, 255, 0.15) !important;
-    color: #fff !important;
-    padding-left: 1.5rem;
-    /* Subtle indent via padding instead of transform */
-    box-shadow: none;
-    /* Remove shadow that might bleed */
-    border-left: 4px solid #667eea;
-    /* Clean indicator */
+.card-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Modern Buttons */
+.card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Button Styling */
 .btn-primary {
-    background: var(--primary-gradient);
-    border: none;
-    border-radius: var(--border-radius-btn);
-    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
-    transition: all 0.3s ease;
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    padding: 0.5rem 1rem;
     font-weight: 500;
-    padding: 0.5rem 1.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 .btn-primary:hover {
-    filter: brightness(110%);
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-.btn-success {
-    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-    border: none;
-    color: #1a472a;
-    /* Darker text for contrast on bright green */
-    border-radius: var(--border-radius-btn);
-    transition: all 0.3s ease;
-}
-
-.btn-success:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(67, 233, 123, 0.4);
-}
-
-/* Animations */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translate3d(0, 20px, 0);
-    }
-
-    to {
-        opacity: 1;
-        transform: translate3d(0, 0, 0);
-    }
-}
-
-.card {
-    animation: fadeInUp 0.6s ease-out;
-    /* Animate cards on load */
-    animation-fill-mode: both;
-}
-
-/* Stagger animations for multiple cards */
-.row .col-md-3:nth-child(1) .card {
-    animation-delay: 0.1s;
-}
-
-.row .col-md-3:nth-child(2) .card {
-    animation-delay: 0.2s;
-}
-
-.row .col-md-3:nth-child(3) .card {
-    animation-delay: 0.3s;
-}
-
-.row .col-md-3:nth-child(4) .card {
-    animation-delay: 0.4s;
-}
-
-/* Table Improvements */
+/* Table Styling */
 .table {
-    border-collapse: separate;
-    border-spacing: 0 8px;
-    /* Gap between rows */
+    --bs-table-bg: transparent;
 }
 
 .table thead th {
-    border: none;
+    background-color: #f1f5f9;
+    /* Slate 100 */
+    color: #64748b;
+    /* Slate 500 */
+    font-weight: 600;
     text-transform: uppercase;
     font-size: 0.75rem;
-    letter-spacing: 1px;
-    color: #a0aec0;
-    padding-bottom: 15px;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
 }
 
-.table tbody tr {
-    background: #fff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
-    border-radius: 8px;
-    /* Doesn't work directly on TR, needs TD styling */
-    transition: transform 0.2s ease;
-}
-
-.table tbody tr:hover {
-    transform: scale(1.01);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-    background: #fff;
-    /* Ensure it stays white/distinct */
-    z-index: 10;
-    position: relative;
-}
-
-.table td {
+.table tbody td {
     vertical-align: middle;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    color: #475569;
+    /* Slate 600 */
+    border-bottom-color: #f1f5f9;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Badge Styling */
+.badge {
+    font-weight: 600;
+    padding: 0.35em 0.8em;
+    border-radius: 9999px;
+    letter-spacing: 0.025em;
+}
+
+/* Form Controls */
+.form-control,
+.form-select {
+    border-color: #cbd5e1;
+    /* Slate 300 */
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.5rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.input-group-text {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    color: #64748b;
+}
+
+/* Sidebar specific styles - Professional Dark Theme */
+#sidebar-wrapper {
+    background-color: #0f172a;
+    /* Slate 900 */
+    color: #e2e8f0;
+    /* Slate 200 */
+    border-right: 1px solid #1e293b;
+}
+
+#sidebar-wrapper .sidebar-heading {
+    padding: 1.5rem 1.5rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    /* Slate 500 */
+    background-color: transparent !important;
+    border-bottom: none !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Brand Header specific */
+#sidebar-wrapper .sidebar-heading:first-child {
+    padding: 1.5rem;
+    font-size: 1.25rem;
+    color: white;
+    background-color: #0f172a !important;
+    /* Match sidebar bg */
+    border-bottom: 1px solid #1e293b !important;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+#sidebar-wrapper .list-group-item {
+    background-color: transparent !important;
+    /* Force override Bootstrap */
+    color: #94a3b8;
+    /* Slate 400 */
     border: none;
-    padding: 1rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    margin-bottom: 2px;
 }
 
-/* Fix rounding for first and last cells to fake rounded rows */
-.table tbody td:first-child {
-    border-top-left-radius: 8px;
-    border-bottom-left-radius: 8px;
+#sidebar-wrapper .list-group-item:hover {
+    color: #f1f5f9;
+    /* Slate 100 */
+    background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
-.table tbody td:last-child {
-    border-top-right-radius: 8px;
-    border-bottom-right-radius: 8px;
+#sidebar-wrapper .list-group-item.active {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    /* Blue 500 with opacity */
+    color: #60a5fa;
+    /* Blue 400 */
+    border-left-color: #60a5fa;
+    font-weight: 500;
 }
 
-/* Dashboard Metric Cards Specifically */
-.metric-card-link .card {
-    border: none;
-    /* Already handled but ensure clean */
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.6));
+#sidebar-wrapper .list-group-item i {
+    width: 24px;
+    text-align: center;
+    margin-right: 0.5rem;
+    opacity: 0.8;
 }
 
-.metric-card-link h1 {
-    font-weight: 800;
-    background: var(--primary-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-/* Alert Styling */
-.alert {
-    border-radius: 12px;
-    border: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+#sidebar-wrapper .list-group-item.active i {
+    opacity: 1;
 }

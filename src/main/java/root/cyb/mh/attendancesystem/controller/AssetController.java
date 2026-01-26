@@ -151,6 +151,22 @@ public class AssetController {
         return "redirect:/admin/assets";
     }
 
+    @PostMapping("/bulk-save")
+    public String bulkSaveAssets(@RequestParam String name,
+            @RequestParam Asset.Category category,
+            @RequestParam String startTag,
+            @RequestParam int quantity,
+            @RequestParam(required = false) String description,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        try {
+            assetService.bulkCreateAssets(name, category, startTag, quantity, description);
+            redirectAttributes.addFlashAttribute("successMessage", "Successfully created " + quantity + " assets.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/assets";
+    }
+
     @PostMapping("/assign")
     public String assignAsset(@RequestParam Long assetId, @RequestParam String employeeId,
             @RequestParam String condition) {
