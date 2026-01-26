@@ -5,7 +5,14 @@
     <div class="border-end" id="sidebar-wrapper">
         <div class="sidebar-heading border-bottom bg-dark text-white">[[${companyName}]]</div>
         <div class="list-group list-group-flush">
-            <!-- Admin / HR Navigation -->
+            <!-- Admin Only: Assets -->
+            <a sec:authorize="hasRole('ADMIN')" href="/admin/assets"
+                class="list-group-item list-group-item-action bg-transparent border-0"
+                th:classappend="${activeLink == 'assets'} ? 'active fw-bold'">
+                <i class="fas fa-boxes me-2"></i> Assets
+            </a>
+
+            <!-- Admin Only: Departments -->
             <div sec:authorize="hasAnyRole('ADMIN', 'HR')">
                 <a href="/dashboard" class="list-group-item list-group-item-action"
                     th:classappend="${activeLink == 'dashboard'} ? 'active'">

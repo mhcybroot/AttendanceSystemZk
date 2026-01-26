@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Asset Lifecycle History</title>
+    <style>
+        /* Timeline CSS */
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+            list-style: none;
+        }
+
+        .timeline:before {
+            content: " ";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 24px;
+            width: 2px;
+            background-color: #dee2e6;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .timeline-badge {
+            position: absolute;
+            top: 0;
+            left: 12px;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 26px;
+            color: #fff;
+            background-color: #6c757d;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px #dee2e6;
+            z-index: 100;
+            transform: translateX(-50%);
+        }
+
+        .timeline-panel {
+            margin-left: 60px;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            position: relative;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .timeline-panel:before {
+            content: " ";
+            position: absolute;
+            top: 10px;
+            right: 100%;
+            border-width: 8px;
+            border-style: solid;
+            border-color: transparent #dee2e6 transparent transparent;
+        }
+
+        .timeline-panel:after {
+            content: " ";
+            position: absolute;
+            top: 11px;
+            right: 100%;
+            border-width: 7px;
+            border-style: solid;
+            border-color: transparent #fff transparent transparent;
+        }
+
+        /* Badge Colors */
+        .timeline-badge.primary {
+            background-color: #0d6efd;
+        }
+
+        /* Assignment */
+        .timeline-badge.warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        /* Status Change */
+        .timeline-badge.danger {
+            background-color: #dc3545;
+        }
+
+        /* Broken/Lost */
+        .timeline-badge.success {
+            background-color: #198754;
+        }
+
+        /* Return/Available */
+
+        .text-small {
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div th:replace="~{layout :: layout(~{::section}, ~{::script}, 'assets')}">
+        <section>
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-1">
+                            <li class="breadcrumb-item"><a href="/admin/assets">Assets</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">History</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h2"><i class="fas fa-history me-2"></i>Lifecycle: <span
+                            th:text="${asset.name}">Asset</span></h1>
+                </div>
+                <div>
+                    <span class="badge bg-secondary fs-6" th:text="${asset.assetTag}">TAG-001</span>
+                    <span class="badge"
+                        th:classappend="${asset.status.name() == 'AVAILABLE' ? 'bg-success' : (asset.status.name() == 'ASSIGNED' ? 'bg-warning text-dark' : 'bg-danger')}"
+                        th:text="${asset.status}">STATUS</span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <ul class="timeline">
+                        <!-- EVENTS LOOP -->
+                        <li class="timeline-item" th:each="event : ${timeline}">
+
+                            <!-- ASSIGNMENT EVENT -->
+                            <th:block th:if="${event.type.name() == 'ASSIGNMENT'}">
+                                <div class="timeline-badge primary">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="timeline-panel">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="mb-0 text-primary">Assigned to <span
+                                                th:text="${event.employee.name}">User</span></h5>
+                                        <small class="text-muted"><i class="far fa-clock me-1"></i> <span
+                                                th:text="${#temporals.format(event.timestamp, 'dd MMM yyyy HH:mm')}">Date</span></small>
+                                    </div>
+                                    <div class="d-flex align-items-center text-muted mb-2">
+                                        <span class="badge bg-light text-dark border me-2"
+                                            th:text="${event.employee.department != null ? event.employee.department.name : 'Unknown Dept'}">Dept</span>
+                                        <span class="small" th:if="${event.returnDate == null}"><i
+                                                class="fas fa-hourglass-half text-primary"></i> Currently Active (<span
+                                                th:text="${event.duration}"></span>)</span>
+                                        <span class="small" th:if="${event.returnDate != null}">
+                                            <i class="fas fa-check-circle text-success"></i> Returned: <span
+                                                th:text="${#temporals.format(event.returnDate, 'dd MMM yyyy')}">Date</span>
+                                            <span class="badge bg-secondary ms-1"
+                                                th:text="${event.duration}">Duration</span>
+                                        </span>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <div
+                                                class="p-2 bg-light rounded text-small border-start border-3 border-primary">
+                                                <strong>Start:</strong> <span th:text="${event.description}">Good</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6" th:if="${event.returnDate != null}">
+                                            <div
+                                                class="p-2 bg-light rounded text-small border-start border-3 border-secondary">
+                                                <strong>End:</strong> <span th:text="${event.returnCondition}">Returned
+                                                    Good</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </th:block>
+
+                            <!-- STATUS CHANGE EVENT -->
+                            <th:block th:if="${event.type.name() == 'STATUS_CHANGE'}">
+                                <!-- Dynamic Badge Color -->
+                                <div class="timeline-badge"
+                                    th:classappend="${event.newStatus.name() == 'BROKEN' || event.newStatus.name() == 'LOST' ? 'danger' : (event.newStatus.name() == 'AVAILABLE' ? 'success' : 'warning')}">
+                                    <i class="fas"
+                                        th:classappend="${event.newStatus.name() == 'BROKEN' || event.newStatus.name() == 'LOST' ? 'fa-exclamation-triangle' : (event.newStatus.name() == 'AVAILABLE' ? 'fa-check' : 'fa-sync-alt')}"></i>
+                                </div>
+                                <div class="timeline-panel">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="mb-0">
+                                            Status Changed
+                                        </h5>
+                                        <small class="text-muted"><i class="far fa-clock me-1"></i> <span
+                                                th:text="${#temporals.format(event.timestamp, 'dd MMM yyyy HH:mm')}">Date</span></small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <span class="badge bg-secondary opacity-75"
+                                            th:text="${event.oldStatus}">OLD</span>
+                                        <i class="fas fa-arrow-right mx-2 text-muted"></i>
+                                        <span class="badge"
+                                            th:classappend="${event.newStatus.name() == 'AVAILABLE' ? 'bg-success' : (event.newStatus.name() == 'ASSIGNED' ? 'bg-warning text-dark' : 'bg-danger')}"
+                                            th:text="${event.newStatus}">NEW</span>
+                                    </div>
+                                    <div th:if="${event.description != null && !event.description.isEmpty()}"
+                                        class="p-2 bg-light rounded text-small text-muted fst-italic">
+                                        "<span th:text="${event.description}">Reason</span>"
+                                    </div>
+                                </div>
+                            </th:block>
+                        </li>
+
+                        <li class="timeline-item" th:if="${timeline.isEmpty()}">
+                            <div class="timeline-badge bg-secondary"><i class="fas fa-box"></i></div>
+                            <div class="timeline-panel">
+                                <p class="mb-0 text-muted">Asset created. No further history.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Sidebar / Details Column -->
+                <div class="col-lg-4">
+                    <div class="card shadow-sm sticky-top" style="top: 20px;">
+                        <div class="card-header bg-light fw-bold">Current Status</div>
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                <h4 class="fw-bold" th:text="${asset.name}">Asset Name</h4>
+                                <div class="text-muted small" th:text="${asset.serialNumber}">SN123</div>
+                            </div>
+                            <hr>
+                            <dl class="row mb-0">
+                                <dt class="col-sm-5 text-muted">Category</dt>
+                                <dd class="col-sm-7 fw-bold" th:text="${asset.category}">Laptop</dd>
+
+                                <dt class="col-sm-5 text-muted">Current</dt>
+                                <dd class="col-sm-7" th:text="${asset.status}">Available</dd>
+
+                                <dt class="col-sm-5 text-muted">Tag</dt>
+                                <dd class="col-sm-7" th:text="${asset.assetTag}">TAG-01</dd>
+                            </dl>
+                            <div class="mt-3" th:if="${asset.description}">
+                                <small class="text-muted d-block">Notes:</small>
+                                <p class="small mb-0" th:text="${asset.description}">Desc</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script></script> <!-- Empty script block for fragment -->
+        </section>
+    </div>
+</body>
+
+</html>
