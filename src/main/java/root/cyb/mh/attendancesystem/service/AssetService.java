@@ -33,6 +33,34 @@ public class AssetService {
         return assetRepository.findAll();
     }
 
+    public List<Asset> searchAssets(String keyword) {
+        return assetRepository.search(keyword);
+    }
+
+    public List<Asset> getAssetsByStatus(String statusStr) {
+        if (statusStr == null || statusStr.isEmpty()) {
+            return getAllAssets();
+        }
+
+        if ("UNAVAILABLE".equalsIgnoreCase(statusStr)) {
+            // Fetch all non-active statuses
+            java.util.List<Asset> all = getAllAssets();
+            return all.stream()
+                    .filter(a -> a.getStatus() == Asset.Status.BROKEN ||
+                            a.getStatus() == Asset.Status.LOST ||
+                            a.getStatus() == Asset.Status.RETIRED ||
+                            a.getStatus() == Asset.Status.REPAIR)
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
+        try {
+            Asset.Status status = Asset.Status.valueOf(statusStr.toUpperCase());
+            return assetRepository.findByStatus(status);
+        } catch (IllegalArgumentException e) {
+            return getAllAssets();
+        }
+    }
+
     public void saveAsset(Asset asset) {
         // Check for updates to log status changes
         if (asset.getId() != null) {

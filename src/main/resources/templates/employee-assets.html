@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>My Assets</title>
+</head>
+
+<body>
+    <div th:replace="~{layout :: layout(~{::section}, ~{::script}, 'my-assets')}">
+        <section>
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">My Assigned Assets</h1>
+            </div>
+
+            <!-- Assets Grid -->
+            <div class="row" th:if="${!assets.isEmpty()}">
+                <div class="col-md-6 col-lg-4 mb-4" th:each="asset : ${assets}">
+                    <div class="card shadow-sm h-100 border-0">
+                        <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="badge bg-primary mb-2" th:text="${asset.category}">LAPTOP</span>
+                                    <h5 class="card-title fw-bold text-dark" th:text="${asset.name}">Dell Latitude</h5>
+                                </div>
+                                <i class="fas fa-laptop fa-2x text-muted opacity-25"
+                                    th:classappend="${asset.category.name() == 'PHONE' ? 'fa-mobile-alt' : (asset.category.name() == 'MONITOR' ? 'fa-desktop' : 'fa-laptop')}"></i>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <small class="text-muted d-block text-uppercase fw-bold"
+                                    style="font-size: 0.7rem; letter-spacing: 1px;">Asset Tag</small>
+                                <span class="fs-5" th:text="${asset.assetTag}">TAG-001</span>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block text-uppercase fw-bold"
+                                        style="font-size: 0.7rem; letter-spacing: 1px;">Serial</small>
+                                    <span class="text-dark" th:text="${asset.serialNumber}">SN123</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block text-uppercase fw-bold"
+                                        style="font-size: 0.7rem; letter-spacing: 1px;">Assigned</small>
+                                    <span class="text-success"><i class="fas fa-check-circle me-1"></i> Active</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-light p-3 rounded"
+                                th:if="${asset.description != null && !asset.description.isEmpty()}">
+                                <small class="text-muted d-block mb-1">Description / Condition</small>
+                                <p class="mb-0 small" th:text="${asset.description}">Good condition.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="text-center py-5" th:if="${assets.isEmpty()}">
+                <div class="mb-4">
+                    <span class="fa-stack fa-2x text-muted opacity-50">
+                        <i class="fas fa-circle fa-stack-2x"></i>
+                        <i class="fas fa-laptop fa-stack-1x fa-inverse"></i>
+                    </span>
+                </div>
+                <h3>No Assets Assigned</h3>
+                <p class="text-muted">You currently do not have any company assets assigned to you.</p>
+            </div>
+
+        </section>
+        <script></script>
+    </div>
+</body>
+
+</html>

@@ -19,36 +19,71 @@
             <!-- Stats Cards -->
             <div class="row mb-4">
                 <div class="col-md-3">
-                    <div class="card text-white bg-primary mb-3 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Assets</h5>
-                            <h2 class="card-text" th:text="${stats.total}">0</h2>
+                    <a href="/admin/assets" class="text-decoration-none">
+                        <div class="card text-white bg-primary mb-3 shadow-sm h-100 card-hover">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Assets</h5>
+                                <h2 class="card-text" th:text="${stats.total}">0</h2>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
                 <div class="col-md-3">
-                    <div class="card text-white bg-success mb-3 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Available</h5>
-                            <h2 class="card-text" th:text="${stats.available}">0</h2>
+                    <a href="/admin/assets?status=AVAILABLE" class="text-decoration-none">
+                        <div class="card text-white bg-success mb-3 shadow-sm h-100 card-hover">
+                            <div class="card-body">
+                                <h5 class="card-title">Available</h5>
+                                <h2 class="card-text" th:text="${stats.available}">0</h2>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
                 <div class="col-md-3">
-                    <div class="card text-white bg-warning mb-3 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Assigned</h5>
-                            <h2 class="card-text" th:text="${stats.assigned}">0</h2>
+                    <a href="/admin/assets?status=ASSIGNED" class="text-decoration-none">
+                        <div class="card text-white bg-warning mb-3 shadow-sm h-100 card-hover">
+                            <div class="card-body">
+                                <h5 class="card-title">Assigned</h5>
+                                <h2 class="card-text" th:text="${stats.assigned}">0</h2>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
                 <div class="col-md-3">
-                    <div class="card text-white bg-danger mb-3 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Unavailable / Other</h5>
-                            <h2 class="card-text" th:text="${stats.broken}">0</h2>
+                    <a href="/admin/assets?status=UNAVAILABLE" class="text-decoration-none">
+                        <div class="card text-white bg-danger mb-3 shadow-sm h-100 card-hover">
+                            <div class="card-body">
+                                <h5 class="card-title">Unavailable / Other</h5>
+                                <h2 class="card-text" th:text="${stats.broken}">0</h2>
+                            </div>
                         </div>
-                    </div>
+                    </a>
+                </div>
+            </div>
+
+            <style>
+                .card-hover:hover {
+                    transform: translateY(-3px);
+                    transition: transform 0.2s ease;
+                    opacity: 0.9;
+                    cursor: pointer;
+                }
+            </style>
+
+            <!-- Search & Filter -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body py-3">
+                    <form action="/admin/assets" method="get" class="row g-3 align-items-center">
+                        <div class="col-md-6 offset-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                                <input type="text" name="search" class="form-control"
+                                    placeholder="Search by Asset Name, Tag, or Employee Name..." th:value="${search}">
+                                <button type="submit" class="btn btn-primary">Search</button>
+                                <a th:if="${search != null && !search.isEmpty()}" href="/admin/assets"
+                                    class="btn btn-outline-secondary">Clear</a>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
 

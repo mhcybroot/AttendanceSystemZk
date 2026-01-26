@@ -62,6 +62,10 @@
                     th:classappend="${activeLink == 'dashboard'} ? 'active'">
                     <i class="fas fa-id-card me-2"></i> My Dashboard
                 </a>
+                <a href="/employee/assets" class="list-group-item list-group-item-action"
+                    th:classappend="${activeLink == 'my-assets'} ? 'active'">
+                    <i class="fas fa-laptop me-2"></i> My Assets
+                </a>
                 <a href="/employee/attendance/history" class="list-group-item list-group-item-action"
                     th:classappend="${activeLink == 'history'} ? 'active'">
                     <i class="fas fa-history me-2"></i> My History

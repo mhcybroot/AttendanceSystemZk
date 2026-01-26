@@ -63,6 +63,21 @@ public class EmployeeDashboardController {
         return "employee-dashboard";
     }
 
+    @Autowired
+    private root.cyb.mh.attendancesystem.repository.AssetRepository assetRepository;
+
+    @GetMapping("/employee/assets")
+    public String myAssets(Model model, Principal principal) {
+        String employeeId = principal.getName();
+        Employee employee = employeeRepository.findById(employeeId).orElse(null);
+        List<Asset> myAssets = assetRepository.findByAssignedTo(employee);
+
+        model.addAttribute("assets", myAssets);
+        model.addAttribute("activeLink", "my-assets");
+
+        return "employee-assets";
+    }
+
     @GetMapping("/employee/attendance/history")
     public String attendanceHistory(
             @RequestParam(name = "period", required = false) String period,

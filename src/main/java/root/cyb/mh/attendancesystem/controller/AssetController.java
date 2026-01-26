@@ -30,8 +30,17 @@ public class AssetController {
     private AssetAssignmentRepository assetAssignmentRepository;
 
     @GetMapping
-    public String listAssets(Model model) {
-        List<Asset> assets = assetService.getAllAssets();
+    public String listAssets(@RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            Model model) {
+        List<Asset> assets;
+        if (search != null && !search.trim().isEmpty()) {
+            assets = assetService.searchAssets(search);
+        } else if (status != null && !status.trim().isEmpty()) {
+            assets = assetService.getAssetsByStatus(status);
+        } else {
+            assets = assetService.getAllAssets();
+        }
         List<Employee> employees = employeeRepository.findAll();
 
         model.addAttribute("assets", assets);
@@ -39,6 +48,7 @@ public class AssetController {
         model.addAttribute("stats", assetService.getInventoryStats());
         model.addAttribute("newAsset", new Asset());
         model.addAttribute("activeLink", "assets");
+        model.addAttribute("search", search);
 
         return "admin-assets";
     }
